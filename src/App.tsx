@@ -31,6 +31,7 @@ import { Product, CartItem, FreeGiftSelection } from "./types";
 import PromoHub from "./components/PromoHub";
 import ProductCatalog from "./components/ProductCatalog";
 import PromoCalculator from "./components/PromoCalculator";
+import { PROMO_CAMPAIGN_META } from "./promoData";
 
 export default function App() {
   // Navigation active tab
@@ -52,9 +53,9 @@ export default function App() {
 
   // User Profile Simulator
   const [selectedAgent, setSelectedAgent] = useState({
-    name: "Đại lý Thể Thao Hoàng Nam",
-    code: "DL-HANOI-9981",
-    tier: "Đại lý Cấp 1",
+    name: "TOP VN SPORT",
+    code: "",
+    tier: "",
     region: "Khu vực Miền Bắc"
   });
 
@@ -154,10 +155,10 @@ export default function App() {
             </div>
 
             {/* Live Ticker banner or warnings */}
-            <div className="hidden lg:flex items-center gap-2 bg-zinc-800/80 px-3.5 py-1.5 rounded-full border border-zinc-700/60 text-xs">
-              <BellRing className="w-3.5 h-3.5 text-red-500 animate-bounce" />
+            <div className="hidden lg:flex items-center gap-2 bg-zinc-800/80 px-3 py-1.5 rounded-full border border-zinc-700/60 text-[10.5px] tracking-wide">
+              <BellRing className="w-3 h-3 text-red-500 animate-bounce" />
               <span className="text-zinc-300">
-                Ưu đãi hiện có: <strong className="text-white">A (giảm 45%)</strong>, <strong className="text-white">B (tuyển N65)</strong>, <strong className="text-white">C (tích doanh số)</strong>
+                Chính sách: <strong className="text-white font-bold">A (Giảm 45%)</strong> | <strong className="text-white font-bold">B1 (Tặng cước N65)</strong> | <strong className="text-white font-bold">B2 (Tặng vợt sỉ)</strong>
               </span>
             </div>
 
@@ -229,7 +230,7 @@ export default function App() {
             >
               <div className="flex items-center gap-2">
                 <Settings className="w-4 h-4 text-[#D8232A]" />
-                <span className="truncate">Trợ lý Ưu đãi B2B</span>
+                <span className="truncate">Hệ Thống Tự Động Tối Ưu B2B</span>
               </div>
               <ChevronDown className={`w-4 h-4 text-neutral-500 transition-transform duration-200 ${mobileToolsOpen ? "rotate-180" : ""}`} />
             </button>
@@ -241,13 +242,13 @@ export default function App() {
                 <div className="bg-indigo-950 text-indigo-100 rounded-lg p-3.5 space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] bg-indigo-800 text-indigo-200 font-extrabold px-2 py-0.5 rounded uppercase tracking-wide">
-                      Trợ lý thông thái B2B
+                      Hệ Thống Phân Tích & Tối Ưu B2B
                     </span>
                     <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
                   </div>
                   <div className="space-y-1.5 text-xs">
                     <div>
-                      <div className="text-indigo-300 font-semibold text-[10px]">Ưu đãi C đạt được:</div>
+                      <div className="text-indigo-300 font-semibold text-[10px]">Hạng quà tặng B2 đạt được (Doanh số sỉ):</div>
                       <div className="font-mono text-white text-xs font-bold">
                         {catalog2WholesaleSum >= 50000000 ? "27% Mức Kim Cương" : 
                          catalog2WholesaleSum >= 35000000 ? "20% Mức Vàng" : 
@@ -261,6 +262,10 @@ export default function App() {
                         className="bg-emerald-400 h-full rounded-full transition-all duration-300" 
                         style={{ width: `${Math.min((catalog2WholesaleSum / 50000000) * 100, 100)}%` }}
                       ></div>
+                    </div>
+                    {/* Setup tip */}
+                    <div className="text-[9px] text-indigo-300 italic pt-1 border-t border-indigo-900/30 leading-normal">
+                      *Hệ thống tự động kích hoạt & tính toán ưu đãi tức thì dựa trên số lượng đặt hàng giả lập của bạn ở bảng tính hoặc bảng giá.
                     </div>
                   </div>
                 </div>
@@ -318,14 +323,18 @@ export default function App() {
           <div className="bg-indigo-950 text-indigo-100 rounded-xl p-4 border border-indigo-900 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[10px] bg-indigo-800 text-indigo-200 font-extrabold px-2 py-0.5 rounded tracking-wide uppercase">
-                Trợ lý thông thái B2B
+                Hệ Thống Phân Tích & Tối Ưu B2B
               </span>
               <Activity className="w-4 h-4 text-emerald-400 animate-pulse" />
             </div>
 
             <div className="space-y-2 text-xs">
+              <div className="text-[10px] text-indigo-300 italic pb-1.5 border-b border-indigo-900/30 leading-relaxed font-sans">
+                💡 <em>Hệ thống phân tích tự động hoạt động dựa trên số đặt hàng giả lập ở <strong>Bảng giá</strong> hoặc <strong>Bản tính nháp</strong> của đại lý.</em>
+              </div>
+
               <div>
-                <div className="text-indigo-300 font-semibold mb-1">Mức ưu đãi C đạt được:</div>
+                <div className="text-indigo-300 font-semibold mb-1">Hạng quà tặng B2 đạt được (Doanh số sỉ):</div>
                 <div className="font-mono text-white text-sm font-bold">
                   {catalog2WholesaleSum >= 50000000 ? "27% Mức Kim Cương" : 
                    catalog2WholesaleSum >= 35000000 ? "20% Mức Vàng" : 
@@ -334,7 +343,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Progress visual line for Promo C */}
+              {/* Progress visual line for Promo B2 */}
               <div className="w-full bg-indigo-900 h-1.5 rounded-full overflow-hidden">
                 <div 
                   className="bg-emerald-400 h-full rounded-full transition-all duration-300" 
@@ -404,7 +413,7 @@ export default function App() {
             <span>•</span>
             <a href="#" className="hover:underline">Bộ tiêu chí đại lý chính hãng</a>
             <span>•</span>
-            <a href="#" className="hover:underline">Hotline: 1900.2026.88</a>
+            <a href={`tel:${PROMO_CAMPAIGN_META.hotlinePhone}`} className="hover:underline">Hotline: {PROMO_CAMPAIGN_META.hotlineDisplay}</a>
           </div>
         </div>
       </footer>

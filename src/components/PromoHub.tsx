@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   Calendar, 
   Percent, 
@@ -11,8 +11,18 @@ import {
   ChevronRight,
   Clock,
   ThumbsUp,
-  Briefcase
+  Briefcase,
+  Layers,
+  Info
 } from "lucide-react";
+import { 
+  PROMO_CAMPAIGN_META, 
+  PROMO_A_CONFIG, 
+  PROMO_B1_CONFIG, 
+  PROMO_B2_CONFIG, 
+  GIFT_N65_STRINGS,
+  CATALOG_INFO
+} from "../promoData";
 
 interface PromoHubProps {
   onSetActiveTab: (tab: string) => void;
@@ -29,8 +39,8 @@ export default function PromoHub({
   catalog2WholesaleSum,
   giftValueSelected
 }: PromoHubProps) {
-  // Target date for countdown: 10/06/2026
-  const targetDate = new Date("2026-06-10T23:59:59").getTime();
+  // Target date for countdown: 10/06/2026 based on official campaign date
+  const targetDateStr = `${PROMO_CAMPAIGN_META.endDate.split("/").reverse().join("-")}T23:59:59`;
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({
     days: 18,
     hours: 12,
@@ -39,18 +49,10 @@ export default function PromoHub({
   });
 
   useEffect(() => {
-    // Current time from mock system metadata is June 2026 or May 23 2026 (2026-05-23T05:25:51Z)
-    // We update with an offset to make it look active
     const interval = setInterval(() => {
-      const now = new Date().getTime();
-      // Since actual client absolute time in browser might differ from 2026 system meta, 
-      // let's calculate the difference from May 23 2026 or fallback to a realistic countdown.
-      const testTarget = new Date("2026-06-10T23:59:59").getTime();
-      
-      // We will anchor standard system date count down
+      const targetTime = new Date(targetDateStr).getTime();
       const currentSimTime = new Date().getTime();
-      // To keep it perfectly synchronized with 2026-05-23 from instructions:
-      const msLeft = testTarget - currentSimTime;
+      const msLeft = targetTime - currentSimTime;
       
       if (msLeft > 0) {
         const d = Math.floor(msLeft / (1000 * 60 * 60 * 24));
@@ -59,331 +61,337 @@ export default function PromoHub({
         const s = Math.floor((msLeft % (1000 * 60)) / 1000);
         setTimeLeft({ days: d, hours: h, minutes: m, seconds: s });
       } else {
-        // Fallback static positive count down to maintain look
+        // Fallback static positive countdown representation if current date passes limit
         setTimeLeft({ days: 18, hours: 14, minutes: 22, seconds: 5 });
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [targetDateStr]);
 
-  // Format currency
+  // Format currency helper
   const formatVND = (num: number) => {
     return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
   };
 
-  // Check which promotions are currently met in draft
-  const promoAActive = catalog1Count >= 2 && catalog1Count <= 4 && catalog3Count >= 1;
-  const promoCActive = catalog2WholesaleSum >= 8000000;
+  // Determine activation state based on centralized configs
+  const promoAActive = catalog1Count >= PROMO_A_CONFIG.minCatalog1Qty && 
+                        catalog1Count <= PROMO_A_CONFIG.maxCatalog1Qty && 
+                        catalog3Count >= PROMO_A_CONFIG.requiredCatalog3Qty;
+                        
+  const promoB1Active = catalog1Count > 0;
 
-  // Determine Promo C tier
-  let promoCTierLabel = "Chưa đạt hạng mức";
-  let promoCValuePercent = 0;
-  if (catalog2WholesaleSum >= 50000000) {
-    promoCTierLabel = "Hạng Kim Cương (Mức 27%)";
-    promoCValuePercent = 27;
-  } else if (catalog2WholesaleSum >= 35000000) {
-    promoCTierLabel = "Hạng Vàng (Mức 20%)";
-    promoCValuePercent = 20;
-  } else if (catalog2WholesaleSum >= 20000000) {
-    promoCTierLabel = "Hạng Bạc (Mức 18%)";
-    promoCValuePercent = 18;
-  } else if (catalog2WholesaleSum >= 8000000) {
-    promoCTierLabel = "Hạng Đồng (Mức 15%)";
-    promoCValuePercent = 15;
-  }
+  // Find active Tier from centralized Config for Bullet 2 / Promo B2
+  const activePromoB2Tier = useMemo(() => {
+    const tiers = PROMO_B2_CONFIG.tiers;
+    let fallback = tiers[0];
+    for (let i = tiers.length - 1; i >= 0; i--) {
+      if (catalog2WholesaleSum >= tiers[i].minWholesalePrice) {
+        fallback = tiers[i];
+        break;
+      }
+    }
+    return fallback;
+  }, [catalog2WholesaleSum]);
+
+  const maxGiftValueAllowed = useMemo(() => {
+    if (activePromoB2Tier.giftPercent === 0) return 0;
+    return (catalog2WholesaleSum * activePromoB2Tier.giftPercent) / 100;
+  }, [catalog2WholesaleSum, activePromoB2Tier]);
 
   return (
-    <div className="space-y-6" id="promo-hub-page">
-      {/* Summer Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#D8232A] to-[#A01A1F] p-6 md:p-8 text-white shadow-xl">
-        <div className="absolute right-0 top-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
+    <div className="space-y-6 animate-fade-in" id="promo-hub-page">
+      
+      {/* Summer Campaign Banner Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 to-red-805 p-6 md:p-8 text-white shadow-lg border-b-4 border-red-700">
+        <div className="absolute right-0 top-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/5 blur-3xl"></div>
         <div className="absolute left-1/3 bottom-0 w-48 h-48 rounded-full bg-orange-400/10 blur-2xl"></div>
         
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 bg-black/30 text-white font-mono text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider animate-pulse">
-              <Flame className="w-3.5 h-3.5 text-yellow-400" /> Hot Deal B2B 2026
+          <div className="space-y-3.5 max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 bg-black/30 text-white font-mono text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+              <Flame className="w-3.5 h-3.5 text-yellow-400" /> {PROMO_CAMPAIGN_META.announcementTitle}
             </div>
-            <h1 className="text-2xl md:text-4xl font-black italic uppercase tracking-tight">
-              CHƯƠNG TRÌNH KHUYẾN MẠI HÈ 2026
+            
+            <h1 className="text-2xl md:text-3.5xl font-extrabold italic uppercase tracking-tight leading-tight">
+              {PROMO_CAMPAIGN_META.campaignName} 2026 - {PROMO_CAMPAIGN_META.supplier}
             </h1>
-            <p className="text-white/95 text-xs md:text-sm font-medium leading-relaxed">
-              Áp dụng đặc quyền cho hệ thống đại lý chính hãng và cửa hàng bán buôn cầu lông Li-Ning Việt Nam. 
-              Đặt hàng ngay để gia tăng tỷ suất lợi nhuận bán lẻ của bạn lên tới <span className="font-black font-mono underline decoration-white decoration-2 underline-offset-4">45%</span>.
+            
+            <p className="text-white/95 text-xs md:text-sm font-medium leading-relaxed font-sans">
+              Kính gửi Quý khách hàng, {PROMO_CAMPAIGN_META.supplier} xin trân trọng gửi tới quý khách hàng chương trình khuyến mại lớn mùa hè, áp dụng đặc trị định vị thúc đẩy thương mại cho hệ thống đại lý.
             </p>
-            <div className="flex flex-wrap items-center gap-4 pt-1 text-xs">
-              <span className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded border border-white/15">
-                <Calendar className="w-3.5 h-3.5 text-yellow-400" /> 
-                Hiệu lực: <strong className="text-white">20/05/2026 - 10/06/2026</strong>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px]">
+              <span className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded border border-white/10 font-medium">
+                <Calendar className="w-3.5 h-3.5 text-yellow-405" /> 
+                Hiệu lực: <strong className="text-white font-bold">{PROMO_CAMPAIGN_META.startDate} – {PROMO_CAMPAIGN_META.endDate}</strong>
               </span>
-              <span className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded border border-white/15">
-                <Award className="w-3.5 h-3.5 text-yellow-400" />
-                Đối tượng: <strong className="text-white">Đại lý & NPP Toàn Quốc</strong>
+              <span className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded border border-white/10 font-medium">
+                <Award className="w-3.5 h-3.5 text-yellow-450" />
+                Quy mô: <strong className="text-white uppercase font-bold">{PROMO_CAMPAIGN_META.scale}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded border border-white/10 font-medium">
+                <Layers className="w-3.5 h-3.5 text-yellow-300" />
+                Đối tượng: <strong className="text-white font-bold">{PROMO_CAMPAIGN_META.targetGroup}</strong>
               </span>
             </div>
           </div>
 
-          {/* Countdown Clock */}
-          <div className="bg-[#1A1A1A]/95 border border-white/10 p-4 rounded flex flex-col items-center justify-center min-w-[260px] max-w-full w-full md:w-auto shadow-2xl">
-            <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#D8232A] mb-2">
-              <Clock className="w-3.5 h-3.5 animate-spin" /> THỜI GIAN CÒN LẠI
+          {/* Realtime synchronized countdown clock */}
+          <div className="bg-neutral-950 border border-white/15 p-4 rounded flex flex-col items-center justify-center min-w-[260px] max-w-full w-full md:w-auto shadow-xl">
+            <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-500 mb-2">
+              <Clock className="w-3.5 h-3.5 animate-pulse" /> THỜI GIAN CÒN LẠI
             </div>
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="bg-black/45 border border-white/5 rounded p-2 min-w-[50px]">
+            <div className="grid grid-cols-4 gap-2 text-center select-none">
+              <div className="bg-black/60 border border-white/5 rounded p-2 min-w-[50px]">
                 <div className="text-xl md:text-2xl font-mono font-bold text-white">{timeLeft.days}</div>
-                <div className="text-[9px] text-white/50 font-sans uppercase font-bold">Ngày</div>
+                <div className="text-[9px] text-zinc-400 uppercase font-bold">Ngày</div>
               </div>
-              <div className="bg-black/45 border border-white/5 rounded p-2 min-w-[50px]">
+              <div className="bg-black/60 border border-white/5 rounded p-2 min-w-[50px]">
                 <div className="text-xl md:text-2xl font-mono font-bold text-white">
                   {timeLeft.hours.toString().padStart(2, "0")}
                 </div>
-                <div className="text-[9px] text-white/50 font-sans uppercase font-bold">Giờ</div>
+                <div className="text-[9px] text-zinc-400 uppercase font-bold">Giờ</div>
               </div>
-              <div className="bg-black/45 border border-white/5 rounded p-2 min-w-[50px]">
+              <div className="bg-black/60 border border-white/5 rounded p-2 min-w-[50px]">
                 <div className="text-xl md:text-2xl font-mono font-bold text-white">
                   {timeLeft.minutes.toString().padStart(2, "0")}
                 </div>
-                <div className="text-[9px] text-white/50 font-sans uppercase font-bold">Phút</div>
+                <div className="text-[9px] text-zinc-400 uppercase font-bold">Phút</div>
               </div>
-              <div className="bg-black/45 border border-white/5 rounded p-2 min-w-[50px]">
-                <div className="text-xl md:text-2xl font-mono font-bold text-[#D8232A]">
+              <div className="bg-black/60 border border-white/5 rounded p-2 min-w-[50px]">
+                <div className="text-xl md:text-2xl font-mono font-bold text-red-505 animate-pulse">
                   {timeLeft.seconds.toString().padStart(2, "0")}
                 </div>
-                <div className="text-[9px] text-white/50 font-sans uppercase font-bold text-[#D8232A]">Giây</div>
+                <div className="text-[9px] text-red-500 uppercase font-bold">Giây</div>
               </div>
             </div>
-            <div className="text-[9px] text-white/40 mt-2 italic text-center uppercase tracking-wider">
-              *Hạn cuối thanh toán hóa đơn: 23h59 ngày 10/06/2026
+            <div className="text-[9px] text-white/40 mt-2 italic text-center uppercase">
+              *Hạn cuối ưu đãi sỉ gốc: {PROMO_CAMPAIGN_META.endDate}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Live State Hub Checkers */}
+      {/* Real-time Order Summary Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded p-4 shadow-sm ring-1 ring-black/5 hover:bg-gray-50 transition-all flex items-center justify-between border-l-4 border-[#D8232A]">
+        {/* Cat 1 Quantity indicator */}
+        <div className="bg-white rounded-xl p-4 shadow-sm ring-1 ring-black/5 hover:bg-neutral-50 transition-all flex items-center justify-between border-l-4 border-red-600">
           <div>
-            <span className="text-[10px] text-neutral-400 uppercase font-black tracking-wider">Vợt danh mục 01 đã chọn</span>
-            <div className="text-2xl font-black italic font-mono text-neutral-900 mt-0.5">{catalog1Count} chiếc</div>
+            <span className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider">Đã đặt ở {CATALOG_INFO[1].short}</span>
+            <div className="text-2xl font-black italic font-mono text-neutral-900 mt-0.5">{catalog1Count} sản phẩm</div>
+            <span className="text-[9px] text-neutral-500 font-sans mt-1 block">Yêu cầu ưu đãi A: từ 2 đến 4 SP</span>
           </div>
-          <div className={`p-3 rounded ${catalog1Count >= 2 && catalog1Count <= 4 ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
-            <Percent className="w-5 h-5" />
+          <div className={`p-3 rounded-xl ${promoAActive ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-600'}`}>
+            <Percent className="w-5 h-5 shrink-0" />
           </div>
         </div>
 
-        <div className="bg-white rounded p-4 shadow-sm ring-1 ring-black/5 hover:bg-gray-50 transition-all flex items-center justify-between border-l-4 border-neutral-400">
+        {/* Cat 3 Quantity indicator */}
+        <div className="bg-white rounded-xl p-4 shadow-sm ring-1 ring-black/5 hover:bg-neutral-50 transition-all flex items-center justify-between border-l-4 border-neutral-400">
           <div>
-            <span className="text-[10px] text-neutral-400 uppercase font-black tracking-wider w-full">Phụ phẩm kèm theo (DM03)</span>
+            <span className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider">Đã đặt ở {CATALOG_INFO[3].short}</span>
             <div className="text-2xl font-black italic font-mono text-neutral-900 mt-0.5">{catalog3Count} sản phẩm</div>
+            <span className="text-[9px] text-neutral-500 font-sans mt-1 block">Yêu cầu ưu đãi A: tối thiểu 1 SP</span>
           </div>
-          <div className={`p-3 rounded ${catalog3Count >= 1 ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
-            <Briefcase className="w-5 h-5" />
+          <div className={`p-3 rounded-xl ${catalog3Count >= 1 ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
+            <Briefcase className="w-5 h-5 shrink-0" />
           </div>
         </div>
 
-        <div className="bg-white rounded p-4 shadow-sm ring-1 ring-black/5 hover:bg-gray-50 transition-all flex items-center justify-between border-l-4 border-[#D8232A]">
+        {/* Wholesale sum indicator */}
+        <div className="bg-white rounded-xl p-4 shadow-sm ring-1 ring-black/5 hover:bg-neutral-50 transition-all flex items-center justify-between border-l-4 border-red-600">
           <div>
-            <span className="text-[10px] text-neutral-400 uppercase font-black tracking-wider">Doanh số mua DM02 (Bán buôn)</span>
-            <div className="text-lg font-black italic font-mono text-[#D8232A] mt-0.5">{formatVND(catalog2WholesaleSum)}</div>
+            <span className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider">Doanh số mua sỉ {CATALOG_INFO[2].short}</span>
+            <div className="text-lg font-black italic font-mono text-red-600 mt-0.5">{formatVND(catalog2WholesaleSum)}</div>
+            <span className="text-[9px] text-neutral-500 font-sans mt-1 block">Tỷ lệ quà tặng: {activePromoB2Tier.giftPercent}%</span>
           </div>
-          <div className={`p-3 rounded ${catalog2WholesaleSum >= 8000000 ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
-            <Gift className="w-5 h-5" />
+          <div className={`p-3 rounded-xl ${catalog2WholesaleSum >= 8000000 ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-400'}`}>
+            <Gift className="w-5 h-5 shrink-0" />
           </div>
         </div>
       </div>
 
-      {/* Visual Summary Cards for Promo Rules */}
+      {/* Main detailed cards comparing Sections A & B from the announcement */}
       <div>
-        <h3 className="text-sm font-black italic text-neutral-900 uppercase tracking-wide mb-4 flex items-center gap-2">
-          <BadgePercent className="w-5 h-5 text-[#D8232A]" />
-          Nội dung chi tiết các gói ưu đãi đặt hàng
+        <h3 className="text-xs font-black italic text-neutral-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <BadgePercent className="w-5 h-5 text-red-600 shrink-0" />
+          Nội dung chi tiết các mốc ưu đãi đặt hàng
         </h3>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          {/* Promo A Card */}
-          <div className={`rounded bg-white p-5 shadow-sm ring-1 flex flex-col justify-between transition-all duration-300 hover:shadow-md ${promoAActive ? 'ring-green-500' : 'ring-black/5'}`}>
+          {/* Section A Promo Card */}
+          <div className={`rounded-xl bg-white p-5 border shadow-sm flex flex-col justify-between transition-all duration-300 hover:shadow-md ${promoAActive ? 'border-green-500 shadow-green-50' : 'border-neutral-200'}`}>
             <div>
               <div className="flex justify-between items-start mb-3">
-                <span className="bg-red-50 text-[#D8232A] text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wide">
-                  Ưu đãi A (Giảm 45%)
+                <span className="bg-red-50 text-red-605 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider border border-red-100">
+                  Phần A. GIẢM GIÁ ĐẠI LÝ 45%
                 </span>
                 {promoAActive ? (
                   <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                    <ThumbsUp className="w-3 h-3" /> Đạt yêu cầu
+                    <ThumbsUp className="w-3 h-3" /> Hợp lệ (KM 45%)
                   </span>
                 ) : (
                   <span className="bg-neutral-100 text-neutral-600 text-[10px] font-semibold px-2 py-0.5 rounded">
-                    Chờ kích hoạt
+                    Chưa đủ điều kiện
                   </span>
                 )}
               </div>
               
-              <h4 className="text-sm font-black italic uppercase text-neutral-900 mb-2">CHIẾT KHẤU ĐẶC BIỆT 45% DANH MỤC 01</h4>
+              <h4 className="text-sm font-black italic uppercase text-neutral-905 mb-2">{PROMO_A_CONFIG.name}</h4>
               <p className="text-xs text-neutral-600 leading-relaxed mb-4">
-                Mua từ <strong className="text-neutral-900 font-mono">02 đến 04 sản phẩm</strong> tại Danh mục số 01 và mua kèm ít nhất <strong className="text-neutral-900 font-mono">01 sản phẩm</strong> tại Danh mục số 03 để được áp dụng giảm giá thẳng <strong className="text-[#D8232A]">45%</strong> trên đơn giá bán lẻ cho các sản phẩm Danh mục 01 đã chọn.
+                {PROMO_A_CONFIG.description}.
               </p>
 
-              {/* Progress Tracker for Promo A */}
-              <div className="bg-[#F8F9FA] rounded p-3 border border-neutral-100 text-xs space-y-2 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-neutral-500 font-medium">Tiêu chí 1: Số lượng vợt DM01 (2-4 vợt):</span>
-                  <span className={`font-mono font-bold ${catalog1Count >= 2 && catalog1Count <= 4 ? 'text-green-600' : 'text-neutral-600'}`}>
+              <div className="bg-neutral-50 rounded-lg p-3.5 border border-neutral-200 text-xs space-y-3 mb-4">
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-neutral-500 font-medium">1. Mua 02-04 sản phẩm tại {CATALOG_INFO[1].short}:</span>
+                  <span className={`font-mono font-bold ${catalog1Count >= PROMO_A_CONFIG.minCatalog1Qty && catalog1Count <= PROMO_A_CONFIG.maxCatalog1Qty ? 'text-green-600' : 'text-neutral-500'}`}>
                     {catalog1Count} / 4 chiếc
                   </span>
                 </div>
+                {/* Visual bar */}
                 <div className="w-full bg-neutral-200 h-2 rounded-full overflow-hidden">
                   <div 
-                    className={`h-full rounded-full transition-all duration-300 ${catalog1Count >= 2 && catalog1Count <= 4 ? 'bg-green-500' : catalog1Count > 4 ? 'bg-amber-500' : 'bg-[#D8232A]'}`}
+                    className={`h-full rounded-full transition-all duration-300 ${catalog1Count >= PROMO_A_CONFIG.minCatalog1Qty && catalog1Count <= PROMO_A_CONFIG.maxCatalog1Qty ? 'bg-green-500' : catalog1Count > PROMO_A_CONFIG.maxCatalog1Qty ? 'bg-amber-500' : 'bg-red-600'}`}
                     style={{ width: `${Math.min((catalog1Count / 4) * 100, 100)}%` }}
                   ></div>
                 </div>
 
-                <div className="flex justify-between pt-1">
-                  <span className="text-neutral-500 font-medium">Tiêu chí 2: Mua phụ phẩm DM03 (&gt;= 1 cái):</span>
-                  <span className={`font-mono font-bold ${catalog3Count >= 1 ? 'text-green-600' : 'text-neutral-600'}`}>
-                    {catalog3Count >= 1 ? "Đạt yêu cầu" : "Thiếu"} ({catalog3Count}/1)
+                <div className="flex justify-between items-center text-[11px] pt-1">
+                  <span className="text-neutral-500 font-medium">2. Mua kèm ít nhất 01 sản phẩm tại {CATALOG_INFO[3].short}:</span>
+                  <span className={`font-mono font-bold ${catalog3Count >= PROMO_A_CONFIG.requiredCatalog3Qty ? 'text-green-600' : 'text-neutral-500'}`}>
+                    {catalog3Count >= PROMO_A_CONFIG.requiredCatalog3Qty ? "Đạt yêu cầu" : "Thiếu"} ({catalog3Count}/{PROMO_A_CONFIG.requiredCatalog3Qty})
                   </span>
+                </div>
+                
+                <div className="text-[10px] text-neutral-500 border-t border-neutral-200 pt-2 space-y-0.5 font-sans leading-relaxed">
+                  <div>• <strong>Đối tượng:</strong> {PROMO_A_CONFIG.appliesTo}</div>
+                  <div>• <strong>Thời gian:</strong> {PROMO_A_CONFIG.period}</div>
                 </div>
               </div>
             </div>
 
             <button 
               onClick={() => onSetActiveTab("catalog")}
-              className="mt-2 w-full bg-[#D8232A] hover:brightness-110 text-white font-black italic py-2.5 rounded shadow hover:scale-[1.01] active:scale-[0.99] transition-all uppercase tracking-widest text-xs"
+              className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white font-bold italic py-2.5 rounded shadow hover:scale-[1.01] active:scale-[0.99] transition-all uppercase tracking-wider text-xs"
             >
-              Chọn sản phẩm ngay
+              Chọn sản phẩm {CATALOG_INFO[1].short} & {CATALOG_INFO[3].short}
             </button>
           </div>
 
-          {/* Promo B Card */}
-          <div className="rounded bg-white p-5 shadow-sm ring-1 ring-black/5 flex flex-col justify-between transition-all duration-300 hover:shadow-md">
+          {/* Section B Promo Card */}
+          <div className="rounded-xl bg-white p-5 border border-neutral-200 shadow-sm flex flex-col justify-between transition-all duration-300 hover:shadow-md select-none">
             <div>
               <div className="flex justify-between items-start mb-3">
-                <span className="bg-red-50 text-[#D8232A] text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wide">
-                  Ưu đãi B (Tặng cước N65)
+                <span className="bg-red-50 text-red-605 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider border border-red-100">
+                  Phần B. MUA VỢT TẶNG VỢT, CƯỚC
                 </span>
-                {catalog1Count > 0 ? (
-                  <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                    +{catalog1Count} Cước Free
-                  </span>
-                ) : (
-                  <span className="bg-neutral-100 text-neutral-600 text-[10px] font-semibold px-2 py-0.5 rounded">
-                    Chờ mua vợt DM01
-                  </span>
-                )}
+                <span className="bg-indigo-50 text-indigo-700 text-[10px] font-semibold px-2 py-0.5 rounded border border-indigo-100">
+                  Tích lũy & Tặng kèm
+                </span>
               </div>
               
-              <h4 className="text-sm font-black italic uppercase text-neutral-900 mb-2">TẶNG CƯỚC THI ĐẤU LI-NING N65 MIỄN PHÍ</h4>
-              <p className="text-xs text-neutral-600 leading-relaxed mb-4">
-                Khi chọn mua bất kỳ khung vợt cầu lông Li-Ning nào nằm trong <strong className="text-neutral-900">Danh mục số 01</strong>, quý khách sẽ được tặng kèm ngay <strong className="text-[#D8232A] font-bold">01 sợi cước thi đấu cao cấp Li-Ning N65 chính hãng</strong> (trị giá <span className="font-mono">150.000 đ</span> mỗi sợi).
-              </p>
-
-              <div className="bg-red-50 border border-red-100 rounded p-3 text-xs text-red-800 space-y-1">
-                <p className="font-bold flex items-center gap-1 uppercase tracking-wider text-[10px]">
-                  <Flame className="w-3.5 h-3.5 text-[#D8232A] animate-pulse" /> Danh sách cước tặng:
-                </p>
-                <p className="font-mono text-neutral-700 italic">
-                  {catalog1Count > 0 ? `Đã thêm ${catalog1Count} sợi cước N65 miễn phí vào giỏ hàng!` : "Chưa chọn khung vợt nào trong Danh mục 01."}
-                </p>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => onSetActiveTab("catalog")}
-              className="mt-5 w-full bg-[#1A1A1A] hover:bg-black text-white font-black italic py-2.5 rounded shadow hover:scale-[1.01] active:scale-[0.99] transition-all uppercase tracking-widest text-xs"
-            >
-              Xem Vợt danh mục 01
-            </button>
-          </div>
-
-          {/* Promo C Card */}
-          <div className={`rounded bg-white p-5 shadow-sm ring-1 flex flex-col justify-between transition-all duration-300 hover:shadow-md ${promoCActive ? 'ring-green-500' : 'ring-black/5'}`}>
-            <div>
-              <div className="flex justify-between items-start mb-3">
-                <span className="bg-red-50 text-[#D8232A] text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wide">
-                  Ưu đãi C (Quà tặng đại lý)
-                </span>
-                {promoCActive ? (
-                  <span className="bg-green-100 text-green-800 text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                    <ThumbsUp className="w-3 h-3" /> {promoCTierLabel}
-                  </span>
-                ) : (
-                  <span className="bg-neutral-100 text-neutral-600 text-[10px] font-semibold px-2 py-0.5 rounded">
-                    Chưa đạt mốc 8M
-                  </span>
-                )}
-              </div>
+              <h4 className="text-sm font-black italic uppercase text-neutral-905 mb-2">QUÀ TẶNG CƯỚC LINING N65 & VỢT {CATALOG_INFO[1].short}</h4>
               
-              <h4 className="text-sm font-black italic uppercase text-neutral-900 mb-2">KHUYẾN MẠI TÍCH LŨY DOANH SỐ (DM02)</h4>
-              <p className="text-xs text-neutral-600 leading-relaxed mb-3">
-                Đặt mua các dòng vợt thuộc <strong className="text-neutral-900">Danh mục số 02</strong> để nhận ngân sách lựa chọn quà tặng miễn phí (tính theo đơn giá bán buôn) từ các vợt Danh mục 01:
-              </p>
+              <div className="space-y-3.5 mb-4 text-xs text-neutral-600">
+                {/* Sub-item 1: N65 Strings gift */}
+                <div className="bg-red-50/50 p-3 rounded-lg border border-red-100/80">
+                  <span className="text-[10px] bg-red-105 text-red-700 font-extrabold px-2 py-0.5 rounded mb-1.5 inline-block uppercase">
+                    Ưu đãi B1: Tặng cước N65
+                  </span>
+                  <p className="leading-relaxed">
+                    <strong>{PROMO_B1_CONFIG.description}</strong>.
+                  </p>
+                  <p className="mt-1.5 text-[11px] text-neutral-500 italic flex items-center gap-1">
+                    <Info className="w-3.5 h-3.5 shrink-0 text-red-500" />
+                    Định lượng: Mua {catalog1Count} cây tặng {catalog1Count} sợi cước N65. (Gồm {GIFT_N65_STRINGS.length} màu mã {GIFT_N65_STRINGS[0].sku.substring(0, 9)}... chọn trực tiếp ở tab Giỏ hàng).
+                  </p>
+                </div>
 
-              {/* Tiers List */}
-              <div className="text-[10px] space-y-1 bg-[#F8F9FA] p-2.5 rounded border border-neutral-100">
-                <div className={`flex justify-between p-1 rounded font-medium ${catalog2WholesaleSum >= 8000000 && catalog2WholesaleSum < 20000000 ? 'bg-amber-100 font-bold text-amber-950' : ''}`}>
-                  <span>Mốc từ 8M đến 20M:</span>
-                  <span className="font-mono font-bold">Hạn mức quà 15%</span>
-                </div>
-                <div className={`flex justify-between p-1 rounded font-medium ${catalog2WholesaleSum >= 20000000 && catalog2WholesaleSum < 35000000 ? 'bg-amber-100 font-bold text-amber-950' : ''}`}>
-                  <span>Mốc từ 20M đến 35M:</span>
-                  <span className="font-mono font-bold">Hạn mức quà 18%</span>
-                </div>
-                <div className={`flex justify-between p-1 rounded font-medium ${catalog2WholesaleSum >= 35000000 && catalog2WholesaleSum < 50000000 ? 'bg-amber-100 font-bold text-amber-950' : ''}`}>
-                  <span>Mốc từ 35M đến 50M:</span>
-                  <span className="font-mono font-bold">Hạn mức quà 20%</span>
-                </div>
-                <div className={`flex justify-between p-1 rounded font-medium ${catalog2WholesaleSum >= 50000000 ? 'bg-green-100 font-bold text-green-950' : ''}`}>
-                  <span>Mốc trên 50M:</span>
-                  <span className="font-mono font-bold">Hạn mức quà 27%</span>
-                </div>
-              </div>
-
-              {/* Promo C live calculated feedback */}
-              {catalog2WholesaleSum > 0 && (
-                <div className="mt-3 p-3 bg-neutral-950 text-white rounded font-mono text-[11px] space-y-1 shadow-inner">
-                  <div className="text-white/60">Doanh số DM02: {formatVND(catalog2WholesaleSum)}</div>
-                  <div className="text-[#D8232A] font-bold">Tỷ lệ quà được: {promoCValuePercent}%</div>
-                  <div className="text-green-400 font-bold">
-                    Ngân sách quà: {formatVND((catalog2WholesaleSum * promoCValuePercent) / 100)}
+                {/* Sub-item 2: Order Tiers */}
+                <div className="bg-neutral-50 p-3 rounded-lg border border-neutral-200 space-y-1.5">
+                  <span className="text-[10px] bg-neutral-900 text-white font-extrabold px-2 py-0.5 rounded inline-block uppercase">
+                    Ưu đãi B2: Tặng vợt {CATALOG_INFO[1].short} theo tỉ lệ sỉ
+                  </span>
+                  <p className="leading-relaxed">
+                    Khách hàng mua vợt {CATALOG_INFO[2].short} đạt doanh số sỉ được chọn tặng sản phẩm bất kỳ trong {CATALOG_INFO[1].short} với tổng giá trị hàng tặng không vượt quá hạn mức (tính theo đơn giá bán buôn):
+                  </p>
+                  
+                  {/* Tiers list directly from image */}
+                  <div className="text-[10px] space-y-1.5 pt-1.5 border-t border-neutral-200 font-mono">
+                    {PROMO_B2_CONFIG.tiers.slice(1).map((tier, index) => {
+                      const isMatched = catalog2WholesaleSum >= tier.minWholesalePrice && catalog2WholesaleSum < tier.maxWholesalePrice;
+                      return (
+                        <div 
+                          key={index}
+                          className={`flex justify-between p-1.5 rounded ${isMatched ? 'bg-amber-100 font-bold text-amber-950 border border-amber-200' : 'text-neutral-600'}`}
+                        >
+                          <span className="truncate">{tier.label}:</span>
+                          <span className="shrink-0 font-bold text-red-650">{tier.valueLimitText}</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="text-white/80">Đã chọn nhận: {formatVND(giftValueSelected)}</div>
+
+                  {catalog2WholesaleSum > 0 && (
+                    <div className="mt-2.5 p-2 bg-neutral-950 text-white rounded font-mono text-[11px] space-y-1 shadow-inner">
+                      <div>• Tiền sỉ sắm {CATALOG_INFO[2].short}: {formatVND(catalog2WholesaleSum)}</div>
+                      <div>• Hạng quà sỉ được hưởng: <strong className="text-red-500 font-bold">{activePromoB2Tier.giftPercent}%</strong></div>
+                      <div>
+                        • Tổng ngân sách quà {CATALOG_INFO[1].short}: <strong className="text-green-400 font-bold">{formatVND(maxGiftValueAllowed)}</strong>
+                      </div>
+                      <div>• Quá đã sắm thực tế: {formatVND(giftValueSelected)}</div>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                <div className="text-[9.5px] text-zinc-500 italic leading-snug">
+                  *<strong>Lưu ý:</strong> {PROMO_B2_CONFIG.notes}
+                </div>
+              </div>
             </div>
 
-            <button 
-              onClick={() => onSetActiveTab("calculator")}
-              className="mt-4 w-full bg-[#D8232A] hover:brightness-110 text-white font-black italic py-2.5 rounded shadow hover:scale-[1.01] active:scale-[0.99] transition-all uppercase tracking-widest text-xs"
-            >
-              Chọn quà tặng miễn phí
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => onSetActiveTab("catalog")}
+                className="flex-1 bg-neutral-900 hover:bg-neutral-805 text-white font-bold italic py-2.5 rounded shadow hover:scale-[1.01] active:scale-[0.99] transition-all uppercase tracking-wider text-xs"
+              >
+                Mua vợt {CATALOG_INFO[1].short} & {CATALOG_INFO[2].short}
+              </button>
+              <button 
+                onClick={() => onSetActiveTab("calculator")}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold italic py-2.5 rounded shadow hover:scale-[1.01] active:scale-[0.99] transition-all uppercase tracking-wider text-xs"
+              >
+                Nhập quà miễn phí
+              </button>
+            </div>
           </div>
 
         </div>
       </div>
 
-      {/* Helper tips & Contact info */}
-      <div className="bg-white p-5 rounded shadow-sm ring-1 ring-black/5 space-y-3">
-        <h4 className="text-xs font-black italic text-neutral-900 flex items-center gap-1.5 uppercase tracking-wide">
-          <TrendingUp className="w-5 h-5 text-[#D8232A]" /> HƯỚNG DẪN TỐI ƯU HÁN LỢI NHUẬN
+      {/* Helper Tips & Official Distributor Info Section */}
+      <div className="bg-white p-5 rounded-xl border border-neutral-200 space-y-3">
+        <h4 className="text-xs font-black italic text-neutral-905 flex items-center gap-1.5 uppercase tracking-wide">
+          <TrendingUp className="w-5 h-5 text-red-600 shrink-0" /> HƯỚNG DẪN TỐI ƯU HÓA LỢI NHUẬN / CHIẾT KHẤU ĐẠI LÝ
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-neutral-600 leading-relaxed">
-          <div className="space-y-2">
-            <p>
-              💡 <strong>Lợi ích tối đa từ Ưu đãi A:</strong> Thay vì đặt đơn lẻ tẻ, hãy gom nhóm dòng Danh mục 1 đúng từ 2 - 4 chiếc và kèm ít nhất 1 phụ kiện ở Danh mục 3. Toàn bộ dòng sản phẩm sẽ được nâng cấp lên mức giá <strong>Sau KM (giảm thẳng 45%)</strong> thay vì áp dụng sỉ gốc thường!
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs text-neutral-600 leading-relaxed">
+          <div className="space-y-2.5">
+            <p className="font-sans leading-relaxed">
+              💡 <strong>Lợi ích tối đa từ Ưu đãi A:</strong> Vui lòng gom đơn đặt sản phẩm ở {CATALOG_INFO[1].title} theo lô đúng từ <strong>02 đến 04 sản phẩm</strong> và mua kèm ít nhất <strong>01 sản phẩm ở {CATALOG_INFO[3].title}</strong>. Khi đó, toàn bộ danh sách vợt ở Catalog 1 trong gói đó sẽ chuyển sang đơn giá <strong>Siêu khuyến mại 45%</strong> lý tưởng.
             </p>
-            <p>
-              💡 <strong>Lựa chọn quà tối ưu:</strong> Khi đạt doanh số mua ở danh mục 2 (Vợt cao cấp) mở được hạn mức hàng triệu đồng, hãy ưu tiên chọn những mã vợt chạy dòng danh mục 1 làm quà miễn phí để tặng kích cầu hoặc trưng bày cửa hàng.
+            <p className="font-sans leading-relaxed">
+              💡 <strong>Hạn mức quà tặng tối đa B2:</strong> Đừng bỏ lỡ các mốc doanh số sỉ {CATALOG_INFO[2].short} quan trọng như <strong>8M, 20M, 35M, và 50M</strong>. Đặt thêm một vài cây vợt để vượt ngưỡng doanh số sỉ sẽ nâng ngay tổng ngân sách lựa chọn vợt tặng từ Catalog 1 sỉ gốc lên tới <strong>27%</strong>!
             </p>
           </div>
-          <div className="space-y-2 border-t md:border-t-0 md:border-l border-neutral-100 pt-3 md:pt-0 md:pl-4">
-            <p className="font-bold text-neutral-900 uppercase text-[10px] tracking-wide">Thông tin liên hệ đại lý chính thức:</p>
-            <p className="font-medium"><strong>Công ty TNHH Quốc tế Hải Long</strong> - Tổng phân phối Li-Ning Badminton tại Việt Nam.</p>
-            <p>📍 Văn phòng nghiệp vụ: Số 375 Đề Án, Hải Long, Hà Nội.</p>
-            <p>📞 Tổng đài B2B hỗ trợ đối tác: <strong className="text-[#D8232A] font-mono">1900.2026.88</strong> (Nhánh số 2).</p>
+          <div className="space-y-2 border-t md:border-t-0 md:border-l border-neutral-200 pt-3 md:pt-0 md:pl-5 text-neutral-600">
+            <p className="font-bold text-neutral-900 uppercase text-[10px] tracking-widest text-red-600">Đơn vị phân phối ủy quyền:</p>
+            <p className="font-bold text-neutral-800">{PROMO_CAMPAIGN_META.distributor}</p>
+            <p>📍 Trụ sở chính: Tòa nhà Hải Long, Đống Đa, Hà Nội, Việt Nam.</p>
+            <p>📞 Tổng đài kinh doanh & hỗ trợ NPP: <strong className="text-red-600 font-mono font-bold">{PROMO_CAMPAIGN_META.hotlineDisplay}</strong> (Hỗ trợ 24/7).</p>
+            <p className="text-[10px] text-neutral-450 italic mt-1">• Văn bản thông báo chính thức có hiệu lực từ {PROMO_CAMPAIGN_META.startDate}. Quy đổi sỉ tự động.</p>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Product, CartItem } from "../types";
+import { CATALOG_INFO } from "../promoData";
 import { 
   Search, 
   Grid, 
@@ -14,7 +15,10 @@ import {
   TrendingDown,
   Percent,
   ChevronDown,
-  ShoppingBag
+  ShoppingBag,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 
 interface ProductCatalogProps {
@@ -103,15 +107,79 @@ export default function ProductCatalog({
     });
   }, [mergedProducts, activeCatalogTab, searchQuery, selectedSeries, selectedSpec]);
 
-  // Helper to format currency
-  const formatVND = (num: number) => {
-    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
+  // Sorting States & Actions for premium B2B user experience
+  const [sortField, setSortField] = useState<"catalogId" | "ma_hang" | "ten_hang" | "don_gia_ban_le" | "don_gia_ban_buon" | "gia_sau_giam" | "cart_qty" | null>("ma_hang");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (field: "catalogId" | "ma_hang" | "ten_hang" | "don_gia_ban_le" | "don_gia_ban_buon" | "gia_sau_giam" | "cart_qty") => {
+    if (sortField === field) {
+      setSortDirection(prev => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
   };
 
   // Helper to get present quantity in cart
   const getCartQuantity = (productId: string) => {
     const item = cart.find(i => i.product.ma_hang === productId);
     return item ? item.quantity : 0;
+  };
+
+  // Combined sorted products array
+  const sortedProducts = useMemo(() => {
+    if (!sortField) return filteredProducts;
+
+    return [...filteredProducts].sort((a, b) => {
+      let valA: any;
+      let valB: any;
+
+      if (sortField === "cart_qty") {
+        valA = getCartQuantity(a.ma_hang);
+        valB = getCartQuantity(b.ma_hang);
+      } else if (sortField === "gia_sau_giam") {
+        const hasA = a.gia_sau_giam !== undefined && a.gia_sau_giam !== null;
+        const hasB = b.gia_sau_giam !== undefined && b.gia_sau_giam !== null;
+        if (!hasA && !hasB) return 0;
+        if (!hasA) return 1; // Put undefined/null prices at the bottom in both directions
+        if (!hasB) return -1;
+        valA = a.gia_sau_giam;
+        valB = b.gia_sau_giam;
+      } else {
+        valA = a[sortField];
+        valB = b[sortField];
+      }
+
+      if (typeof valA === "string" && typeof valB === "string") {
+        return sortDirection === "asc"
+          ? valA.localeCompare(valB, "vi")
+          : valB.localeCompare(valA, "vi");
+      }
+
+      // Numeric comparison
+      if (valA < valB) return sortDirection === "asc" ? -1 : 1;
+      if (valA > valB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [filteredProducts, sortField, sortDirection, cart]);
+
+  // Helper to format currency
+  const formatVND = (num: number) => {
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
+  };
+
+  // Helper to render interactive table sort indicator
+  const renderSortIndicator = (field: "catalogId" | "ma_hang" | "ten_hang" | "don_gia_ban_le" | "don_gia_ban_buon" | "gia_sau_giam" | "cart_qty") => {
+    if (sortField !== field) {
+      return (
+        <ArrowUpDown className="w-3 h-3 text-neutral-400 opacity-40 group-hover:opacity-100 transition-opacity ml-1.5 shrink-0" />
+      );
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="w-3 h-3 text-[#D8232A] font-bold ml-1.5 shrink-0" />
+    ) : (
+      <ArrowDown className="w-3 h-3 text-[#D8232A] font-bold ml-1.5 shrink-0" />
+    );
   };
 
   return (
@@ -215,19 +283,19 @@ export default function ProductCatalog({
           onClick={() => setActiveCatalogTab(1)}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${activeCatalogTab === 1 ? "border-[#D8232A] text-[#D8232A]" : "border-transparent text-gray-400 hover:text-gray-800"}`}
         >
-          Danh Mục 01 (Giảm 45%) ({productsCatalog1.length})
+          {CATALOG_INFO[1].title} ({productsCatalog1.length})
         </button>
         <button
           onClick={() => setActiveCatalogTab(2)}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${activeCatalogTab === 2 ? "border-[#D8232A] text-[#D8232A]" : "border-transparent text-gray-400 hover:text-gray-800"}`}
         >
-          Danh Mục 02 (Mua Vợt Tặng Quà) ({productsCatalog2.length})
+          {CATALOG_INFO[2].title} ({productsCatalog2.length})
         </button>
         <button
           onClick={() => setActiveCatalogTab(3)}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${activeCatalogTab === 3 ? "border-[#D8232A] text-[#D8232A]" : "border-transparent text-gray-400 hover:text-gray-800"}`}
         >
-          Danh Mục 03 (Phụ Kiện Kèm Theo) ({productsCatalog3.length})
+          {CATALOG_INFO[3].title} ({productsCatalog3.length})
         </button>
       </div>
 
@@ -242,26 +310,62 @@ export default function ProductCatalog({
           )}
           {activeCatalogTab === 1 && (
             <p>
-              🔥 <strong>Danh Mục Hàng Số 01:</strong> Hỗ trợ mức giá chiết khấu đặc biệt giảm thẳng tới <strong className="text-red-600">45%</strong> (giá mua chỉ từ <strong className="text-green-600">486k</strong>) khi mua từ 2-4 sản phẩm và mua kèm 1 món bất kỳ thuộc Danh mục 03. 
-              Ngoài ra, toàn bộ khung vợt thuộc Danh mục 01 đều được <strong className="text-red-600">tặng kèm 01 sợi cước N65</strong> miễn phí!
+              🔥 <strong>{CATALOG_INFO[1].short}:</strong> {CATALOG_INFO[1].desc}
             </p>
           )}
           {activeCatalogTab === 2 && (
             <p>
-              💎 <strong>Danh Mục Hàng Số 02:</strong> Tập hợp các dòng vợt siêu cao cấp dòng Axforce, Bladex, Halbertec chính hãng. 
-              Doanh thu tích lũy từ danh mục này sẽ giúp đại lý mở khóa hạn mức tặng thêm các món quà tự chọn miễn phí từ Danh mục 01 (tỷ lệ lên tới <strong className="text-red-900 font-bold">27%</strong>).
+              💎 <strong>{CATALOG_INFO[2].short}:</strong> {CATALOG_INFO[2].desc}
             </p>
           )}
           {activeCatalogTab === 3 && (
             <p>
-              ⚡ <strong>Danh Mục Hàng Số 03:</strong> Các phụ sản hỗ trợ thi đấu cần thiết. Đây là sản phẩm điều kiện bắt buộc để kích hoạt gói Ưu đãi A giảm 45% cho nhóm vợt thuộc Danh mục 01.
+              ⚡ <strong>{CATALOG_INFO[3].short}:</strong> {CATALOG_INFO[3].desc}
             </p>
           )}
         </div>
       </div>
 
+      {/* Visual B2B Sorting status & reset utility for premium UI/UX */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-neutral-50 px-4 py-3 rounded-xl border border-neutral-200 text-xs text-neutral-600 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="bg-[#D8232A]/10 p-1.5 rounded-lg text-[#D8232A]">
+            <ArrowUpDown className="w-4 h-4 shrink-0" />
+          </div>
+          <div>
+            Đang hiển thị <strong className="text-neutral-900 font-bold">{filteredProducts.length}</strong> sản phẩm. 
+            {sortField ? (
+              <span>
+                {" "}Sắp xếp theo: <strong className="text-[#D8232A] font-bold">{
+                  sortField === "catalogId" ? "Phân loại Danh mục" :
+                  sortField === "ma_hang" ? "Mã hàng (SKU)" :
+                  sortField === "ten_hang" ? "Tên sản phẩm" :
+                  sortField === "don_gia_ban_le" ? "Giá lẻ niêm yết" :
+                  sortField === "don_gia_ban_buon" ? "Giá gốc bán sỉ" :
+                  sortField === "gia_sau_giam" ? "Giá khuyến mại sỉ 45%" :
+                  sortField === "cart_qty" ? "Số lượng đã đặt nháp" : ""
+                }</strong> ({sortDirection === "asc" ? "Tăng dần" : "Giảm dần"}).
+              </span>
+            ) : (
+              <span> Nhấp trực tiếp vào tên cột ở bảng biểu B2B dưới đây để sắp xếp nhanh.</span>
+            )}
+          </div>
+        </div>
+        {sortField && (
+          <button
+            onClick={() => {
+              setSortField(null);
+              setSortDirection("asc");
+            }}
+            className="text-xs text-[#D8232A] hover:text-red-700 font-bold hover:underline transition-colors cursor-pointer self-end sm:self-auto"
+          >
+            Đặt lại mặc định
+          </button>
+        )}
+      </div>
+
       {/* No Products Alert */}
-      {filteredProducts.length === 0 && (
+      {sortedProducts.length === 0 && (
         <div className="bg-neutral-50 rounded-xl py-12 px-4 border border-dashed border-neutral-300 text-center space-y-2">
           <HelpCircle className="w-10 h-10 text-neutral-400 mx-auto" />
           <p className="text-sm font-semibold text-neutral-700">Không tìm thấy sản phẩm nào khớp với điều kiện lọc!</p>
@@ -272,8 +376,10 @@ export default function ProductCatalog({
               setSelectedSeries("all");
               setSelectedSpec("all");
               setActiveCatalogTab("all");
+              setSortField("ma_hang");
+              setSortDirection("asc");
             }}
-            className="text-xs bg-neutral-900 text-white rounded px-3 py-1.5 font-semibold hover:bg-neutral-800 transition-colors"
+            className="text-xs bg-neutral-900 text-white rounded px-3 py-1.5 font-semibold hover:bg-neutral-805 transition-colors"
           >
             Hiển thị lại tất cả sản phẩm
           </button>
@@ -281,13 +387,13 @@ export default function ProductCatalog({
       )}
 
       {/* Grid View Layout */}
-      {viewMode === "grid" && filteredProducts.length > 0 && (
+      {viewMode === "grid" && sortedProducts.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="catalog-grid">
-          {filteredProducts.map(p => {
+          {sortedProducts.map(p => {
             const qty = getCartQuantity(p.ma_hang);
             return (
               <div 
-                key={p.ma_hang}
+                key={`${p.catalogId}-${p.ma_hang}`}
                 className="bg-white rounded shadow-sm ring-1 ring-black/5 overflow-hidden hover:shadow-md transition-all flex flex-col justify-between border-t-4 border-[#D8232A]"
               >
                 {/* Product Meta Header banner */}
@@ -350,17 +456,27 @@ export default function ProductCatalog({
                   <div className="flex items-center gap-1.5">
                     <button
                       disabled={qty === 0}
+                      type="button"
                       onClick={() => onUpdateCartQuantity(p, qty - 1, p.catalogId)}
                       className={`p-1.5 rounded-lg border transition-all ${qty > 0 ? 'bg-white border-neutral-300 hover:bg-neutral-100 text-neutral-800' : 'bg-neutral-100 border-neutral-200 text-neutral-300 cursor-not-allowed'}`}
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
                     
-                    <span className="w-8 text-center font-bold text-sm font-mono text-neutral-800">
-                      {qty}
-                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={qty === 0 ? "" : qty}
+                      placeholder="0"
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        onUpdateCartQuantity(p, isNaN(val) ? 0 : Math.max(0, val), p.catalogId);
+                      }}
+                      className="w-12 text-center font-bold text-sm font-mono border border-neutral-300 rounded px-1 py-0.5 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 bg-white text-neutral-900"
+                    />
 
                     <button
+                      type="button"
                       onClick={() => onUpdateCartQuantity(p, qty + 1, p.catalogId)}
                       className="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-sm border border-red-700 hover:scale-105 transition-all"
                     >
@@ -375,28 +491,104 @@ export default function ProductCatalog({
       )}
 
       {/* B2B Dense Table View (Highly Preferred by Dealers) */}
-      {viewMode === "table" && filteredProducts.length > 0 && (
+      {viewMode === "table" && sortedProducts.length > 0 && (
         <div className="overflow-hidden" id="catalog-table">
           <div className="overflow-x-auto pr-2">
             <table className="w-full text-left border-separate border-spacing-y-2">
               <thead className="sticky top-0 bg-[#F8F9FA] z-10">
-                <tr className="text-[10px] text-gray-400 uppercase font-black tracking-wider">
-                  <th className="px-4 py-2">Phân Loại</th>
-                  <th className="px-4 py-2">Mã hàng (SKU)</th>
-                  <th className="px-4 py-2">Tên sản phẩm</th>
-                  <th className="px-4 py-2 text-right">Đơn giá lẻ</th>
-                  <th className="px-4 py-2 text-right">Giá gốc sỉ</th>
-                  <th className="px-4 py-2 text-right">Giá Siêu KM</th>
-                  <th className="px-4 py-2 text-center">Đặt Nháp B2B</th>
+                <tr className="text-[10px] text-gray-500 uppercase font-bold tracking-wider select-none">
+                  {/* Column 1: Catalog ID */}
+                  <th 
+                    onClick={() => handleSort("catalogId")}
+                    title="Nhấp để sắp xếp theo Phân loại danh mục"
+                    className="px-4 py-3 cursor-pointer group hover:bg-neutral-100 hover:text-[#D8232A] transition-colors rounded-l-lg"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Phân Loại</span>
+                      {renderSortIndicator("catalogId")}
+                    </div>
+                  </th>
+
+                  {/* Column 2: SKU */}
+                  <th 
+                    onClick={() => handleSort("ma_hang")}
+                    title="Nhấp để sắp xếp theo Mã hàng (SKU)"
+                    className="px-4 py-3 cursor-pointer group hover:bg-neutral-100 hover:text-[#D8232A] transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Mã hàng (SKU)</span>
+                      {renderSortIndicator("ma_hang")}
+                    </div>
+                  </th>
+
+                  {/* Column 3: Name */}
+                  <th 
+                    onClick={() => handleSort("ten_hang")}
+                    title="Nhấp để sắp xếp theo Tên sản phẩm"
+                    className="px-4 py-3 cursor-pointer group hover:bg-neutral-100 hover:text-[#D8232A] transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>Tên sản phẩm</span>
+                      {renderSortIndicator("ten_hang")}
+                    </div>
+                  </th>
+
+                  {/* Column 4: List retail price */}
+                  <th 
+                    onClick={() => handleSort("don_gia_ban_le")}
+                    title="Nhấp để sắp xếp theo Giá bán lẻ niêm yết"
+                    className="px-4 py-3 cursor-pointer group hover:bg-neutral-100 hover:text-[#D8232A] transition-colors text-right"
+                  >
+                    <div className="flex items-center gap-1 justify-end">
+                      <span>Đơn giá lẻ</span>
+                      {renderSortIndicator("don_gia_ban_le")}
+                    </div>
+                  </th>
+
+                  {/* Column 5: Wholesale Price */}
+                  <th 
+                    onClick={() => handleSort("don_gia_ban_buon")}
+                    title="Nhấp để sắp xếp theo Giá gốc sỉ đại lý"
+                    className="px-4 py-3 cursor-pointer group hover:bg-neutral-100 hover:text-[#D8232A] transition-colors text-right"
+                  >
+                    <div className="flex items-center gap-1 justify-end">
+                      <span>Giá gốc sỉ</span>
+                      {renderSortIndicator("don_gia_ban_buon")}
+                    </div>
+                  </th>
+
+                  {/* Column 6: Special Promoted Price */}
+                  <th 
+                    onClick={() => handleSort("gia_sau_giam")}
+                    title="Nhấp để sắp xếp theo Giá Siêu Khuyến Mãi"
+                    className="px-4 py-3 cursor-pointer group hover:bg-neutral-100 hover:text-[#D8232A] transition-colors text-right"
+                  >
+                    <div className="flex items-center gap-1 justify-end">
+                      <span>Giá Siêu KM</span>
+                      {renderSortIndicator("gia_sau_giam")}
+                    </div>
+                  </th>
+
+                  {/* Column 7: Draft Cart quantity */}
+                  <th 
+                    onClick={() => handleSort("cart_qty")}
+                    title="Nhấp để sắp xếp lượng SP đang đặt trong nháp"
+                    className="px-4 py-3 cursor-pointer group hover:bg-neutral-100 hover:text-[#D8232A] transition-colors text-center rounded-r-lg"
+                  >
+                    <div className="flex items-center gap-1 justify-center">
+                      <span>Đặt Nháp B2B</span>
+                      {renderSortIndicator("cart_qty")}
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="text-xs">
-                {filteredProducts.map(p => {
+                {sortedProducts.map(p => {
                   const qty = getCartQuantity(p.ma_hang);
                   const inCart = qty > 0;
                   return (
                     <tr 
-                      key={p.ma_hang}
+                      key={`${p.catalogId}-${p.ma_hang}`}
                       className={`shadow-sm ring-1 ring-black/5 rounded transition-all bg-white hover:bg-gray-50 ${inCart ? 'ring-[#D8232A]/50 bg-red-50/10' : ''}`}
                     >
                       {/* Catalog Tag */}
@@ -438,7 +630,7 @@ export default function ProductCatalog({
                             <div className="text-[9px] text-[#D8232A] font-sans font-bold uppercase tracking-wider">(Gói 45%)</div>
                           </div>
                         ) : (
-                          <span className="text-gray-400 font-sans font-normal italic text-[10px]">Học tặng quà C</span>
+                          <span className="text-neutral-400 font-sans font-normal text-xs">—</span>
                         )}
                       </td>
 
@@ -447,17 +639,27 @@ export default function ProductCatalog({
                         <div className="flex items-center justify-center gap-1.5 max-w-[120px] mx-auto">
                           <button
                             disabled={qty === 0}
+                            type="button"
                             onClick={() => onUpdateCartQuantity(p, qty - 1, p.catalogId)}
                             className={`p-1.5 rounded bg-white border border-neutral-200 transition-all ${qty > 0 ? 'hover:bg-neutral-100 text-neutral-800' : 'text-neutral-300 cursor-not-allowed'}`}
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
                           
-                          <span className="w-6 text-center font-bold font-mono text-xs text-neutral-850">
-                            {qty}
-                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={qty === 0 ? "" : qty}
+                            placeholder="0"
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              onUpdateCartQuantity(p, isNaN(val) ? 0 : Math.max(0, val), p.catalogId);
+                            }}
+                            className="w-12 text-center font-bold text-xs font-mono border border-neutral-300 rounded px-1 py-0.5 focus:outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600 bg-white text-neutral-900"
+                          />
 
                           <button
+                            type="button"
                             onClick={() => onUpdateCartQuantity(p, qty + 1, p.catalogId)}
                             className="p-1.5 rounded bg-[#D8232A] hover:bg-red-700 text-white shadow-sm transition-transform active:scale-95"
                           >
