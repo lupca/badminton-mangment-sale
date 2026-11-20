@@ -1,7 +1,7 @@
 // Xuất Excel: danh sách đơn hàng và bảng tổng hợp của một chương trình.
 import { exportTableXlsx, safeFileName } from "../../lib/exportXlsx";
 import { formatDate, todayISO } from "../../lib/format";
-import { NO_DEALER_NAME, NO_PROGRAM_NAME, ORDER_STATUS_LABEL } from "./labels";
+import { NO_DEALER_NAME, NO_PROGRAM_NAME, NO_SALES_NAME, ORDER_STATUS_LABEL } from "./labels";
 import type { OrderRow } from "./OrdersTable";
 import type { OrderTotals, OrdersSummary, SkuTotal } from "./totals";
 
@@ -13,6 +13,7 @@ export function exportOrderList(rows: OrderRow[], totals: OrderTotals): Promise<
     "Đại lý",
     "Số điện thoại",
     "Sale",
+    "Số điện thoại sale",
     "Chương trình",
     "SL",
     "Thanh toán",
@@ -26,7 +27,8 @@ export function exportOrderList(rows: OrderRow[], totals: OrderTotals): Promise<
     formatDate(order.createdAt),
     order.customerName.trim(),
     order.customerPhone,
-    order.salesperson,
+    order.salesperson.trim(),
+    order.salespersonPhone.trim(),
     program?.name ?? NO_PROGRAM_NAME,
     calc.totalQty,
     calc.totalAmount,
@@ -42,6 +44,7 @@ export function exportOrderList(rows: OrderRow[], totals: OrderTotals): Promise<
     "",
     "",
     "",
+    "",
     totals.totalQty,
     totals.totalAmount,
     totals.giftQty,
@@ -50,7 +53,11 @@ export function exportOrderList(rows: OrderRow[], totals: OrderTotals): Promise<
     "",
   ];
   return exportTableXlsx(`don-hang-${todayISO()}`, [
-    { name: "Đơn hàng", rows: [header, ...body, total], colWidths: [16, 12, 28, 14, 16, 44, 8, 16, 8, 16, 16, 30] },
+    {
+      name: "Đơn hàng",
+      rows: [header, ...body, total],
+      colWidths: [16, 12, 28, 14, 20, 18, 44, 8, 16, 8, 16, 16, 30],
+    },
   ]);
 }
 
@@ -98,6 +105,21 @@ export function exportProgramReport(report: {
         ["Tổng", "", summary.giftQty, summary.giftValue],
       ],
       colWidths: [16, 50, 8, 16],
+    },
+    {
+      name: "Theo sale",
+      rows: [
+        ["Sale", "Số đơn", "SL", "Thanh toán", "Giá trị quà"],
+        ...summary.sales.map((sale) => [
+          sale.name || NO_SALES_NAME,
+          sale.orderCount,
+          sale.totalQty,
+          sale.totalAmount,
+          sale.giftValue,
+        ]),
+        ["Tổng", summary.orderCount, summary.totalQty, summary.totalAmount, summary.giftValue],
+      ],
+      colWidths: [28, 10, 8, 16, 16],
     },
     {
       name: "Theo đại lý",

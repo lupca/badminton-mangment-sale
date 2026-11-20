@@ -4,8 +4,8 @@ import { Download, Plus } from "lucide-react";
 import NewOrderDialog from "../components/orders/NewOrderDialog";
 import OrdersTable, { type OrderRow } from "../components/orders/OrdersTable";
 import { exportOrderList } from "../components/orders/excel";
-import { ORDER_STATUS_LABEL } from "../components/orders/labels";
-import { sumOrders } from "../components/orders/totals";
+import { NO_SALES_NAME, ORDER_STATUS_LABEL } from "../components/orders/labels";
+import { salesKey, salesNames, sumOrders } from "../components/orders/totals";
 import { calculateOrder } from "../lib/engine";
 import { matchesSearch } from "../lib/format";
 import { navigate, useRoute } from "../lib/router";
@@ -15,7 +15,7 @@ import { Button, EmptyState, PageHeader, SearchInput, Select, toast } from "../u
 
 type StatusFilter = "all" | Order["status"];
 
-/** Chữ dùng để tìm: mã đơn, đại lý, điện thoại (cả dạng viết liền), sale. */
+/** Chữ dùng để tìm: mã đơn, đại lý, sale, điện thoại của đại lý và của sale (cả dạng viết liền). */
 function searchText(order: Order): string {
   return [
     order.code,
@@ -23,14 +23,22 @@ function searchText(order: Order): string {
     order.customerPhone,
     order.customerPhone.replace(/\D/g, ""),
     order.salesperson,
+    order.salespersonPhone,
+    order.salespersonPhone.replace(/\D/g, ""),
   ].join(" ");
 }
+
+// Giá trị của ô lọc sale: "" = tất cả; mỗi sale là "=" + khóa gộp tên, nhờ vậy nhóm đơn chưa ghi sale (khóa rỗng)
+// không trùng với «tất cả».
+const ALL_SALES = "";
+const saleValue = (key: string) => `=${key}`;
 
 export default function OrdersPage() {
   const { orders, programs, duplicateOrder, deleteOrder } = useStore();
   const route = useRoute();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [sale, setSale] = useState(ALL_SALES);
   const [creating, setCreating] = useState(false);
 
   // Bộ lọc chương trình nằm trên địa chỉ (#/orders?program=ID) để trang chương trình dẫn thẳng tới đây được.
@@ -50,21 +58,35 @@ export default function OrdersPage() {
       });
   }, [orders, programs]);
 
+  // Các sale có trong toàn bộ đơn, xếp theo tên; nhóm đơn chưa ghi sale đứng cuối.
+  const saleChoices = useMemo(
+    () =>
+      [...salesNames(orders)]
+        .sort(([, a], [, b]) => Number(!a) - Number(!b) || a.localeCompare(b, "vi"))
+        .map(([key, name]) => ({ value: saleValue(key), label: name || NO_SALES_NAME })),
+    [orders],
+  );
+  // Chỉ có một lựa chọn thì lọc theo sale không để làm gì: ô lọc không hiện và không lọc.
+  const showSaleFilter = saleChoices.length > 1;
+  const saleFilter = showSaleFilter && saleChoices.some((choice) => choice.value === sale) ? sale : ALL_SALES;
+
   const visible = useMemo(
     () =>
       rows.filter(
         ({ order }) =>
           (!programId || order.programId === programId) &&
+          (saleFilter === ALL_SALES || saleValue(salesKey(order.salesperson)) === saleFilter) &&
           (status === "all" || order.status === status) &&
           matchesSearch(searchText(order), search),
       ),
-    [rows, programId, status, search],
+    [rows, programId, saleFilter, status, search],
   );
   const totals = useMemo(() => sumOrders(visible), [visible]);
 
   const clearFilters = () => {
     setSearch("");
     setStatus("all");
+    setSale(ALL_SALES);
     if (programId) setProgramId("");
   };
 
@@ -118,9 +140,10 @@ export default function OrdersPage() {
         />
       ) : (
         <>
-          <div className="mb-3 flex flex-col gap-2 md:flex-row">
+          {/* Màn hình vừa không đủ chỗ cho cả bốn ô trên một hàng thì ô cuối xuống hàng dưới. */}
+          <div className="mb-3 flex flex-col gap-2 md:flex-row md:flex-wrap">
             <SearchInput
-              className="md:max-w-sm md:flex-1"
+              className="md:min-w-56 md:max-w-sm md:flex-1"
               value={search}
               onChange={setSearch}
               placeholder="Tìm mã đơn, đại lý, số điện thoại, sale…"
@@ -138,6 +161,21 @@ export default function OrdersPage() {
                 </option>
               ))}
             </Select>
+            {showSaleFilter ? (
+              <Select
+                className="md:w-52"
+                aria-label="Lọc theo sale"
+                value={saleFilter}
+                onChange={(e) => setSale(e.target.value)}
+              >
+                <option value={ALL_SALES}>Tất cả sale</option>
+                {saleChoices.map((choice) => (
+                  <option key={choice.value} value={choice.value}>
+                    {choice.label}
+                  </option>
+                ))}
+              </Select>
+            ) : null}
             <Select
               className="md:w-52"
               aria-label="Lọc theo trạng thái"
@@ -153,7 +191,7 @@ export default function OrdersPage() {
           {visible.length === 0 ? (
             <EmptyState
               title="Không có đơn nào khớp bộ lọc"
-              hint="Thử đổi từ khóa tìm, chương trình hoặc trạng thái."
+              hint={`Thử đổi từ khóa tìm, chương trình${showSaleFilter ? ", sale" : ""} hoặc trạng thái.`}
               action={<Button onClick={clearFilters}>Bỏ lọc</Button>}
             />
           ) : (

@@ -2,11 +2,15 @@
 import { memo, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { ClipboardPaste } from "lucide-react";
-import type { CalcLine, ID, ProductGroup, ProductItem } from "../../types";
-import { formatNumber, matchesSearch } from "../../lib/format";
+import type { CalcLine, ID, ProductGroup, ProductItem, Stock } from "../../types";
+import { formatNumber, matchesSearch, normalizeSku } from "../../lib/format";
+import { stockOf } from "../../lib/stock";
 import { Button, Card, SearchInput, Select, cx, numCls, tableCls, tableWrapCls, tdCls, thCls } from "../../ui";
+import { StockTag } from "./StockTag";
 import { itemSearchText, lineKey } from "./orderOps";
 import { QtyCell, focusFirstQtyCell, moveQtyFocus } from "./qtyCells";
+import { stockSourceNote } from "./stockView";
+import type { OrderStockView } from "./stockView";
 import { useStableCallback } from "./useStableCallback";
 
 type SetQty = (groupId: ID, item: ProductItem, qty: number) => void;
@@ -15,6 +19,8 @@ interface PickRow {
   key: string;
   groupId: ID;
   item: ProductItem;
+  /** Mã hàng đã chuẩn hóa — tồn kho tính theo mã, chung cho mọi danh mục. */
+  sku: string;
   /** Chữ để tìm (mã + tên), tính sẵn một lần. */
   haystack: string;
 }
@@ -32,7 +38,7 @@ function buildSections(groups: ProductGroup[]): Section[] {
       const key = lineKey(group.id, item.sku);
       if (seen.has(key)) continue; // mã lặp lại trong cùng danh mục: đơn chỉ có một dòng cho mã đó
       seen.add(key);
-      rows.push({ key, groupId: group.id, item, haystack: itemSearchText(item) });
+      rows.push({ key, groupId: group.id, item, sku: normalizeSku(item.sku), haystack: itemSearchText(item) });
     }
     return { group, rows };
   });
@@ -46,13 +52,17 @@ const NO_KEYS: ReadonlySet<string> = new Set();
 //  • từ @md: thêm cột thành tiền, dòng thấp hơn để thấy được nhiều mã;
 //  • từ 44rem: mã hàng tách thành cột riêng, tên hàng nằm trên một dòng.
 // Riêng trên điện thoại bảng còn tràn hết bề ngang khung để không phải cuộn ngang.
+// Tồn kho (khi có): ghi gọn ngay cạnh mã hàng; từ 44rem là cột «Tồn» đứng sát cột số lượng.
 const wrapCls = cx(tableWrapCls, "max-sm:-mx-4 max-sm:rounded-none max-sm:border-x-0");
 const headCls = cx(thCls, "@max-md:px-2 @max-md:whitespace-normal");
 const cellCls = cx(tdCls, "@max-md:px-2 @md:py-1");
+// Cột «Tồn» canh phải nên bỏ lề trái, nhường chỗ cho tên hàng.
+const stockColCls = cx(numCls, "hidden @[44rem]:table-cell @[44rem]:pl-0");
 
 export function ProductPicker({
   groups,
   lines,
+  stockView,
   disabled,
   emptyText,
   onQty,
@@ -61,6 +71,8 @@ export function ProductPicker({
   /** Các danh mục được chọn mua. */
   groups: ProductGroup[];
   lines: CalcLine[];
+  /** Tồn kho hiện cạnh từng mã; null = không hiện gì về tồn kho (chưa có số liệu, hoặc đơn đã chốt). */
+  stockView: OrderStockView | null;
   disabled: boolean;
   /** Lời giải thích khi không có mã hàng nào để chọn. */
   emptyText: string;
@@ -212,6 +224,11 @@ export function ProductPicker({
                       <span className="@[44rem]:hidden">Mã hàng / </span>Tên hàng
                     </th>
                     <th className={cx(headCls, numCls)}>Giá sỉ</th>
+                    {stockView ? (
+                      <th className={cx(headCls, stockColCls)} title={stockSourceNote(stockView.stock)}>
+                        Tồn
+                      </th>
+                    ) : null}
                     <th className={headCls}>
                       <div className="text-center">SL</div>
                     </th>
@@ -224,7 +241,7 @@ export function ProductPicker({
                     <tbody key={group.id}>
                       <tr>
                         <th
-                          colSpan={5}
+                          colSpan={stockView ? 6 : 5}
                           scope="rowgroup"
                           className="border-b border-gray-200 bg-gray-100 px-2 py-1.5 text-left text-sm font-semibold text-gray-800 @md:px-3"
                         >
@@ -244,6 +261,9 @@ export function ProductPicker({
                             wholesalePrice={line?.wholesalePrice ?? row.item.wholesalePrice}
                             discountedPrice={line && line.discountRuleId != null ? line.unitPrice : null}
                             amount={line?.amount ?? 0}
+                            stock={stockView?.stock ?? null}
+                            lowStockThreshold={stockView?.lowThreshold ?? 0}
+                            overStock={stockView?.overSkus.has(row.sku) ?? false}
                             disabled={disabled}
                             onQty={handleQty}
                           />
@@ -267,6 +287,9 @@ const ProductRow = memo(function ProductRow({
   wholesalePrice,
   discountedPrice,
   amount,
+  stock,
+  lowStockThreshold,
+  overStock,
   disabled,
   onQty,
 }: {
@@ -277,15 +300,31 @@ const ProductRow = memo(function ProductRow({
   /** Đơn giá sau giảm, null nếu dòng không được giảm giá. */
   discountedPrice: number | null;
   amount: number;
+  /** Danh tính chỉ đổi khi nhập lại tồn kho nên không làm dòng vẽ lại lúc gõ số lượng; null = không hiện tồn kho. */
+  stock: Stock | null;
+  lowStockThreshold: number;
+  /** Đơn đang đặt mã này (hàng mua + quà) nhiều hơn số tồn. */
+  overStock: boolean;
   disabled: boolean;
   onQty: SetQty;
 }) {
   const { item, groupId } = row;
+  const stockTag = (compact: boolean) =>
+    stock ? (
+      <StockTag qty={stockOf(stock, row.sku)} lowThreshold={lowStockThreshold} over={overStock} compact={compact} />
+    ) : null;
   return (
     <tr className={qty > 0 ? "bg-blue-50" : undefined}>
       <td className={cx(cellCls, "hidden whitespace-nowrap font-medium @[44rem]:table-cell")}>{item.sku}</td>
       <td className={cellCls}>
-        <div className="font-medium @[44rem]:hidden">{item.sku}</div>
+        {stock ? (
+          <div className="flex flex-wrap items-center gap-x-1.5 @[44rem]:hidden">
+            <span className="font-medium">{item.sku}</span>
+            <span className="ml-auto text-xs">{stockTag(true)}</span>
+          </div>
+        ) : (
+          <div className="font-medium @[44rem]:hidden">{item.sku}</div>
+        )}
         <div className="text-xs text-gray-600 @[44rem]:text-sm @[44rem]:text-gray-900">{item.name}</div>
         {item.note ? <div className="text-xs text-gray-500">{item.note}</div> : null}
       </td>
@@ -301,6 +340,7 @@ const ProductRow = memo(function ProductRow({
         )}
         {qty > 0 ? <div className="text-xs font-medium text-gray-900 @md:hidden">= {formatNumber(amount)}</div> : null}
       </td>
+      {stock ? <td className={cx(cellCls, stockColCls)}>{stockTag(false)}</td> : null}
       <td className={cx(cellCls, "text-center")}>
         <QtyCell
           className="@md:py-1"

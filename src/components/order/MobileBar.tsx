@@ -1,7 +1,9 @@
-// Thanh cố định dưới đáy màn hình điện thoại: luôn thấy số tiền phải thanh toán và tình trạng khuyến mãi.
+// Thanh cố định dưới đáy màn hình điện thoại: luôn thấy số tiền phải thanh toán, tình trạng khuyến mãi và cảnh báo tồn kho.
 import type { CalcResult } from "../../types";
 import { formatNumber, formatVND } from "../../lib/format";
 import { Button, cx } from "../../ui";
+import { stockWarningSummary } from "./stockView";
+import type { StockWarning } from "./stockView";
 
 type StatusTone = "error" | "warning" | "normal" | "muted";
 
@@ -48,15 +50,19 @@ function promoStatus(calc: CalcResult): { tone: StatusTone; text: string } {
 
 export function MobileBar({
   calc,
+  stockWarnings,
   atResult,
   onToggle,
 }: {
   calc: CalcResult;
+  /** Các mã mà kho không đủ cho đơn này (rỗng = không có gì để báo). */
+  stockWarnings: StockWarning[];
   /** Phần kết quả đang nằm trong màn hình. */
   atResult: boolean;
   onToggle: () => void;
 }) {
   const status = promoStatus(calc);
+  const stockWarning = stockWarningSummary(stockWarnings);
   return (
     <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-300 bg-white px-4 py-2 lg:hidden print:hidden">
       <div className="flex items-center justify-between gap-3">
@@ -67,6 +73,8 @@ export function MobileBar({
         <Button onClick={onToggle}>{atResult ? "Về chọn hàng" : "Xem kết quả"}</Button>
       </div>
       <p className={cx("mt-0.5 line-clamp-2 text-xs", TONE_CLS[status.tone])}>{status.text}</p>
+      {/* Thêm đúng một dòng, chi tiết từng mã nằm ở phần kết quả. */}
+      {stockWarning ? <p className="mt-0.5 truncate text-xs font-medium text-amber-800">{stockWarning}</p> : null}
     </div>
   );
 }

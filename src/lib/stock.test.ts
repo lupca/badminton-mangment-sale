@@ -1,11 +1,14 @@
 // Tests for the stock helpers and the product list behind the «Sản phẩm» screen.
 import { describe, expect, it } from "vitest";
-import type { Program, Stock } from "../types";
+import type { CalcGift, CalcLine, Program, Stock } from "../types";
 import {
   applyStock,
   listProducts,
   newerStock,
+  orderStockIssues,
   productNames,
+  stockAlerts,
+  stockLevel,
   stockOf,
   stockQty,
   summarizeProducts,
@@ -15,15 +18,19 @@ import {
 import { seedDB } from "./store";
 
 const NO_STOCK: Stock = { bySku: {}, updatedAt: null };
-const ALL: ProductFilter = { programId: "", search: "", stock: "all" };
+const ALL: ProductFilter = { programId: "", search: "", stock: "all", lowThreshold: 5 };
 
-function program(id: string, groups: Array<[string, Array<[string, string, number]>]>): Program {
+function program(
+  id: string,
+  groups: Array<[string, Array<[string, string, number]>]>,
+  dates: { startDate?: string | null; endDate?: string | null } = {},
+): Program {
   return {
     id,
     name: `Chương trình ${id}`,
     brand: "Li-Ning",
-    startDate: null,
-    endDate: null,
+    startDate: dates.startDate ?? null,
+    endDate: dates.endDate ?? null,
     note: "",
     groups: groups.map(([groupId, items]) => ({
       id: groupId,
@@ -174,17 +181,129 @@ describe("summarizeProducts", () => {
   it("counts each SKU once even when it sits in several categories", () => {
     const list = listProducts([P1, P2], STOCK, ALL);
     // 6 rows, 5 different SKUs: A-1 (in), A-2 and Q-1 (out), A-3 and B-1 (no data).
-    expect(summarizeProducts(list)).toEqual({ skus: 5, inStock: 1, outOfStock: 2, unknown: 2 });
+    expect(summarizeProducts(list)).toEqual({ skus: 5, inStock: 1, low: 0, outOfStock: 2, unknown: 2 });
   });
 
   it("follows the filter", () => {
     expect(summarizeProducts(listProducts([P1, P2], STOCK, { ...ALL, programId: "p2" }))).toEqual({
       skus: 2,
       inStock: 1,
+      low: 0,
       outOfStock: 0,
       unknown: 1,
     });
-    expect(summarizeProducts([])).toEqual({ skus: 0, inStock: 0, outOfStock: 0, unknown: 0 });
+    expect(summarizeProducts([])).toEqual({ skus: 0, inStock: 0, low: 0, outOfStock: 0, unknown: 0 });
+  });
+});
+
+describe("stockLevel", () => {
+  it("unknown without data, out at zero or below, low from 1 up to the threshold, in above it", () => {
+    expect(stockLevel(null, 5)).toBe("unknown");
+    expect(stockLevel(0, 5)).toBe("out");
+    expect(stockLevel(-2, 5)).toBe("out");
+    expect(stockLevel(1, 5)).toBe("low");
+    expect(stockLevel(5, 5)).toBe("low");
+    expect(stockLevel(0.5, 5)).toBe("low");
+    expect(stockLevel(6, 5)).toBe("in");
+  });
+
+  it("a threshold of 0 turns the low-stock warning off", () => {
+    expect(stockLevel(1, 0)).toBe("in");
+    expect(stockLevel(0, 0)).toBe("out");
+  });
+});
+
+describe("low stock in the product list", () => {
+  // A-1 plenty, A-2 out, A-3 low (3), Q-1 low (exactly at the threshold), B-1 no data.
+  const LOW: Stock = { bySku: { "A-1": 24, "A-2": 0, "A-3": 3, "Q-1": 5 }, updatedAt: "2026-11-20T14:05:00.000Z" };
+  const only = (stock: ProductFilter["stock"], lowThreshold = 5) =>
+    listProducts([P1, P2], LOW, { ...ALL, stock, lowThreshold }).flatMap(({ groups }) =>
+      groups.flatMap(({ rows }) => rows.map((row) => row.item.sku)),
+    );
+
+  it("each row carries its level", () => {
+    const rows = listProducts([P1], LOW, ALL).flatMap(({ groups }) => groups.flatMap(({ rows: r }) => r));
+    expect(rows.map((row) => [row.item.sku, row.level])).toEqual([
+      ["A-1", "in"],
+      ["A-2", "out"],
+      ["A-3", "low"],
+      ["Q-1", "low"],
+    ]);
+  });
+
+  it("filters: low, attention (low + out), and in stock still includes the low ones", () => {
+    expect(only("low")).toEqual(["A-3", "Q-1"]);
+    expect(only("attention")).toEqual(["A-2", "A-3", "Q-1"]);
+    expect(only("in")).toEqual(["A-1", "A-3", "Q-1", "A-1"]);
+    expect(only("out")).toEqual(["A-2"]);
+  });
+
+  it("follows the threshold", () => {
+    expect(only("low", 3)).toEqual(["A-3"]);
+    expect(only("low", 0)).toEqual([]);
+    expect(only("low", 100)).toEqual(["A-1", "A-3", "Q-1", "A-1"]);
+  });
+
+  it("the summary counts the low SKUs inside the in-stock ones", () => {
+    expect(summarizeProducts(listProducts([P1, P2], LOW, ALL))).toEqual({ skus: 5, inStock: 3, low: 2, outOfStock: 1, unknown: 1 });
+  });
+});
+
+describe("stockAlerts", () => {
+  const TODAY = "2026-11-20";
+  const LOW: Stock = { bySku: { "A-1": 2, "A-2": 0, "A-3": 30, "Q-1": -1, "B-1": 5, "Z-9": 1 }, updatedAt: null };
+
+  it("lists each low or out-of-stock SKU once, emptiest first, with where it is first listed", () => {
+    expect(stockAlerts([P1, P2], LOW, 5, TODAY)).toEqual([
+      { sku: "Q-1", name: "Vợt quà tặng Lightning 2000", stock: -1, level: "out", programId: "p1", programName: "Chương trình p1", groupName: "Danh mục g2" },
+      { sku: "A-2", name: "Khung vợt Axforce 90", stock: 0, level: "out", programId: "p1", programName: "Chương trình p1", groupName: "Danh mục g1" },
+      { sku: "A-1", name: "Khung vợt Aeronaut 6000", stock: 2, level: "low", programId: "p1", programName: "Chương trình p1", groupName: "Danh mục g1" },
+      { sku: "B-1", name: "Cước cầu lông N65", stock: 5, level: "low", programId: "p2", programName: "Chương trình p2", groupName: "Danh mục g3" },
+    ]);
+  });
+
+  it("leaves out products of programs that have ended, SKUs without data and SKUs in no category", () => {
+    const ended = program("old", [["g9", [["A-2", "Khung vợt Axforce 90", 1], ["E-1", "Chỉ có ở chương trình cũ", 1]]]], { endDate: "2026-11-19" });
+    const upcoming = program("next", [["g8", [["U-1", "Hàng sắp bán", 1]]]], { startDate: "2026-12-01" });
+    const stock: Stock = { bySku: { "A-2": 0, "E-1": 0, "U-1": 1, "Z-9": 0 }, updatedAt: null };
+    expect(stockAlerts([ended, upcoming], stock, 5, TODAY).map((a) => a.sku)).toEqual(["U-1"]);
+    // The same SKU is still reported when a program that is not over lists it too.
+    expect(stockAlerts([ended, P1], stock, 5, TODAY).map((a) => [a.sku, a.programId])).toEqual([["A-2", "p1"]]);
+  });
+
+  it("with the threshold at 0 only out-of-stock SKUs are reported; with no stock data nothing is", () => {
+    expect(stockAlerts([P1, P2], LOW, 0, TODAY).map((a) => a.sku)).toEqual(["Q-1", "A-2"]);
+    expect(stockAlerts([P1, P2], NO_STOCK, 5, TODAY)).toEqual([]);
+  });
+});
+
+describe("orderStockIssues", () => {
+  const stock: Stock = { bySku: { "A-1": 10, "A-2": 0, "A-3": 3, "Q-1": 2 }, updatedAt: null };
+  const line = (sku: string, qty: number): CalcLine => ({
+    index: 0, groupId: "g1", sku, name: `Tên ${sku}`, qty, retailPrice: 1, wholesalePrice: 1, unitPrice: 1, amount: qty, discountRuleId: null, discountPercent: null,
+  });
+  const gift = (sku: string, qty: number): CalcGift => ({ ruleId: "r", sku, name: `Tên ${sku}`, qty, unitValue: 1, value: qty, auto: false });
+
+  it("reports SKUs ordered beyond the stock and SKUs that are out of stock", () => {
+    const issues = orderStockIssues({ lines: [line("A-1", 12), line("A-2", 1), line("A-3", 3)], gifts: [] }, stock);
+    expect(issues).toEqual([
+      { sku: "A-1", name: "Tên A-1", ordered: 12, stock: 10, level: "over" },
+      { sku: "A-2", name: "Tên A-2", ordered: 1, stock: 0, level: "out" },
+    ]);
+  });
+
+  it("adds purchases and gifts of the same SKU together", () => {
+    // 2 bought + 1 as a gift = 3 needed, only 2 in stock.
+    expect(orderStockIssues({ lines: [line("Q-1", 2)], gifts: [gift("Q-1", 1)] }, stock)).toEqual([
+      { sku: "Q-1", name: "Tên Q-1", ordered: 3, stock: 2, level: "over" },
+    ]);
+    expect(orderStockIssues({ lines: [line("A-1", 5)], gifts: [gift("A-1", 5)] }, stock)).toEqual([]);
+  });
+
+  it("ignores SKUs without stock data, gifts described in words and rows with no quantity", () => {
+    const calc = { lines: [line("NO-DATA", 99), line("A-2", 0)], gifts: [gift("", 5)] };
+    expect(orderStockIssues(calc, stock)).toEqual([]);
+    expect(orderStockIssues(calc, NO_STOCK)).toEqual([]);
   });
 });
 
@@ -209,6 +328,6 @@ describe("the seed data", () => {
     const list = listProducts(db.programs, db.stock, ALL);
     expect(list.map(({ program: p }) => p.id)).toEqual(["seed-km-2026-11", "seed-bang-gia-sau-ck", "seed-km-2026-he"]);
     expect(list.reduce((sum, { groups }) => sum + groups.reduce((n, { rows }) => n + rows.length, 0), 0)).toBe(351);
-    expect(summarizeProducts(list)).toEqual({ skus: 166, inStock: 0, outOfStock: 0, unknown: 166 });
+    expect(summarizeProducts(list)).toEqual({ skus: 166, inStock: 0, low: 0, outOfStock: 0, unknown: 166 });
   });
 });

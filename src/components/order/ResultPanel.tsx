@@ -1,16 +1,19 @@
-// Cột "Kết quả": tổng tiền, các thông báo của engine và kết quả từng quy tắc.
+// Cột "Kết quả": tổng tiền, các thông báo của engine, cảnh báo tồn kho và kết quả từng quy tắc.
 import type { ReactNode } from "react";
 import type { CalcIssue, CalcResult, Order, ProductGroup, Rule } from "../../types";
 import { formatNumber, formatVND } from "../../lib/format";
 import { Button, Card, Notice, cx } from "../../ui";
 import { RuleBlock } from "./RuleBlocks";
 import type { SetGiftQty } from "./RuleBlocks";
+import { stockSourceNote, stockWarningText } from "./stockView";
+import type { OrderStockView } from "./stockView";
 
 export function ResultPanel({
   order,
   groups,
   rules,
   calc,
+  stockView,
   disabled,
   action,
   onGiftQty,
@@ -22,6 +25,8 @@ export function ResultPanel({
   /** Các quy tắc đang áp cho đơn, cùng thứ tự với calc.rules. */
   rules: Rule[];
   calc: CalcResult;
+  /** Tồn kho: cảnh báo các mã kho không đủ và số tồn cạnh từng quà; null = không hiện gì về tồn kho. */
+  stockView: OrderStockView | null;
   disabled: boolean;
   /** Nút hành động đặt ngay dưới tổng tiền (chốt đơn). */
   action?: ReactNode;
@@ -30,6 +35,7 @@ export function ResultPanel({
 }) {
   const orphanGifts = calc.orphanGiftIndexes.map((index) => order.gifts[index]).filter(Boolean);
   const issuesOf = (level: CalcIssue["level"]) => calc.issues.filter((issue) => issue.level === level);
+  const stockWarnings = stockView?.warnings ?? [];
 
   return (
     <>
@@ -39,7 +45,7 @@ export function ResultPanel({
       </Card>
 
       <div className="mt-4 space-y-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-        {calc.issues.length > 0 ? (
+        {calc.issues.length > 0 || stockWarnings.length > 0 ? (
           <div className="space-y-2">
             <IssueList issues={issuesOf("error")} />
             {orphanGifts.length > 0 ? (
@@ -51,6 +57,17 @@ export function ResultPanel({
                   {orphanGifts.map((gift) => `${gift.sku} × ${formatNumber(gift.qty)}`).join(", ")}
                 </span>
               </div>
+            ) : null}
+            {/* Chỉ là cảnh báo: số tồn lấy từ file kho có thể đã cũ nên không chặn việc chốt đơn. */}
+            {stockView && stockWarnings.length > 0 ? (
+              <Notice tone="warning">
+                <ul className="space-y-0.5">
+                  {stockWarnings.map((warning) => (
+                    <li key={warning.sku}>{stockWarningText(warning)}</li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-xs">{stockSourceNote(stockView.stock)}</p>
+              </Notice>
             ) : null}
             <IssueList issues={issuesOf("warning")} />
             <IssueList issues={issuesOf("info")} />
@@ -67,6 +84,7 @@ export function ResultPanel({
               groups={groups}
               chosenGifts={order.gifts}
               autoGifts={calc.gifts}
+              stockView={stockView}
               disabled={disabled}
               onGiftQty={onGiftQty}
             />

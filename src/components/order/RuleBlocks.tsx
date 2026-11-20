@@ -20,6 +20,7 @@ import { Badge, Card, cx } from "../../ui";
 import { GiftPicker } from "./GiftPicker";
 import { buildGiftRows } from "./orderOps";
 import type { PricedItem } from "./orderOps";
+import type { OrderStockView } from "./stockView";
 
 export type SetGiftQty = (ruleId: ID, groupId: ID, item: PricedItem, qty: number) => void;
 
@@ -28,6 +29,8 @@ interface GiftContext {
   groups: ProductGroup[];
   /** order.gifts */
   chosenGifts: OrderGift[];
+  /** Tồn kho hiện cạnh từng quà trong bảng chọn quà; null = không hiện. */
+  stockView: OrderStockView | null;
   disabled: boolean;
   onGiftQty: SetGiftQty;
 }
@@ -61,6 +64,7 @@ function TierGiftBlock({
   result,
   groups,
   chosenGifts,
+  stockView,
   disabled,
   onGiftQty,
 }: { rule: TierGiftRule; result: TierGiftResult } & GiftContext) {
@@ -148,6 +152,7 @@ function TierGiftBlock({
               : "Quà đã chọn trước đó"
           }
           rows={rows}
+          stockView={stockView}
           disabled={disabled}
           onQty={(row, qty) => onGiftQty(rule.id, row.groupId, row, qty)}
         />
@@ -184,6 +189,7 @@ function BuyXGetYBlock({
   autoGifts,
   groups,
   chosenGifts,
+  stockView,
   disabled,
   onGiftQty,
 }: { rule: BuyXGetYRule; result: BuyXGetYResult; autoGifts: CalcGift[] } & GiftContext) {
@@ -233,6 +239,7 @@ function BuyXGetYBlock({
             </span>
           }
           rows={rows}
+          stockView={stockView}
           disabled={disabled}
           onQty={(row, qty) => onGiftQty(rule.id, row.groupId, row, qty)}
         />

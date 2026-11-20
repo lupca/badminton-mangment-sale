@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { calculateOrder } from "../../lib/engine";
 import seed from "../../seed/seed.json";
 import type { DB, Order, OrderGift, OrderLine, Program } from "../../types";
-import { sumOrders, summarizeOrders, type OrderCalc } from "./totals";
+import { salesKey, salesNames, sumOrders, summarizeOrders, type OrderCalc } from "./totals";
 
 const db = seed as unknown as DB;
 
@@ -31,6 +31,7 @@ function entry(p: Program, fields: Partial<Order>): OrderCalc {
     customerName: "",
     customerPhone: "",
     salesperson: "",
+    salespersonPhone: "",
     note: "",
     status: "draft",
     lines: [],
@@ -131,5 +132,115 @@ describe("summarizeOrders", () => {
     expect(result.gifts).toEqual([{ sku: "", name: "Cước cầu lông LiNing N65", qty: 4, value: 0 }]);
     // 2.356.364 × 55% = 1.296.000 (làm tròn) — hàng bán cộng theo tiền sau giảm.
     expect(result.items.find((i) => i.sku === "P-AYPT417-5")).toMatchObject({ qty: 3, value: 3 * 1_296_000 });
+  });
+});
+
+describe("salesKey", () => {
+  it("cùng một khóa dù gõ khác chữ hoa/thường, có dấu hay không dấu, thừa khoảng trắng", () => {
+    expect(salesKey("Nguyễn Văn An")).toBe("nguyen van an");
+    expect(salesKey("  NGUYỄN   VĂN AN ")).toBe("nguyen van an");
+    expect(salesKey("nguyen van an")).toBe("nguyen van an");
+    // Cùng một chữ nhưng máy gõ ra dạng dấu rời (NFD).
+    expect(salesKey("Nguyễn Văn An".normalize("NFD"))).toBe("nguyen van an");
+    expect(salesKey("Đỗ Thị Đào")).toBe("do thi dao");
+  });
+
+  it("tên khác nhau thì khóa khác nhau; để trống hoặc chỉ có khoảng trắng thì khóa rỗng", () => {
+    expect(salesKey("Nguyễn Văn Anh")).not.toBe(salesKey("Nguyễn Văn An"));
+    expect(salesKey("")).toBe("");
+    expect(salesKey("   ")).toBe("");
+  });
+});
+
+describe("salesNames", () => {
+  const order = (salesperson: string, createdAt = "2026-11-10T00:00:00.000Z"): Order =>
+    entry(km11, { salesperson, createdAt }).order;
+
+  it("mỗi sale một tên: cách viết gặp nhiều nhất, đã bỏ khoảng trắng thừa", () => {
+    const names = salesNames([
+      order("nguyen van an"),
+      order("Nguyễn Văn An"),
+      order("  Nguyễn  Văn An "),
+      order("Trần Thị Bình"),
+    ]);
+    expect([...names]).toEqual([
+      ["nguyen van an", "Nguyễn Văn An"],
+      ["tran thi binh", "Trần Thị Bình"],
+    ]);
+    // Khóa của bảng tên chính là `salesKey` — danh sách đơn dựa vào điều này để lọc theo sale.
+    for (const [key, name] of names) expect(salesKey(name)).toBe(key);
+  });
+
+  it("hai cách viết gặp bằng nhau thì lấy cách viết ở đơn tạo gần đây hơn, không phụ thuộc thứ tự các đơn", () => {
+    const older = order("NGUYEN VAN AN", "2026-11-10T08:00:00.000Z");
+    const newer = order("Nguyễn Văn An", "2026-11-12T08:00:00.000Z");
+    expect(salesNames([older, newer]).get("nguyen van an")).toBe("Nguyễn Văn An");
+    expect(salesNames([newer, older]).get("nguyen van an")).toBe("Nguyễn Văn An");
+  });
+
+  it("các đơn chưa ghi tên sale nằm ở khóa rỗng; không có đơn nào thì không có sale nào", () => {
+    expect([...salesNames([order(""), order("   "), order("An")])]).toEqual([
+      ["", ""],
+      ["an", "An"],
+    ]);
+    expect(salesNames([]).size).toBe(0);
+  });
+});
+
+describe("summarizeOrders — theo sale", () => {
+  const apply = (sku: string, qty: number) => line(km11, "g-km11-apply", sku, qty);
+  const summary = summarizeOrders([
+    entry(km11, { salesperson: "Nguyễn Văn An", lines: [apply("P-AYPR285-3", 2)] }),
+    entry(km11, { salesperson: "Nguyễn Văn An", status: "confirmed", lines: [apply("P-AYPT065-4", 4)] }),
+    entry(km11, { salesperson: " nguyen  van AN ", lines: [apply("P-AYPR287-3", 1)] }),
+    entry(km11, {
+      salesperson: "Trần Thị Bình",
+      lines: [apply("P-AYPR285-3", 15)],
+      gifts: [
+        gift(km11, "r-km11-tier", "g-km11-gift", "P-AYPM394-4", 1),
+        gift(km11, "r-km11-tier", "g-km11-gift", "P-AYPT563-4", 1),
+      ],
+    }),
+    entry(km11, { salesperson: "  ", lines: [apply("P-AYPR285-3", 6)] }),
+    entry(km11, { lines: [apply("P-AYPR287-3", 1)] }),
+  ]);
+
+  it("mỗi sale một dòng dù tên gõ khác nhau, thanh toán nhiều nhất đứng trước; đơn chưa ghi sale gom lại", () => {
+    // Bình chỉ 1 đơn nhưng thanh toán nhiều nhất nên đứng đầu; An 3 đơn (2 cách viết); 2 đơn chưa ghi sale.
+    expect(summary.sales).toEqual([
+      { name: "Trần Thị Bình", orderCount: 1, totalQty: 15, totalAmount: 21_236_730, giftValue: 2_830_000 },
+      {
+        name: "Nguyễn Văn An",
+        orderCount: 3,
+        totalQty: 7,
+        totalAmount: 2 * 1_415_782 + 4 * 2_130_545 + 1_415_782,
+        giftValue: 0,
+      },
+      { name: "", orderCount: 2, totalQty: 7, totalAmount: 7 * 1_415_782, giftValue: 0 },
+    ]);
+  });
+
+  it("tổng của bảng theo sale khớp với tổng chung", () => {
+    const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
+    expect(sum(summary.sales.map((s) => s.orderCount))).toBe(summary.orderCount);
+    expect(sum(summary.sales.map((s) => s.totalQty))).toBe(summary.totalQty);
+    expect(sum(summary.sales.map((s) => s.totalAmount))).toBe(summary.totalAmount);
+    expect(sum(summary.sales.map((s) => s.giftValue))).toBe(summary.giftValue);
+  });
+
+  it("không có đơn nào thì bảng theo sale rỗng", () => {
+    expect(summarizeOrders([]).sales).toEqual([]);
+  });
+
+  it("nhận bảng tên của toàn bộ đơn hàng: sale hiện đúng cách viết đó dù nhóm đơn đang cộng viết khác", () => {
+    const all = [
+      entry(km11, { salesperson: "Nguyễn Văn An" }),
+      entry(km11, { salesperson: "Nguyễn Văn An" }),
+      entry(km11, { salesperson: "NGUYEN VAN AN", status: "confirmed", lines: [apply("P-AYPR285-3", 1)] }),
+    ];
+    const confirmed = all.filter((e) => e.order.status === "confirmed");
+    const allNames = salesNames(all.map((e) => e.order));
+    expect(summarizeOrders(confirmed).sales.map((s) => s.name)).toEqual(["NGUYEN VAN AN"]);
+    expect(summarizeOrders(confirmed, allNames).sales.map((s) => s.name)).toEqual(["Nguyễn Văn An"]);
   });
 });

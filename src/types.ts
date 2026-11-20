@@ -140,7 +140,8 @@ export interface Order {
   programId: ID;
   customerName: string; // đại lý / nhà phân phối
   customerPhone: string;
-  salesperson: string;
+  salesperson: string; // tên sale phụ trách đơn
+  salespersonPhone: string; // số điện thoại của sale đó
   note: string;
   status: "draft" | "confirmed"; // nháp / đã chốt
   lines: OrderLine[];
@@ -251,8 +252,20 @@ export interface CalcResult {
 
 // ───────────────────────── Kho dữ liệu ─────────────────────────
 
+/**
+ * Vai trò của người dùng máy này. Quản lý: tạo / sửa chương trình, cập nhật tồn kho, quản trị dữ liệu, và tạo đơn.
+ * Sale: xem chương trình và tồn kho, tạo đơn.
+ */
+export type Role = "manager" | "sale";
+
 export interface Settings {
-  salesperson: string; // tên sale mặc định khi tạo đơn
+  /** Vai trò đang dùng trên máy này (chưa có đăng nhập nên vai trò là thiết lập của từng máy). */
+  role: Role;
+  /** Thông tin sale của máy này: tự ghi vào mỗi đơn mới. */
+  salesperson: string;
+  salespersonPhone: string;
+  /** Mã có tồn kho từ 1 đến số này được cảnh báo «sắp hết hàng». 0 = không cảnh báo sắp hết. */
+  lowStockThreshold: number;
 }
 
 /**

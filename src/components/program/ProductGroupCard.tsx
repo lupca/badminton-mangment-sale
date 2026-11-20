@@ -1,31 +1,15 @@
 // Một danh mục sản phẩm của chương trình: tên, các nút nhập / xuất, bảng sản phẩm.
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { Download, Plus, Trash2, Upload } from "lucide-react";
 import type { ProductGroup, ProductItem } from "../../types";
-import { exportTableXlsx, safeFileName } from "../../lib/exportXlsx";
-import { formatVND, matchesSearch, normalizeSku } from "../../lib/format";
+import { formatVND, normalizeSku } from "../../lib/format";
 import { mergeItems, removeGroup } from "../../lib/programOps";
-import {
-  Button,
-  Card,
-  Field,
-  SearchInput,
-  cx,
-  numCls,
-  tableCls,
-  tableWrapCls,
-  tdCls,
-  thCls,
-  toast,
-} from "../../ui";
+import { Button, Card, Field, cx, numCls, tableCls, tableWrapCls, tdCls, thCls, toast } from "../../ui";
 import ImportProductsDialog from "../ImportProductsDialog";
 import ProductItemDialog from "./ProductItemDialog";
-import { NameInput, hintCls } from "./fields";
+import { NameInput } from "./fields";
+import { ItemsBrowser, exportGroupExcel, useItemsView } from "./groupItems";
 import { replaceItem, updateGroup, type UpdateProgram } from "./programEdits";
-
-const SEARCH_OVER = 15; // danh mục nhiều hơn số này thì có ô tìm
-const COLLAPSE_OVER = 30; // danh mục nhiều hơn số này thì mặc định chỉ hiện các dòng đầu
-const COLLAPSED_ROWS = 15;
 
 /** Bảng sản phẩm chỉ có chữ. Được memo để gõ ở ô khác (vd tên danh mục) không phải vẽ lại hàng trăm dòng. */
 const ItemsTable = memo(function ItemsTable({
@@ -98,18 +82,9 @@ function ProductGroupCard({
   saveStock: (stock: Record<string, number>) => void;
 }) {
   const { id, items } = group;
-  const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState(false);
+  const view = useItemsView(items);
   const [importing, setImporting] = useState(false);
   const [editing, setEditing] = useState<ProductItem | "new" | null>(null);
-
-  const searchText = items.length > SEARCH_OVER ? query.trim() : "";
-  const visible = useMemo(() => {
-    if (searchText) {
-      return items.filter((item) => matchesSearch(`${item.sku} ${item.name} ${item.note ?? ""}`, searchText));
-    }
-    return expanded || items.length <= COLLAPSE_OVER ? items : items.slice(0, COLLAPSED_ROWS);
-  }, [items, searchText, expanded]);
 
   const importItems = (incoming: ProductItem[], mode: "append" | "replace", stock: Record<string, number>) => {
     update((p) =>
@@ -134,7 +109,7 @@ function ProductGroupCard({
   const saveItem = (next: ProductItem) => {
     if (editing === "new") {
       update((p) => updateGroup(p, id, (g) => ({ ...g, items: [...g.items, next] })));
-      setExpanded(true); // sản phẩm mới nằm cuối bảng — mở hết bảng để nhìn thấy
+      view.setExpanded(true); // sản phẩm mới nằm cuối bảng — mở hết bảng để nhìn thấy
       toast(`Đã thêm sản phẩm ${next.sku}.`);
     } else if (editing) {
       const { sku } = editing;
@@ -152,24 +127,6 @@ function ProductGroupCard({
     },
     [update, id],
   );
-
-  const exportExcel = async () => {
-    try {
-      await exportTableXlsx(safeFileName(`${programName} - ${group.name}`), [
-        {
-          name: group.name,
-          rows: [
-            ["Mã hàng", "Tên hàng", "Giá lẻ", "Giá sỉ", "Ghi chú"],
-            ...items.map((item) => [item.sku, item.name, item.retailPrice, item.wholesalePrice, item.note ?? ""]),
-          ],
-          colWidths: [18, 50, 14, 14, 30],
-        },
-      ]);
-      toast(`Đã xuất ${items.length} sản phẩm ra file Excel.`);
-    } catch {
-      toast("Không xuất được file Excel. Hãy thử lại.", "error");
-    }
-  };
 
   const deleteGroup = () => {
     const question = [`Xóa danh mục «${group.name}» cùng ${items.length} sản phẩm? Không khôi phục được.`];
@@ -211,7 +168,7 @@ function ProductGroupCard({
         <Button onClick={() => setEditing("new")}>
           <Plus className="h-4 w-4" /> Thêm sản phẩm
         </Button>
-        <Button onClick={exportExcel} disabled={items.length === 0}>
+        <Button onClick={() => exportGroupExcel(programName, group)} disabled={items.length === 0}>
           <Download className="h-4 w-4" /> Xuất Excel
         </Button>
         <Button variant="danger" className="sm:ml-auto" onClick={deleteGroup}>
@@ -226,35 +183,9 @@ function ProductGroupCard({
         </p>
       ) : (
         <div className="mt-4">
-          {items.length > SEARCH_OVER ? (
-            <SearchInput
-              value={query}
-              onChange={setQuery}
-              placeholder="Tìm mã hoặc tên hàng…"
-              className="mb-3 sm:max-w-sm"
-            />
-          ) : null}
-
-          {visible.length > 0 ? <ItemsTable items={visible} onEdit={setEditing} onDelete={deleteItem} /> : null}
-
-          {searchText ? (
-            <p className={hintCls}>
-              {visible.length > 0
-                ? `Tìm thấy ${visible.length} / ${items.length} sản phẩm.`
-                : `Không có sản phẩm nào khớp «${searchText}».`}
-            </p>
-          ) : items.length > COLLAPSE_OVER ? (
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-gray-600">
-              {expanded ? null : (
-                <span>
-                  Đang hiện {COLLAPSED_ROWS} / {items.length} sản phẩm.
-                </span>
-              )}
-              <Button size="sm" onClick={() => setExpanded(!expanded)}>
-                {expanded ? "Thu gọn bảng" : `Hiện tất cả ${items.length} sản phẩm`}
-              </Button>
-            </div>
-          ) : null}
+          <ItemsBrowser items={items} view={view}>
+            <ItemsTable items={view.visible} onEdit={setEditing} onDelete={deleteItem} />
+          </ItemsBrowser>
         </div>
       )}
 

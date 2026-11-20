@@ -14,7 +14,10 @@ export function programTitle(program: Program): string {
   return program.name.trim() || "(Chưa đặt tên)";
 }
 
-/** Ba thao tác trên một chương trình: tạo đơn, nhân bản, xóa. */
+/**
+ * Ba thao tác trên một chương trình: tạo đơn, nhân bản, xóa. Tạo đơn thì vai trò nào cũng được; nhân bản và xóa là
+ * việc của người quản lý — màn hình chỉ vẽ hai nút đó khi `canManage(settings.role)`.
+ */
 export function useProgramActions() {
   const { createOrder, duplicateProgram, deleteProgram, orderCountOf } = useStore();
   return {

@@ -1,6 +1,6 @@
 // Tồn kho và danh sách sản phẩm gộp từ mọi chương trình (cho màn hình «Sản phẩm»). Các hàm đều thuần.
-import type { ProductGroup, ProductItem, Program, Stock } from "../types";
-import { matchesSearch, normalizeSku } from "./format";
+import type { CalcResult, ProductGroup, ProductItem, Program, Stock } from "../types";
+import { matchesSearch, normalizeSku, programStatus, todayISO } from "./format";
 
 /** Số lượng tồn hợp lệ: số hữu hạn (nhận cả 0 và số âm — kho bị âm), làm tròn 3 chữ số lẻ. Không phải số → null. */
 export function stockQty(value: unknown): number | null {
@@ -36,10 +36,25 @@ export function newerStock(current: Stock, incoming: Stock): Stock {
   return time(incoming) > time(current) ? incoming : current;
 }
 
+// ───────────────────────── Mức tồn kho ─────────────────────────
+
+/** Chưa có số liệu / hết hàng (≤ 0) / sắp hết (từ 1 đến ngưỡng cảnh báo) / còn hàng (trên ngưỡng). */
+export type StockLevel = "unknown" | "out" | "low" | "in";
+
+/** Mức tồn kho của một mã. `lowThreshold` = ngưỡng cảnh báo sắp hết (0 = không cảnh báo sắp hết). */
+export function stockLevel(qty: number | null, lowThreshold: number): StockLevel {
+  if (qty == null) return "unknown";
+  if (qty <= 0) return "out";
+  return qty <= lowThreshold ? "low" : "in";
+}
+
 // ───────────────────────── Danh sách sản phẩm theo danh mục ─────────────────────────
 
-/** Lọc theo tồn kho: tất cả / còn hàng (> 0) / hết hàng (≤ 0) / chưa có số liệu. */
-export type StockFilter = "all" | "in" | "out" | "unknown";
+/**
+ * Lọc theo tồn kho: tất cả / còn hàng (> 0, gồm cả mã sắp hết) / sắp hết / hết hàng / chưa có số liệu /
+ * cần chú ý (sắp hết + hết hàng).
+ */
+export type StockFilter = "all" | "in" | "low" | "out" | "unknown" | "attention";
 
 export interface ProductFilter {
   /** "" = mọi chương trình. */
@@ -47,12 +62,15 @@ export interface ProductFilter {
   /** Tìm theo mã hoặc tên hàng. */
   search: string;
   stock: StockFilter;
+  /** Ngưỡng cảnh báo sắp hết hàng (settings.lowStockThreshold). */
+  lowThreshold: number;
 }
 
 export interface ProductRow {
   item: ProductItem;
   /** null = chưa có số liệu tồn kho của mã này. */
   stock: number | null;
+  level: StockLevel;
 }
 
 export interface ProductGroupRows {
@@ -65,9 +83,17 @@ export interface ProgramProducts {
   groups: ProductGroupRows[];
 }
 
-function stockStatus(stock: number | null): Exclude<StockFilter, "all"> {
-  if (stock == null) return "unknown";
-  return stock > 0 ? "in" : "out";
+function matchesStockFilter(level: StockLevel, filter: StockFilter): boolean {
+  switch (filter) {
+    case "all":
+      return true;
+    case "in":
+      return level === "in" || level === "low";
+    case "attention":
+      return level === "low" || level === "out";
+    default:
+      return level === filter;
+  }
 }
 
 /**
@@ -83,9 +109,10 @@ export function listProducts(programs: Program[], stock: Stock, filter: ProductF
       const rows: ProductRow[] = [];
       for (const item of group.items) {
         const qty = stockOf(stock, item.sku);
-        if (filter.stock !== "all" && stockStatus(qty) !== filter.stock) continue;
+        const level = stockLevel(qty, filter.lowThreshold);
+        if (!matchesStockFilter(level, filter.stock)) continue;
         if (!matchesSearch(`${item.sku} ${item.name}`, filter.search)) continue;
-        rows.push({ item, stock: qty });
+        rows.push({ item, stock: qty, level });
       }
       if (rows.length > 0) groups.push({ group, rows });
     }
@@ -97,24 +124,27 @@ export function listProducts(programs: Program[], stock: Stock, filter: ProductF
 export interface ProductSummary {
   /** Số mã hàng khác nhau: một mã nằm ở nhiều danh mục chỉ đếm một lần. */
   skus: number;
+  /** Số mã còn hàng (> 0), gồm cả các mã sắp hết. */
   inStock: number;
+  /** Trong số mã còn hàng, số mã sắp hết. */
+  low: number;
   outOfStock: number;
   unknown: number;
 }
 
 export function summarizeProducts(list: ProgramProducts[]): ProductSummary {
-  const seen = new Map<string, number | null>();
+  const seen = new Map<string, StockLevel>();
   for (const { groups } of list) {
     for (const { rows } of groups) {
-      for (const row of rows) seen.set(normalizeSku(row.item.sku), row.stock);
+      for (const row of rows) seen.set(normalizeSku(row.item.sku), row.level);
     }
   }
-  const summary: ProductSummary = { skus: seen.size, inStock: 0, outOfStock: 0, unknown: 0 };
-  for (const qty of seen.values()) {
-    const status = stockStatus(qty);
-    if (status === "in") summary.inStock++;
-    else if (status === "out") summary.outOfStock++;
-    else summary.unknown++;
+  const summary: ProductSummary = { skus: seen.size, inStock: 0, low: 0, outOfStock: 0, unknown: 0 };
+  for (const level of seen.values()) {
+    if (level === "unknown") summary.unknown++;
+    else if (level === "out") summary.outOfStock++;
+    else summary.inStock++;
+    if (level === "low") summary.low++;
   }
   return summary;
 }
@@ -137,4 +167,79 @@ export function productNames(programs: Program[]): Map<string, string> {
 export function unlistedStockCount(programs: Program[], stock: Stock): number {
   const listed = productNames(programs);
   return Object.keys(stock.bySku).filter((sku) => !listed.has(sku)).length;
+}
+
+// ───────────────────────── Cảnh báo tồn kho ─────────────────────────
+
+export interface StockAlert {
+  sku: string;
+  name: string;
+  stock: number;
+  level: "out" | "low";
+  /** Chương trình và danh mục nơi mã này xuất hiện đầu tiên. */
+  programId: string;
+  programName: string;
+  groupName: string;
+}
+
+/**
+ * Các mã sale cần chú ý: hết hàng hoặc sắp hết, thuộc các chương trình chưa kết thúc (hàng của chương trình đã kết thúc
+ * không còn bán nên không báo). Mỗi mã một dòng; hết hàng đứng trước, rồi tới tồn ít nhất.
+ */
+export function stockAlerts(programs: Program[], stock: Stock, lowThreshold: number, today: string = todayISO()): StockAlert[] {
+  const alerts = new Map<string, StockAlert>();
+  for (const program of programs) {
+    if (programStatus(program, today) === "ended") continue;
+    for (const group of program.groups) {
+      for (const item of group.items) {
+        const sku = normalizeSku(item.sku);
+        if (alerts.has(sku)) continue;
+        const qty = stockOf(stock, sku);
+        const level = stockLevel(qty, lowThreshold);
+        if (qty == null || (level !== "out" && level !== "low")) continue;
+        alerts.set(sku, {
+          sku,
+          name: item.name,
+          stock: qty,
+          level,
+          programId: program.id,
+          programName: program.name,
+          groupName: group.name,
+        });
+      }
+    }
+  }
+  return [...alerts.values()].sort((a, b) => a.stock - b.stock);
+}
+
+export interface OrderStockIssue {
+  sku: string;
+  name: string;
+  /** Tổng số lượng của mã này trong đơn: hàng mua cộng quà tặng. */
+  ordered: number;
+  stock: number;
+  /** out = kho đã hết; over = đặt nhiều hơn số đang tồn. */
+  level: "out" | "over";
+}
+
+/**
+ * Các mã trong đơn mà kho không đủ: đã hết hàng, hoặc số lượng trong đơn (hàng mua + quà, kể cả quà tự tặng) nhiều hơn
+ * số tồn. Mã chưa có số liệu tồn kho thì không báo. Thứ tự theo lần xuất hiện đầu tiên trong đơn.
+ */
+export function orderStockIssues(calc: Pick<CalcResult, "lines" | "gifts">, stock: Stock): OrderStockIssue[] {
+  const demand = new Map<string, { name: string; ordered: number }>();
+  for (const row of [...calc.lines, ...calc.gifts]) {
+    const sku = normalizeSku(row.sku);
+    if (!sku || row.qty <= 0) continue;
+    const entry = demand.get(sku);
+    if (entry) entry.ordered += row.qty;
+    else demand.set(sku, { name: row.name, ordered: row.qty });
+  }
+  const issues: OrderStockIssue[] = [];
+  for (const [sku, { name, ordered }] of demand) {
+    const qty = stockOf(stock, sku);
+    if (qty == null || ordered <= qty) continue;
+    issues.push({ sku, name, ordered, stock: qty, level: qty <= 0 ? "out" : "over" });
+  }
+  return issues;
 }

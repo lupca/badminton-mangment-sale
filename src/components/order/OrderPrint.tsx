@@ -1,6 +1,7 @@
 // Bản in của đơn hàng (A4 dọc). Chỉ hiện khi in; phần còn lại của trang ẩn bằng `print:hidden`.
 import { formatDate, formatNumber, formatPeriod, formatPercent, formatVND } from "../../lib/format";
 import { cx } from "../../ui";
+import { saleContact } from "./orderExport";
 import type { OrderDocument } from "./orderExport";
 
 const cell = "border border-gray-500 px-1.5 py-1 align-top";
@@ -22,7 +23,7 @@ export function OrderPrint({ order, program, calc, lines }: OrderDocument) {
           <b>SĐT:</b> {order.customerPhone}
         </p>
         <p className="col-span-2">
-          <b>Sale:</b> {order.salesperson}
+          <b>Sale:</b> {saleContact(order)}
         </p>
         <p className="col-span-2">
           <b>Chương trình:</b>{" "}

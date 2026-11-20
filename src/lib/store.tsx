@@ -17,6 +17,7 @@ import type {
   Stock,
 } from "../types";
 import { newId, normalizeSku } from "./format";
+import { canManage } from "./roles";
 import { applyStock, newerStock, stockQty } from "./stock";
 
 const STORAGE_KEY = "kmdb.v1";
@@ -174,6 +175,7 @@ function normalizeOrder(raw: any): Order {
     customerName: str(raw?.customerName),
     customerPhone: str(raw?.customerPhone),
     salesperson: str(raw?.salesperson),
+    salespersonPhone: str(raw?.salespersonPhone),
     note: str(raw?.note),
     status: raw?.status === "confirmed" ? "confirmed" : "draft",
     lines: list(raw?.lines)
@@ -187,6 +189,43 @@ function normalizeOrder(raw: any): Order {
   };
   if (Array.isArray(raw?.frozenRules)) order.frozenRules = normalizeRules(raw.frozenRules);
   return order;
+}
+
+export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
+
+/**
+ * Thiết lập. Dữ liệu lưu trước khi có vai trò thì coi là của người quản lý (họ đang dùng đủ mọi chức năng);
+ * ngưỡng sắp hết hàng thiếu thì lấy mặc định, còn số 0 người dùng đã ghi (tắt cảnh báo) thì giữ.
+ */
+function normalizeSettings(raw: any): Settings {
+  return {
+    role: raw?.role === "sale" ? "sale" : "manager",
+    salesperson: str(raw?.salesperson),
+    salespersonPhone: str(raw?.salespersonPhone),
+    lowStockThreshold: raw?.lowStockThreshold == null ? DEFAULT_LOW_STOCK_THRESHOLD : qty(raw.lowStockThreshold),
+  };
+}
+
+/**
+ * Khi thay toàn bộ dữ liệu bằng một file hoặc bằng dữ liệu mẫu: vai trò và thông tin sale là của riêng người dùng
+ * máy này nên giữ nguyên (kể cả khi đang để trống — không lấy tên sale của người gửi file); phần còn lại theo dữ liệu mới.
+ */
+export function keepDeviceSettings(device: Settings, incoming: Settings): Settings {
+  return {
+    ...incoming,
+    role: device.role,
+    salesperson: device.salesperson,
+    salespersonPhone: device.salespersonPhone,
+  };
+}
+
+/**
+ * Khi thêm dữ liệu từ một file vào dữ liệu đang có: thiết lập của máy giữ nguyên, trừ ngưỡng «sắp hết hàng» trên máy
+ * sale. Ngưỡng đó do người quản lý đặt và sale không tự đổi được, nên máy sale lấy theo file vừa nhập (file của người
+ * quản lý gửi kèm chương trình và tồn kho); máy quản lý giữ số của mình, không lấy số cũ trong file sale gửi về.
+ */
+export function mergeDeviceSettings(device: Settings, incoming: Settings): Settings {
+  return canManage(device.role) ? device : { ...device, lowStockThreshold: incoming.lowStockThreshold };
 }
 
 /** Tồn kho: chỉ giữ các cặp (mã hàng, số). Dữ liệu lưu trước khi có tồn kho thì không có mục này → tồn kho rỗng. */
@@ -212,7 +251,7 @@ export function normalizeDB(raw: any): DB {
     version: 1,
     programs: records(raw.programs).map(normalizeProgram),
     orders: records(raw.orders).map(normalizeOrder),
-    settings: { salesperson: str(raw.settings?.salesperson) },
+    settings: normalizeSettings(raw.settings),
     stock: normalizeStock(raw.stock),
   };
 }
@@ -223,6 +262,12 @@ export function seedDB(): DB {
 
 // ───────────────────────── Đọc / ghi ─────────────────────────
 
+/** Máy mở ứng dụng lần đầu: dữ liệu mẫu, ở vai trò Sale (ít quyền nhất) — người quản lý tự đổi vai trò ở trang «Dữ liệu». */
+export function freshDB(): DB {
+  const db = seedDB();
+  return { ...db, settings: { ...db.settings, role: "sale" } };
+}
+
 function readStorage(): DB {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -230,7 +275,7 @@ function readStorage(): DB {
   } catch (error) {
     console.error("Không đọc được dữ liệu đã lưu, dùng dữ liệu mẫu.", error);
   }
-  return seedDB();
+  return freshDB();
 }
 
 function writeStorage(db: DB): boolean {
@@ -331,11 +376,12 @@ export interface Store {
   /** Toàn bộ dữ liệu dạng JSON (để sao lưu / gửi cho người khác). */
   exportJSON(): string;
   /**
-   * Nhập dữ liệu JSON. "replace" = thay toàn bộ; "merge" = thêm vào, bản ghi trùng id thì ghi đè, còn tồn kho
-   * thì lấy trọn bộ được cập nhật gần đây hơn. Ném Error (thông báo tiếng Việt) nếu file không hợp lệ.
+   * Nhập dữ liệu JSON. "replace" = thay toàn bộ (riêng vai trò và thông tin sale của máy này thì giữ);
+   * "merge" = thêm vào, bản ghi trùng id thì ghi đè, còn tồn kho thì lấy trọn bộ được cập nhật gần đây hơn.
+   * Ném Error (thông báo tiếng Việt) nếu file không hợp lệ.
    */
   importJSON(text: string, mode: "replace" | "merge"): { programs: number; orders: number };
-  /** Xóa hết và nạp lại dữ liệu mẫu. */
+  /** Xóa hết và nạp lại dữ liệu mẫu (giữ vai trò và thông tin sale của máy này). */
   resetToSeed(): void;
 }
 
@@ -448,6 +494,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const cur = dbRef.current;
         const order = normalizeOrder({
           salesperson: cur.settings.salesperson,
+          salespersonPhone: cur.settings.salespersonPhone,
           ...init,
           id: newId("o"),
           code: nextOrderCode(cur.orders),
@@ -511,7 +558,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const incoming = normalizeDB(parsed);
         const cur = dbRef.current;
         if (mode === "replace") {
-          commit(incoming);
+          commit({ ...incoming, settings: keepDeviceSettings(cur.settings, incoming.settings) });
         } else {
           const programIds = new Set(incoming.programs.map((p) => p.id));
           const orderIds = new Set(incoming.orders.map((o) => o.id));
@@ -520,12 +567,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             programs: [...incoming.programs, ...cur.programs.filter((p) => !programIds.has(p.id))],
             orders: [...incoming.orders, ...cur.orders.filter((o) => !orderIds.has(o.id))],
             stock: newerStock(cur.stock, incoming.stock),
+            settings: mergeDeviceSettings(cur.settings, incoming.settings),
           });
         }
         return { programs: incoming.programs.length, orders: incoming.orders.length };
       },
       resetToSeed() {
-        commit(seedDB());
+        const seed = seedDB();
+        commit({ ...seed, settings: keepDeviceSettings(dbRef.current.settings, seed.settings) });
       },
     };
   }, [db, saveOk, commit]);

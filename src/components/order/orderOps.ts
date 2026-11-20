@@ -10,6 +10,7 @@ import type {
   ProductItem,
   Program,
   Rule,
+  Settings,
   TierGiftRule,
 } from "../../types";
 import { giftUnitValue } from "../../lib/engine";
@@ -121,6 +122,23 @@ export function setGiftQty(order: Order, ruleId: ID, groupId: ID, item: PricedIt
   }
   if (!placed && qty > 0) gifts.push(fresh);
   return { ...order, gifts };
+}
+
+/** Thông tin sale của máy (phần của thiết lập được tự ghi vào mỗi đơn mới). */
+export type SaleProfile = Pick<Settings, "salesperson" | "salespersonPhone">;
+
+/**
+ * Thông tin sale trên đơn nên được mời lưu lại cho các đơn sau; null = không mời.
+ * Chỉ mời khi máy này chưa lưu tên sale, đơn còn là nháp và sale đã gõ tên vào đơn. Tên và số điện thoại được bỏ
+ * khoảng trắng thừa ở hai đầu.
+ */
+export function saleProfileToOffer(
+  settings: Pick<Settings, "salesperson">,
+  order: Pick<Order, "status" | "salesperson" | "salespersonPhone">,
+): SaleProfile | null {
+  const salesperson = order.salesperson.trim();
+  if (order.status !== "draft" || settings.salesperson.trim() !== "" || salesperson === "") return null;
+  return { salesperson, salespersonPhone: order.salespersonPhone.trim() };
 }
 
 export function removeGiftsAt(order: Order, indexes: number[]): Order {

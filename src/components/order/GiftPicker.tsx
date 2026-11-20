@@ -1,11 +1,14 @@
 // Bảng chọn quà của một quy tắc: mỗi mã một dòng, có ô số lượng.
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { formatNumber, matchesSearch } from "../../lib/format";
+import { formatNumber, matchesSearch, normalizeSku } from "../../lib/format";
+import { stockOf } from "../../lib/stock";
 import { Button, SearchInput, cx, numCls, tableCls } from "../../ui";
+import { StockTag } from "./StockTag";
 import { itemSearchText } from "./orderOps";
 import type { GiftRow } from "./orderOps";
 import { QtyCell, moveQtyFocus } from "./qtyCells";
+import type { OrderStockView } from "./stockView";
 
 /** Danh sách dài hơn số này thì có ô tìm và cuộn riêng, để khối kết quả không quá dài. */
 const LONG_LIST = 12;
@@ -16,11 +19,14 @@ const cellCls = "border-b border-gray-100 px-2 py-1.5 align-middle";
 export function GiftPicker({
   heading,
   rows,
+  stockView,
   disabled,
   onQty,
 }: {
   heading: ReactNode;
   rows: GiftRow[];
+  /** Tồn kho hiện cạnh từng quà; null = không hiện gì về tồn kho (chưa có số liệu, hoặc đơn đã chốt). */
+  stockView: OrderStockView | null;
   disabled: boolean;
   onQty: (row: GiftRow, qty: number) => void;
 }) {
@@ -57,7 +63,20 @@ export function GiftPicker({
                   <div className="text-xs text-gray-600">{row.name}</div>
                   {row.invalid ? <div className="text-xs font-medium text-red-700">Không còn được chọn</div> : null}
                 </td>
-                <td className={cx(cellCls, numCls)}>{formatNumber(row.unitValue)}</td>
+                <td className={cx(cellCls, numCls)}>
+                  {formatNumber(row.unitValue)}
+                  {/* Tồn kho nằm ngay dưới giá trị, sát ô số lượng. Quà không còn được chọn chỉ để bỏ đi nên không cần xem. */}
+                  {stockView && !row.invalid ? (
+                    <div className="text-xs">
+                      <StockTag
+                        qty={stockOf(stockView.stock, row.sku)}
+                        lowThreshold={stockView.lowThreshold}
+                        over={stockView.overSkus.has(normalizeSku(row.sku))}
+                        compact
+                      />
+                    </div>
+                  ) : null}
+                </td>
                 <td className={cx(cellCls, "text-center")}>
                   {row.invalid ? (
                     <div className="flex flex-col items-center gap-1">

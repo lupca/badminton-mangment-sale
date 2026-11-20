@@ -6,7 +6,7 @@ import type { BuyXGetYRule, DB, DiscountRule, Program, TierGiftRule } from "../t
 import { calculateOrder } from "./engine";
 import { normalizeSku } from "./format";
 import { ruleGroupIds, validateRule } from "./programOps";
-import { normalizeDB, seedDB } from "./store";
+import { freshDB, keepDeviceSettings, mergeDeviceSettings, normalizeDB, seedDB } from "./store";
 
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
@@ -43,7 +43,13 @@ describe("normalizeDB — input that is not a database", () => {
   });
 
   it("accepts a file that has at least one of the two lists", () => {
-    const empty: DB = { version: 1, programs: [], orders: [], settings: { salesperson: "" }, stock: { bySku: {}, updatedAt: null } };
+    const empty: DB = {
+      version: 1,
+      programs: [],
+      orders: [],
+      settings: { role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 },
+      stock: { bySku: {}, updatedAt: null },
+    };
     expect(normalizeDB({ programs: [] })).toEqual(empty);
     expect(normalizeDB({ orders: [] })).toEqual(empty);
     expect(normalizeDB({ programs: [], orders: "not a list" })).toEqual(empty);
@@ -51,9 +57,10 @@ describe("normalizeDB — input that is not a database", () => {
 
   it("always writes version 1 and a settings object, whatever the file says", () => {
     expect(normalizeDB({ version: 99, programs: [], settings: null })).toMatchObject({ version: 1, settings: { salesperson: "" } });
-    expect(normalizeDB({ programs: [], settings: "x" }).settings).toEqual({ salesperson: "" });
-    expect(normalizeDB({ programs: [], settings: { salesperson: 123 } }).settings).toEqual({ salesperson: "" });
-    expect(normalizeDB({ programs: [], settings: { salesperson: "Tùng", extra: true } }).settings).toEqual({ salesperson: "Tùng" });
+    const defaults = { role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 };
+    expect(normalizeDB({ programs: [], settings: "x" }).settings).toEqual(defaults);
+    expect(normalizeDB({ programs: [], settings: { salesperson: 123 } }).settings).toEqual(defaults);
+    expect(normalizeDB({ programs: [], settings: { salesperson: "Tùng", extra: true } }).settings).toEqual({ ...defaults, salesperson: "Tùng" });
   });
 
   it("drops list entries that are not objects instead of inventing empty records", () => {
@@ -496,6 +503,105 @@ describe("normalizeDB — reading back what the app itself saved", () => {
   });
 });
 
+// ───────────────────────── Settings: role, sale profile, low-stock threshold ─────────────────────────
+
+describe("normalizeDB — settings", () => {
+  const settingsOf = (settings: unknown) => normalizeDB({ programs: [], settings }).settings;
+
+  it("data saved before roles existed belongs to a manager: nobody loses the screens they were using", () => {
+    expect(settingsOf({ salesperson: "Tùng" })).toEqual({ role: "manager", salesperson: "Tùng", salespersonPhone: "", lowStockThreshold: 5 });
+    const old = JSON.parse(JSON.stringify(seedDB()));
+    old.settings = { salesperson: "" };
+    expect(normalizeDB(old).settings.role).toBe("manager");
+  });
+
+  it("keeps the sale role and the sale's phone; anything else as a role means manager", () => {
+    expect(settingsOf({ role: "sale", salesperson: "Lan", salespersonPhone: "0903 111 222" })).toMatchObject({
+      role: "sale",
+      salesperson: "Lan",
+      salespersonPhone: "0903 111 222",
+    });
+    for (const role of ["admin", "SALE", 1, null, {}]) expect(settingsOf({ role }).role).toBe("manager");
+    expect(settingsOf({ salespersonPhone: 903111222 }).salespersonPhone).toBe("");
+  });
+
+  it("low-stock threshold: missing → 5, a saved 0 stays 0 (warning off), text numbers are read, garbage → 0", () => {
+    expect(settingsOf({}).lowStockThreshold).toBe(5);
+    expect(settingsOf({ lowStockThreshold: null }).lowStockThreshold).toBe(5);
+    expect(settingsOf({ lowStockThreshold: 0 }).lowStockThreshold).toBe(0);
+    expect(settingsOf({ lowStockThreshold: 12 }).lowStockThreshold).toBe(12);
+    expect(settingsOf({ lowStockThreshold: "7" }).lowStockThreshold).toBe(7);
+    expect(settingsOf({ lowStockThreshold: 2.9 }).lowStockThreshold).toBe(2);
+    expect(settingsOf({ lowStockThreshold: -3 }).lowStockThreshold).toBe(0);
+    expect(settingsOf({ lowStockThreshold: "nhiều" }).lowStockThreshold).toBe(0);
+  });
+
+  it("settings survive a save / reload unchanged", () => {
+    const db = seedDB();
+    db.settings = { role: "sale", salesperson: "Lan", salespersonPhone: "0903111222", lowStockThreshold: 0 };
+    expect(reload(db).settings).toEqual(db.settings);
+  });
+});
+
+describe("keepDeviceSettings / freshDB", () => {
+  it("replacing the data keeps this device's role and sale profile, and takes the rest from the new data", () => {
+    const device = { role: "sale", salesperson: "Lan", salespersonPhone: "0903111222", lowStockThreshold: 5 } as const;
+    const incoming = { role: "manager", salesperson: "Tùng", salespersonPhone: "0988", lowStockThreshold: 12 } as const;
+    expect(keepDeviceSettings(device, incoming)).toEqual({ role: "sale", salesperson: "Lan", salespersonPhone: "0903111222", lowStockThreshold: 12 });
+  });
+
+  it("a device with no sale name does not pick up the name of whoever sent the file", () => {
+    const device = { role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 } as const;
+    const incoming = { role: "sale", salesperson: "Tùng", salespersonPhone: "0988", lowStockThreshold: 3 } as const;
+    expect(keepDeviceSettings(device, incoming)).toEqual({ role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 3 });
+  });
+
+  it("a browser that opens the app for the first time starts as a sale, with the sample data", () => {
+    const db = freshDB();
+    expect(db.settings).toEqual({ role: "sale", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 });
+    expect(db.programs).toHaveLength(3);
+    expect(seedDB().settings.role).toBe("manager");
+  });
+});
+
+describe("mergeDeviceSettings — adding a file to the data already on the device", () => {
+  const managerFile = { role: "manager", salesperson: "Sếp", salespersonPhone: "0900", lowStockThreshold: 12 } as const;
+
+  it("a sale's device follows the manager's low-stock threshold and keeps its own role and sale profile", () => {
+    const device = { role: "sale", salesperson: "Lan", salespersonPhone: "0903", lowStockThreshold: 5 } as const;
+    expect(mergeDeviceSettings(device, managerFile)).toEqual({
+      role: "sale",
+      salesperson: "Lan",
+      salespersonPhone: "0903",
+      lowStockThreshold: 12,
+    });
+  });
+
+  it("a sale's device also follows a threshold of 0 (the manager switched the «sắp hết» warning off)", () => {
+    const device = { role: "sale", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 } as const;
+    expect(mergeDeviceSettings(device, { ...managerFile, lowStockThreshold: 0 }).lowStockThreshold).toBe(0);
+  });
+
+  it("a manager's device keeps everything: a file sent back by a sale must not undo the manager's threshold", () => {
+    const device = { role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 12 } as const;
+    const saleFile = { role: "sale", salesperson: "Lan", salespersonPhone: "0903", lowStockThreshold: 5 } as const;
+    expect(mergeDeviceSettings(device, saleFile)).toBe(device);
+  });
+});
+
+describe("normalizeDB — the salesperson on an order", () => {
+  it("keeps the name and the phone; an order saved before the phone existed gets an empty one", () => {
+    const [withPhone, old] = normalizeDB({
+      orders: [
+        { id: "o-1", salesperson: "Lan", salespersonPhone: "0903 111 222" },
+        { id: "o-2", salesperson: "Tùng" },
+      ],
+    }).orders;
+    expect(withPhone).toMatchObject({ salesperson: "Lan", salespersonPhone: "0903 111 222" });
+    expect(old).toMatchObject({ salesperson: "Tùng", salespersonPhone: "" });
+  });
+});
+
 // ───────────────────────── Stock ─────────────────────────
 
 describe("normalizeDB — stock", () => {
@@ -554,11 +660,15 @@ describe("seedDB", () => {
     expect(db.version).toBe(1);
     expect(db.programs.map((p) => p.id)).toEqual(["seed-km-2026-11", "seed-bang-gia-sau-ck", "seed-km-2026-he"]);
     expect(db.orders).toEqual([]);
-    expect(db.settings).toEqual({ salesperson: "" });
+    expect(db.settings).toEqual({ role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 });
   });
 
   it("is exactly the content of seed.json plus an empty stock: normalisation loses nothing", () => {
-    expect(seedDB()).toEqual({ ...seed, stock: { bySku: {}, updatedAt: null } });
+    expect(seedDB()).toEqual({
+      ...seed,
+      settings: { role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 },
+      stock: { bySku: {}, updatedAt: null },
+    });
   });
 
   it("returns a fresh copy every time", () => {

@@ -1,11 +1,15 @@
-// Trang "Dữ liệu": sao lưu ra file, nhập từ file, thiết lập, khôi phục dữ liệu mẫu.
-import { useRef, useState, type ChangeEvent } from "react";
+// Trang "Dữ liệu": vai trò trên máy này, thông tin sale, ngưỡng cảnh báo tồn kho, sao lưu ra file, nhập từ file,
+// khôi phục dữ liệu mẫu.
+import { useId, useRef, useState, type ChangeEvent } from "react";
 import { Download, Upload } from "lucide-react";
 import { todayISO } from "../lib/format";
+import { ROLE_HINT, ROLE_LABEL, canManage } from "../lib/roles";
 import { newerStock } from "../lib/stock";
-import { normalizeDB, useStore } from "../lib/store";
-import type { DB } from "../types";
-import { Button, Card, Field, Input, Notice, PageHeader, toast } from "../ui";
+import { mergeDeviceSettings, normalizeDB, useStore } from "../lib/store";
+import type { DB, Role } from "../types";
+import { Button, Card, Field, Input, Notice, PageHeader, QtyInput, toast } from "../ui";
+
+const ROLES: Role[] = ["manager", "sale"];
 
 type ImportMode = "merge" | "replace";
 
@@ -47,7 +51,7 @@ function countSameId(incoming: Array<{ id: string }>, existing: Array<{ id: stri
 
 /** File hợp lệ đã chọn: cho biết trong file có gì và hai cách nhập. */
 function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: ImportMode) => void }) {
-  const { programs, orders, stock } = useStore();
+  const { programs, orders, stock, settings } = useStore();
   const incoming = file.data;
   const sameProgramCount = countSameId(incoming.programs, programs);
   const sameOrderCount = countSameId(incoming.orders, orders);
@@ -55,6 +59,9 @@ function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: 
   const incomingStockCount = Object.keys(incoming.stock.bySku).length;
   // Khi thêm vào dữ liệu hiện có, tồn kho không trộn từng mã: bộ nào được cập nhật gần đây hơn thì giữ trọn bộ đó.
   const fileStockWins = newerStock(stock, incoming.stock) === incoming.stock;
+  // Máy sale lấy ngưỡng «sắp hết hàng» theo file (xem mergeDeviceSettings); chỉ nói ra khi ngưỡng thật sự đổi.
+  const followsFileThreshold =
+    mergeDeviceSettings(settings, incoming.settings).lowStockThreshold !== settings.lowStockThreshold;
 
   if (incoming.programs.length === 0 && incoming.orders.length === 0) {
     return (
@@ -89,6 +96,14 @@ function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: 
               Sẽ ghi đè {sameProgramCount} chương trình và {sameOrderCount} đơn hàng đang có.
             </p>
           ) : null}
+          {followsFileThreshold ? (
+            <p className="mt-1 text-sm text-gray-600">
+              Ngưỡng báo «sắp hết hàng» sẽ theo file:{" "}
+              {incoming.settings.lowStockThreshold > 0
+                ? `tồn từ ${incoming.settings.lowStockThreshold} trở xuống.`
+                : "không báo «sắp hết», chỉ báo hết hàng."}
+            </p>
+          ) : null}
           {incomingStockCount > 0 && stockCount > 0 ? (
             fileStockWins ? (
               <p className="mt-1 text-sm text-amber-800">
@@ -108,7 +123,7 @@ function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: 
           <p className="mt-2 text-sm text-gray-600">
             Xóa hết {programs.length} chương trình và {orders.length} đơn hàng
             {stockCount > 0 ? ` cùng số liệu tồn kho của ${stockCount} mã hàng` : ""} đang có trên máy này, chỉ giữ dữ
-            liệu trong file.
+            liệu trong file. Vai trò và thông tin sale của máy này vẫn giữ nguyên.
           </p>
         </div>
       </div>
@@ -119,6 +134,20 @@ function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: 
 export default function SettingsPage() {
   const { programs, orders, stock, settings, updateSettings, exportJSON, importJSON, resetToSeed } = useStore();
   const stockCount = Object.keys(stock.bySku).length;
+  const manager = canManage(settings.role);
+  const roleName = useId();
+
+  const changeRole = (role: Role) => {
+    if (role === settings.role) return;
+    if (
+      role === "manager" &&
+      !window.confirm("Chuyển máy này sang vai trò Quản lý?\n\nVai trò này dành cho người tạo và sửa chương trình khuyến mãi.")
+    ) {
+      return;
+    }
+    updateSettings({ role });
+    toast(`Máy này đang dùng vai trò ${ROLE_LABEL[role]}`);
+  };
   const fileInput = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<PickedFile | null>(null);
 
@@ -144,15 +173,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Nhập đè và nạp dữ liệu mẫu thay cả phần thiết lập trong kho. Tên sale mặc định là của riêng người dùng máy này,
-  // nên nếu đã đặt thì giữ lại — tránh đơn mới bị ghi nhầm tên sale của người gửi file.
-  const keepingSalesperson = <T,>(change: () => T): T => {
-    const mine = settings.salesperson;
-    const result = change();
-    if (mine.trim()) updateSettings({ salesperson: mine });
-    return result;
-  };
-
   const runImport = (file: BackupFile, mode: ImportMode) => {
     if (mode === "replace") {
       const question =
@@ -164,7 +184,8 @@ export default function SettingsPage() {
       if (!window.confirm(question)) return;
     }
     try {
-      const result = keepingSalesperson(() => importJSON(file.text, mode));
+      // Nhập đè giữ nguyên vai trò và thông tin sale của máy này (kho dữ liệu lo việc đó).
+      const result = importJSON(file.text, mode);
       toast(
         mode === "merge"
           ? `Đã thêm ${result.programs} chương trình và ${result.orders} đơn hàng vào dữ liệu hiện có`
@@ -178,7 +199,7 @@ export default function SettingsPage() {
 
   const restoreSeed = () => {
     if (!window.confirm("Xóa toàn bộ chương trình, đơn hàng và số liệu tồn kho hiện có rồi nạp lại dữ liệu mẫu?")) return;
-    keepingSalesperson(resetToSeed);
+    resetToSeed();
     toast("Đã nạp lại dữ liệu mẫu");
   };
 
@@ -186,6 +207,82 @@ export default function SettingsPage() {
     <>
       <PageHeader title="Dữ liệu" />
       <div className="max-w-3xl space-y-4">
+        <Card title="Vai trò trên máy này">
+          <fieldset className="space-y-2.5">
+            <legend className="sr-only">Vai trò</legend>
+            {ROLES.map((role) => (
+              <label key={role} className="flex cursor-pointer items-start gap-2 text-sm text-gray-800">
+                <input
+                  type="radio"
+                  name={roleName}
+                  checked={settings.role === role}
+                  onChange={() => changeRole(role)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600"
+                />
+                <span>
+                  <span className="font-medium text-gray-900">{ROLE_LABEL[role]}</span>
+                  <span className="block text-gray-600">{ROLE_HINT[role]}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          <p className="mt-3 text-xs text-gray-500">
+            Hệ thống chưa có đăng nhập nên vai trò là thiết lập của từng máy: ai dùng máy này cũng đổi được. Muốn mỗi
+            người một tài khoản, quyền gắn với tài khoản, thì cần thêm máy chủ (backend).
+          </p>
+        </Card>
+
+        <Card title="Thông tin sale">
+          <p className="text-sm text-gray-700">Tự ghi vào mỗi đơn mới tạo trên máy này, và hiện trên đơn in / gửi đại lý.</p>
+          <div className="mt-3 grid max-w-xl gap-3 sm:grid-cols-2">
+            <Field label="Tên sale">
+              <Input
+                autoComplete="off"
+                value={settings.salesperson}
+                onChange={(e) => updateSettings({ salesperson: e.target.value })}
+                onBlur={(e) => {
+                  const trimmed = e.target.value.trim();
+                  if (trimmed !== e.target.value) updateSettings({ salesperson: trimmed });
+                }}
+              />
+            </Field>
+            <Field label="Số điện thoại sale">
+              <Input
+                type="tel"
+                inputMode="tel"
+                autoComplete="off"
+                value={settings.salespersonPhone}
+                onChange={(e) => updateSettings({ salespersonPhone: e.target.value })}
+                onBlur={(e) => {
+                  const trimmed = e.target.value.trim();
+                  if (trimmed !== e.target.value) updateSettings({ salespersonPhone: trimmed });
+                }}
+              />
+            </Field>
+          </div>
+        </Card>
+
+        {manager ? (
+          <Card title="Cảnh báo tồn kho">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-800">
+              <label htmlFor={`${roleName}-threshold`}>Báo «sắp hết hàng» khi tồn kho từ</label>
+              <span className="inline-block w-20 shrink-0">
+                <QtyInput
+                  id={`${roleName}-threshold`}
+                  value={settings.lowStockThreshold}
+                  onChange={(lowStockThreshold) => updateSettings({ lowStockThreshold })}
+                  max={9999}
+                />
+              </span>
+              <span>trở xuống.</span>
+            </div>
+            <p className="mt-1.5 text-xs text-gray-500">
+              Mã hết hàng (tồn 0) luôn được báo. Để trống hoặc 0 nếu không cần báo «sắp hết». Cảnh báo hiện ở màn hình
+              «Sản phẩm» và khi nhập đơn.
+            </p>
+          </Card>
+        ) : null}
+
         <Card title="Sao lưu dữ liệu">
           <p className="text-sm text-gray-700">
             Toàn bộ chương trình, đơn hàng và số liệu tồn kho được lưu ngay trong trình duyệt này, trên máy này, nên
@@ -225,28 +322,17 @@ export default function SettingsPage() {
           ) : null}
         </Card>
 
-        <Card title="Thiết lập">
-          <Field label="Tên sale mặc định" hint="Tự điền vào ô «Sale» mỗi khi tạo đơn mới." className="max-w-sm">
-            <Input
-              value={settings.salesperson}
-              onChange={(e) => updateSettings({ salesperson: e.target.value })}
-              onBlur={(e) => {
-                const trimmed = e.target.value.trim();
-                if (trimmed !== e.target.value) updateSettings({ salesperson: trimmed });
-              }}
-            />
-          </Field>
-        </Card>
-
-        <Card title="Khôi phục dữ liệu mẫu">
-          <p className="text-sm text-gray-700">
-            Xóa toàn bộ chương trình, đơn hàng và số liệu tồn kho hiện có, nạp lại các chương trình mẫu ban đầu. Nên
-            xuất file sao lưu trước khi làm.
-          </p>
-          <Button variant="danger" className="mt-3" onClick={restoreSeed}>
-            Khôi phục dữ liệu mẫu
-          </Button>
-        </Card>
+        {manager ? (
+          <Card title="Khôi phục dữ liệu mẫu">
+            <p className="text-sm text-gray-700">
+              Xóa toàn bộ chương trình, đơn hàng và số liệu tồn kho hiện có, nạp lại các chương trình mẫu ban đầu. Nên
+              xuất file sao lưu trước khi làm.
+            </p>
+            <Button variant="danger" className="mt-3" onClick={restoreSeed}>
+              Khôi phục dữ liệu mẫu
+            </Button>
+          </Card>
+        ) : null}
       </div>
     </>
   );

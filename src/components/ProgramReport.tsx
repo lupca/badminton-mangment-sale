@@ -1,4 +1,4 @@
-// Tab "Tổng hợp" của một chương trình: đã bán bao nhiêu, đã hứa tặng bao nhiêu quà, đại lý nào mua.
+// Tab "Tổng hợp" của một chương trình: đã bán bao nhiêu, đã hứa tặng bao nhiêu quà, đại lý nào mua, sale nào bán.
 import { useMemo, useState, type ReactNode } from "react";
 import { Download } from "lucide-react";
 import { calculateOrder } from "../lib/engine";
@@ -7,8 +7,8 @@ import { Link } from "../lib/router";
 import { useStore } from "../lib/store";
 import { Button, Card, EmptyState, Notice, cx, numCls, tableCls, tableWrapCls, tdCls, thCls, toast } from "../ui";
 import { exportProgramReport } from "./orders/excel";
-import { NO_DEALER_NAME } from "./orders/labels";
-import { summarizeOrders, type SkuTotal } from "./orders/totals";
+import { NO_DEALER_NAME, NO_SALES_NAME } from "./orders/labels";
+import { salesNames, summarizeOrders, type OrderTotals, type SalesTotal, type SkuTotal } from "./orders/totals";
 
 function Figure({
   label,
@@ -100,6 +100,51 @@ function SkuTable({
   );
 }
 
+/** Bảng cộng theo sale: Sale · Số đơn · SL · Thanh toán · Giá trị quà, dòng cuối là tổng. */
+function SalesTable({ rows, totals }: { rows: SalesTotal[]; totals: OrderTotals }) {
+  // Dòng «Chưa ghi sale» gom các đơn không ghi tên nên không tính là một sale.
+  const namedCount = rows.filter((row) => row.name).length;
+  return (
+    <Section title="Theo sale">
+      <div className={tableWrapCls}>
+        <table className={tableCls}>
+          <thead>
+            <tr>
+              <th className={thCls}>Sale</th>
+              <th className={cx(thCls, numCls)}>Số đơn</th>
+              <th className={cx(thCls, numCls)}>SL</th>
+              <th className={cx(thCls, numCls)}>Thanh toán</th>
+              <th className={cx(thCls, numCls)}>Giá trị quà</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.name}>
+                <td className={cx(tdCls, "min-w-36")}>
+                  {row.name || <span className="text-gray-400">{NO_SALES_NAME}</span>}
+                </td>
+                <td className={cx(tdCls, numCls)}>{formatNumber(row.orderCount)}</td>
+                <td className={cx(tdCls, numCls)}>{formatNumber(row.totalQty)}</td>
+                <td className={cx(tdCls, numCls)}>{formatVND(row.totalAmount)}</td>
+                <td className={cx(tdCls, numCls)}>{formatVND(row.giftValue)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="bg-gray-50 font-semibold">
+              <td className={tdCls}>Tổng: {formatNumber(namedCount)} sale</td>
+              <td className={cx(tdCls, numCls)}>{formatNumber(totals.orderCount)}</td>
+              <td className={cx(tdCls, numCls)}>{formatNumber(totals.totalQty)}</td>
+              <td className={cx(tdCls, numCls)}>{formatVND(totals.totalAmount)}</td>
+              <td className={cx(tdCls, numCls)}>{formatVND(totals.giftValue)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </Section>
+  );
+}
+
 export default function ProgramReport({ programId }: { programId: string }) {
   const { orders, getProgram } = useStore();
   const program = getProgram(programId);
@@ -112,9 +157,12 @@ export default function ProgramReport({ programId }: { programId: string }) {
         .map((order) => ({ order, calc: calculateOrder(program, order) })),
     [orders, program, programId],
   );
+  // Tên hiển thị của sale lấy từ toàn bộ đơn hàng: một sale hiện cùng một cách viết ở đây và ở ô lọc của danh sách đơn.
+  const salesName = useMemo(() => salesNames(orders), [orders]);
   const summary = useMemo(
-    () => summarizeOrders(includeDrafts ? entries : entries.filter((e) => e.order.status === "confirmed")),
-    [entries, includeDrafts],
+    () =>
+      summarizeOrders(includeDrafts ? entries : entries.filter((e) => e.order.status === "confirmed"), salesName),
+    [entries, includeDrafts, salesName],
   );
 
   if (entries.length === 0) {
@@ -217,6 +265,8 @@ export default function ProgramReport({ programId }: { programId: string }) {
                 totalQty={summary.giftQty}
                 totalValue={summary.giftValue}
               />
+              {/* Bảng theo sale ngắn (mỗi sale một dòng) nên đứng trước bảng theo đại lý vốn dài hơn nhiều. */}
+              <SalesTable rows={summary.sales} totals={summary} />
               <Section title="Theo đại lý">
                 <div className={tableWrapCls}>
                   <table className={tableCls}>

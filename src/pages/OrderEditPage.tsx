@@ -7,7 +7,7 @@ import { exportTableXlsx, safeFileName } from "../lib/exportXlsx";
 import { copyText, formatDate, formatPeriod, programStatus } from "../lib/format";
 import { Link, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
-import { Badge, Button, EmptyState, Notice, PageHeader, buttonCls, toast } from "../ui";
+import { Badge, Button, EmptyState, Notice, PageHeader, buttonCls, cx, toast } from "../ui";
 import { MobileBar } from "../components/order/MobileBar";
 import { OrderInfoCard } from "../components/order/OrderInfoCard";
 import { OrderPrint } from "../components/order/OrderPrint";
@@ -15,7 +15,7 @@ import { OrphanLines } from "../components/order/OrphanLines";
 import { PasteDialog } from "../components/order/PasteDialog";
 import { ProductPicker } from "../components/order/ProductPicker";
 import { ResultPanel } from "../components/order/ResultPanel";
-import { ORDER_STATUS_LABEL, buildOrderSheet, buildOrderText } from "../components/order/orderExport";
+import { ORDER_STATUS_LABEL, buildOrderSheet, buildOrderText, contactLine } from "../components/order/orderExport";
 import type { OrderDocument } from "../components/order/orderExport";
 import {
   buildCatalog,
@@ -24,14 +24,18 @@ import {
   purchasableGroups,
   refreshPrices,
   removeGiftsAt,
+  saleProfileToOffer,
   setGiftQty,
   setLineQty,
   stalePriceSkus,
 } from "../components/order/orderOps";
 import type { PricedItem, SkuQtyMatch } from "../components/order/orderOps";
+import { orderStockView } from "../components/order/stockView";
+import type { StockWarning } from "../components/order/stockView";
 import { useStableCallback } from "../components/order/useStableCallback";
 
 const NO_RULES: Rule[] = [];
+const NO_STOCK_WARNINGS: StockWarning[] = [];
 
 export default function OrderEditPage({ orderId }: { orderId: string }) {
   const order = useStore().getOrder(orderId);
@@ -52,7 +56,7 @@ export default function OrderEditPage({ orderId }: { orderId: string }) {
 }
 
 function OrderEditor({ order }: { order: Order }) {
-  const { orders, getProgram, updateOrder, deleteOrder, duplicateOrder } = useStore();
+  const { orders, settings, stock, getProgram, updateOrder, deleteOrder, duplicateOrder, updateSettings } = useStore();
   const program = getProgram(order.programId) ?? null;
   const locked = order.status === "confirmed";
 
@@ -64,6 +68,12 @@ function OrderEditor({ order }: { order: Order }) {
   const strayLines = useMemo(() => orphanLines(calc.lines, catalog, groups), [calc.lines, catalog, groups]);
   // Đơn đã chốt giữ nguyên giá lúc chốt; đơn nháp thì báo khi danh mục đã đổi giá.
   const staleSkus = useMemo(() => (locked ? [] : stalePriceSkus(order, catalog)), [locked, order, catalog]);
+  // Tồn kho chỉ hiện trên đơn nháp và khi đã có số liệu; các mã kho không đủ chỉ được cảnh báo, không chặn chốt đơn.
+  const stockView = useMemo(
+    () => orderStockView(stock, settings.lowStockThreshold, order.status, calc),
+    [stock, settings.lowStockThreshold, order.status, calc],
+  );
+  const stockWarnings = stockView?.warnings ?? NO_STOCK_WARNINGS;
   const doc = useMemo<OrderDocument>(
     () => ({ order, program, calc, lines: linesInCatalogOrder(calc.lines, catalog) }),
     [order, program, calc, catalog],
@@ -92,6 +102,13 @@ function OrderEditor({ order }: { order: Order }) {
   const updatePrices = () => {
     update((current) => refreshPrices(current, catalog));
     toast("Đã cập nhật giá theo danh mục");
+  };
+  // Máy chưa lưu thông tin sale: mời lưu luôn tên + điện thoại vừa gõ trên đơn để các đơn sau tự điền.
+  const saleProfile = saleProfileToOffer(settings, order);
+  const saveSaleProfile = () => {
+    if (!saleProfile) return;
+    updateSettings(saleProfile);
+    toast(`Đã lưu, đơn mới sẽ tự điền sale: ${contactLine(saleProfile.salesperson, saleProfile.salespersonPhone)}`);
   };
 
   const [pasting, setPasting] = useState(false);
@@ -180,7 +197,8 @@ function OrderEditor({ order }: { order: Order }) {
 
   return (
     <>
-      <div className="pb-28 lg:pb-0 print:hidden">
+      {/* Lề đáy chừa chỗ cho thanh tổng tiền trên điện thoại; thanh cao thêm một dòng khi có cảnh báo tồn kho. */}
+      <div className={cx("lg:pb-0 print:hidden", stockWarnings.length > 0 ? "pb-32" : "pb-28")}>
         <PageHeader
           backTo="/orders"
           title={
@@ -247,6 +265,7 @@ function OrderEditor({ order }: { order: Order }) {
               customerNames={customerNames}
               disabled={locked}
               onChange={(patch) => update((current) => ({ ...current, ...patch }))}
+              onSaveSaleProfile={saleProfile ? saveSaleProfile : undefined}
             />
             {staleSkus.length > 0 ? (
               <Notice tone="warning" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -266,6 +285,7 @@ function OrderEditor({ order }: { order: Order }) {
                 key={order.status}
                 groups={groups}
                 lines={calc.lines}
+                stockView={stockView}
                 disabled={locked}
                 emptyText={
                   program
@@ -287,6 +307,7 @@ function OrderEditor({ order }: { order: Order }) {
               groups={program?.groups ?? []}
               rules={rules}
               calc={calc}
+              stockView={stockView}
               disabled={locked}
               // Lặp lại nút chốt ngay dưới tổng tiền: sau khi kéo qua danh sách hàng dài thì thanh tiêu đề đã khuất.
               action={
@@ -304,7 +325,7 @@ function OrderEditor({ order }: { order: Order }) {
         </div>
       </div>
 
-      <MobileBar calc={calc} atResult={atResult} onToggle={jump} />
+      <MobileBar calc={calc} stockWarnings={stockWarnings} atResult={atResult} onToggle={jump} />
       <OrderPrint {...doc} />
       {pasting ? <PasteDialog lines={order.lines} groups={groups} onApply={applyPaste} onClose={closePaste} /> : null}
     </>

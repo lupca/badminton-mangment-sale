@@ -11,6 +11,24 @@ export interface OrderRow extends OrderCalc {
   program: Program | undefined;
 }
 
+// Chín cột phải vừa bề ngang màn hình máy tính (không phải kéo ngang mới thấy các nút thao tác), nên lề ô hẹp hơn
+// bảng thường, ngày tạo ghi nhỏ dưới mã đơn và số điện thoại ghi nhỏ dưới tên. Màn hình hẹp hơn thì bảng cuộn ngang
+// trong khung; trên điện thoại cột đại lý và cột sale thu hẹp lại để ba cột đầu — mã đơn, đại lý, sale — nằm gọn
+// trong màn hình.
+const ordersTableCls = cx(tableCls, "[&_td]:px-2 [&_th]:px-2");
+/** Dòng chữ nhỏ dưới nội dung chính của ô: ngày tạo, số điện thoại. Chỉ trên điện thoại mới được xuống dòng. */
+const subCls = "block text-xs text-gray-500 sm:whitespace-nowrap";
+
+/** Tên, bên dưới là số điện thoại. `blank` hiện thay cho tên khi chưa ghi tên. */
+function PersonCell({ name, phone, blank }: { name: string; phone: string; blank: string }) {
+  return (
+    <>
+      {name.trim() || <span className="text-gray-400">{blank}</span>}
+      {phone.trim() ? <span className={subCls}>{phone.trim()}</span> : null}
+    </>
+  );
+}
+
 /** Giá trị quà, bên dưới là số lượng quà. */
 function GiftCell({ qty, value }: { qty: number; value: number }) {
   if (qty === 0) return <span className="font-normal text-gray-400">—</span>;
@@ -32,20 +50,21 @@ function OrderTableRow({
   onDelete: (order: Order) => void;
 }) {
   const path = `/orders/${encodeURIComponent(order.id)}`;
-  const contact = [order.customerPhone, order.salesperson && `Sale: ${order.salesperson}`].filter(Boolean).join(" · ");
   return (
     <tr className="hover:bg-gray-50">
       <td className={cx(tdCls, "whitespace-nowrap")}>
         <Link to={path} className="font-medium text-blue-700 hover:underline">
           {order.code || "(chưa có mã)"}
         </Link>
+        <span className={subCls} title={formatDateTime(order.createdAt)}>
+          {formatDate(order.createdAt)}
+        </span>
       </td>
-      <td className={cx(tdCls, "whitespace-nowrap")} title={formatDateTime(order.createdAt)}>
-        {formatDate(order.createdAt)}
+      <td className={cx(tdCls, "min-w-40 max-sm:min-w-32")}>
+        <PersonCell name={order.customerName} phone={order.customerPhone} blank={NO_DEALER_NAME} />
       </td>
-      <td className={cx(tdCls, "min-w-40")}>
-        {order.customerName.trim() || <span className="text-gray-400">{NO_DEALER_NAME}</span>}
-        {contact ? <span className="block whitespace-nowrap text-xs text-gray-500">{contact}</span> : null}
+      <td className={cx(tdCls, "min-w-32 max-sm:min-w-25")}>
+        <PersonCell name={order.salesperson} phone={order.salespersonPhone} blank="—" />
       </td>
       <td className={cx(tdCls, "min-w-56")}>
         {program?.name ?? <span className="text-gray-400">{NO_PROGRAM_NAME}</span>}
@@ -95,12 +114,12 @@ export default function OrdersTable({
 }) {
   return (
     <div className={tableWrapCls}>
-      <table className={tableCls}>
+      <table className={ordersTableCls}>
         <thead>
           <tr>
             <th className={thCls}>Mã đơn</th>
-            <th className={thCls}>Ngày tạo</th>
             <th className={thCls}>Đại lý</th>
+            <th className={thCls}>Sale</th>
             <th className={thCls}>Chương trình</th>
             <th className={cx(thCls, numCls)}>SL</th>
             <th className={cx(thCls, numCls)}>Thanh toán</th>

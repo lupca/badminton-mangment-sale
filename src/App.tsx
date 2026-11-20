@@ -1,4 +1,6 @@
-import { Component, Suspense, lazy, type ReactNode } from "react";
+import { Component, Suspense, lazy, useMemo, type ReactNode } from "react";
+import { ROLE_LABEL } from "./lib/roles";
+import { stockAlerts } from "./lib/stock";
 import { StoreProvider, useStore } from "./lib/store";
 import { Link, useRoute } from "./lib/router";
 import { Button, Notice, Toaster, cx } from "./ui";
@@ -41,8 +43,13 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 function Shell() {
   const route = useRoute();
-  const { saveOk } = useStore();
+  const { saveOk, programs, stock, settings } = useStore();
   const [section = "programs", id] = route.parts;
+  // Có mã hết hàng / sắp hết trong các chương trình chưa kết thúc thì mục «Sản phẩm» có chấm đỏ để sale chú ý.
+  const hasStockAlert = useMemo(
+    () => stockAlerts(programs, stock, settings.lowStockThreshold).length > 0,
+    [programs, stock, settings.lowStockThreshold],
+  );
 
   let page: ReactNode;
   if (section === "programs") page = id ? <ProgramEditPage key={id} programId={id} /> : <ProgramsPage />;
@@ -58,23 +65,41 @@ function Shell() {
           <Link to="/programs" className="py-3 text-base font-semibold text-gray-900">
             Quản lý khuyến mãi
           </Link>
-          {/* Điện thoại: thu hẹp lề từng mục để bốn mục vừa một hàng; hẹp hơn nữa thì thanh mục cuộn ngang. */}
-          <nav className="flex max-w-full overflow-x-auto sm:gap-1">
+          {/* Điện thoại: thu hẹp lề từng mục để bốn mục vừa một hàng; hẹp hơn nữa thì thanh mục cuộn ngang.
+              Màn hình hẹp: thanh mục xuống hàng dưới, vai trò nằm cùng hàng với tên ứng dụng. */}
+          <nav className="flex max-w-full overflow-x-auto max-md:order-last sm:gap-1">
             {NAV.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cx(
-                  "shrink-0 whitespace-nowrap border-b-2 px-1.5 py-3 text-sm font-medium sm:px-3",
+                  "relative shrink-0 whitespace-nowrap border-b-2 px-1.5 py-3 text-sm font-medium sm:px-3",
                   section === item.section
                     ? "border-blue-600 text-blue-700"
                     : "border-transparent text-gray-600 hover:text-gray-900",
                 )}
               >
                 {item.label}
+                {item.section === "products" && hasStockAlert ? (
+                  <span
+                    role="img"
+                    aria-label="có cảnh báo tồn kho"
+                    title="Có mã hết hàng hoặc sắp hết"
+                    className="absolute right-0 top-2 h-2 w-2 rounded-full bg-red-500 sm:right-1"
+                  />
+                ) : null}
               </Link>
             ))}
           </nav>
+          <Link
+            to="/settings"
+            title="Vai trò trên máy này — bấm để đổi"
+            className="ml-auto rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+          >
+            {/* Màn hình rất hẹp chỉ hiện tên vai trò để còn nằm cùng hàng với tên ứng dụng. */}
+            <span className="max-[359px]:hidden">Vai trò: </span>
+            <span className="font-semibold text-gray-900">{ROLE_LABEL[settings.role]}</span>
+          </Link>
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-5 print:max-w-none print:p-0">

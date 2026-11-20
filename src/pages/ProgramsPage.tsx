@@ -1,9 +1,11 @@
 // Danh sách chương trình khuyến mãi — màn hình đầu tiên của ứng dụng.
+// Người quản lý tạo, nhân bản, xóa chương trình ở đây; vai trò khác (sale) chỉ mở xem và tạo đơn.
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import type { Program, ProgramStatus } from "../types";
 import { PROGRAM_STATUS_LABEL, formatNumber, formatPeriod, matchesSearch, programStatus } from "../lib/format";
 import { newGroup, programItemCount } from "../lib/programOps";
+import { canManage } from "../lib/roles";
 import { Link, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import {
@@ -20,25 +22,32 @@ import {
   thCls,
 } from "../ui";
 import ProgramStatusBadge from "../components/program/ProgramStatusBadge";
+import SaleRoleNote from "../components/program/SaleRoleNote";
 import { programPath, programTitle, useProgramActions } from "../components/program/programActions";
 
 // Thứ tự các dòng trong bảng: đang chạy → sắp diễn ra → không thời hạn → đã kết thúc.
 const ROW_ORDER: ProgramStatus[] = ["running", "upcoming", "open", "ended"];
 const FILTER_OPTIONS: ProgramStatus[] = ["running", "upcoming", "ended", "open"];
 
+/** Các nút trên một dòng: «Tạo đơn» cho mọi vai trò; «Nhân bản» và «Xóa» chỉ người quản lý mới có. */
 function RowActions({ program, size }: { program: Program; size: "sm" | "md" }) {
+  const { settings } = useStore();
   const actions = useProgramActions();
   return (
     <>
       <Button size={size} onClick={() => actions.createOrderFor(program)}>
         Tạo đơn
       </Button>
-      <Button size={size} onClick={() => actions.duplicate(program)}>
-        Nhân bản
-      </Button>
-      <Button size={size} variant="danger" onClick={() => actions.remove(program)}>
-        Xóa
-      </Button>
+      {canManage(settings.role) ? (
+        <>
+          <Button size={size} onClick={() => actions.duplicate(program)}>
+            Nhân bản
+          </Button>
+          <Button size={size} variant="danger" onClick={() => actions.remove(program)}>
+            Xóa
+          </Button>
+        </>
+      ) : null}
     </>
   );
 }
@@ -135,7 +144,8 @@ function ProgramsTable({ rows }: { rows: Array<{ program: Program; status: Progr
 }
 
 export default function ProgramsPage() {
-  const { programs, createProgram } = useStore();
+  const { programs, settings, createProgram } = useStore();
+  const manager = canManage(settings.role);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProgramStatus | "all">("all");
 
@@ -158,24 +168,35 @@ export default function ProgramsPage() {
       (statusFilter === "all" || status === statusFilter) && matchesSearch(`${program.name} ${program.brand}`, query),
   );
 
-  const createButton = (
+  // Chỉ người quản lý mới có nút tạo chương trình (ở tiêu đề trang và ở khung «chưa có chương trình»).
+  const createButton = manager ? (
     <Button variant="primary" onClick={create}>
       <Plus className="h-4 w-4" /> Tạo chương trình
     </Button>
-  );
+  ) : null;
 
   return (
     <>
       <PageHeader
         title="Chương trình khuyến mãi"
-        subtitle="Mỗi chương trình gồm danh mục sản phẩm và các quy tắc khuyến mãi dùng để tính đơn hàng."
+        subtitle={
+          manager ? (
+            "Mỗi chương trình gồm danh mục sản phẩm và các quy tắc khuyến mãi dùng để tính đơn hàng."
+          ) : (
+            <SaleRoleNote />
+          )
+        }
         actions={createButton}
       />
 
       {programs.length === 0 ? (
         <EmptyState
           title="Chưa có chương trình nào"
-          hint="Tạo chương trình đầu tiên, nhập danh mục sản phẩm từ Excel rồi khai báo quy tắc khuyến mãi."
+          hint={
+            manager
+              ? "Tạo chương trình đầu tiên, nhập danh mục sản phẩm từ Excel rồi khai báo quy tắc khuyến mãi."
+              : "Chương trình khuyến mãi do người quản lý tạo. Khi có chương trình, bạn mở ra xem và tạo đơn ở đây."
+          }
           action={createButton}
         />
       ) : (

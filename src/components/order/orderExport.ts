@@ -15,12 +15,23 @@ export interface OrderDocument {
   lines: CalcLine[];
 }
 
+/** Tên rồi tới số điện thoại của một người, bỏ phần để trống: "Tùng — 0912 345 678", "Tùng", "0912 345 678" hoặc "". */
+export function contactLine(name: string, phone: string): string {
+  return [name.trim(), phone.trim()].filter(Boolean).join(" — ");
+}
+
+/** Sale phụ trách đơn: tên rồi tới số điện thoại — dùng chung cho bản in, bản chép và file Excel. */
+export function saleContact(order: Pick<Order, "salesperson" | "salespersonPhone">): string {
+  return contactLine(order.salesperson, order.salespersonPhone);
+}
+
 /** Bản tóm tắt dạng chữ, dán được vào Zalo. */
 export function buildOrderText({ order, program, calc, lines }: OrderDocument): string {
   const out: string[] = [`ĐƠN HÀNG ${order.code}`, `Ngày: ${formatDate(order.createdAt)}`];
-  const customer = [order.customerName.trim(), order.customerPhone.trim()].filter(Boolean).join(" — ");
+  const customer = contactLine(order.customerName, order.customerPhone);
   if (customer) out.push(`Đại lý: ${customer}`);
-  if (order.salesperson.trim()) out.push(`Sale: ${order.salesperson.trim()}`);
+  const sale = saleContact(order);
+  if (sale) out.push(`Sale: ${sale}`);
   out.push(`Chương trình: ${program ? program.name : DELETED_PROGRAM}`);
 
   out.push("");
@@ -65,7 +76,7 @@ export function buildOrderSheet({ order, program, calc, lines }: OrderDocument):
     ["Thời gian", program ? formatPeriod(program.startDate, program.endDate) : ""],
     ["Đại lý", order.customerName],
     ["Số điện thoại", order.customerPhone],
-    ["Sale", order.salesperson],
+    ["Sale", saleContact(order)],
     ["Ghi chú", order.note],
     [],
     ["STT", "Mã hàng", "Tên hàng", "SL", "Giá lẻ", "Giá sỉ", "Đơn giá", "Thành tiền", "Danh mục"],
