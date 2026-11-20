@@ -1,6 +1,8 @@
 {
-  "name": "Li-Ning Badminton Wholesale & Promotion Management Portal",
-  "description": "Cổng quản lý và tối ưu hóa đơn hàng bán buôn, chương trình khuyến mại cầu lông Li-Ning Hè 2026.",
+  "name": "Quản lý chương trình khuyến mãi",
+  "description": "Hệ thống quản lý chương trình khuyến mãi và tính đơn hàng cho sale: nhập bảng giá từ Excel, tạo/sửa quy tắc khuyến mãi, tính đơn và quà tặng.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

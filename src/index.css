@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f9fafb;
+  color: #111827;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+
+/* Bản in: chữ đen trên nền trắng, lề vừa phải. Dùng lớp `print:hidden` để ẩn phần điều khiển. */
+@page {
+  margin: 12mm;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+}

@@ -1,0 +1,2395 @@
+{
+ "version": 1,
+ "programs": [
+  {
+   "id": "seed-km-2026-11",
+   "name": "KM tháng 11/2026 — Mua vợt tặng vợt theo doanh số",
+   "brand": "Li-Ning",
+   "startDate": "2026-11-05",
+   "endDate": "2026-11-30",
+   "note": "Theo Thông báo khuyến mại ngày 02/11/2026 (Công ty TNHH Quốc tế Hải Long). Áp dụng cho tất cả đại lý trên toàn quốc. Giá đã gồm VAT 8%. CTKM này không áp dụng đồng thời với CTKM khác. Chương trình có thể kết thúc sớm khi hết sản phẩm tặng kèm.",
+   "groups": [
+    {
+     "id": "g-km11-apply",
+     "name": "Danh mục hàng hóa áp dụng",
+     "items": [
+      {
+       "sku": "P-AYPR285-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Speed",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPR287-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Power",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPR291-5",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Control",
+       "retailPrice": 2287636,
+       "wholesalePrice": 1601345
+      },
+      {
+       "sku": "P-AYPU077-4",
+       "name": "Khung vợt cầu lông Turbo Charging Marshal-Black",
+       "retailPrice": 2012727,
+       "wholesalePrice": 1408909
+      },
+      {
+       "sku": "P-AYPT747-4",
+       "name": "Khung vợt cầu lông Tubo 50D",
+       "retailPrice": 1718182,
+       "wholesalePrice": 1202727
+      },
+      {
+       "sku": "P-AYPT065-4",
+       "name": "Khung vợt cầu lông Sơn BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT307-4",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Black",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT311-4",
+       "name": "Khung vợt cầu lông Axforce Cannon Pearl White",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT311-5",
+       "name": "Khung vợt cầu lông Axforce Cannon - 5U White",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT317-2",
+       "name": "Khung vợt cầu lông Axforce 9 Black Purple",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPT365-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U Pink",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT353-6",
+       "name": "Khung vợt cầu lông Bladex 73 Light-6U Flower Blue",
+       "retailPrice": 2110909,
+       "wholesalePrice": 1477636
+      },
+      {
+       "sku": "P-AYPT361-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U Yellow",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT349-4",
+       "name": "Khung vợt cầu lông Bladex Sonar - 4U Blue",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT377-3",
+       "name": "Khung vợt cầu lông Halbertec 2000 - 3U White Gray",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPU039-5",
+       "name": "Khung vợt cầu lông Axforce Cannon - 5U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT417-5",
+       "name": "Khung vợt cầu lông Aeronaut 6000I",
+       "retailPrice": 2356364,
+       "wholesalePrice": 1649455
+      },
+      {
+       "sku": "P-AYPT419-4",
+       "name": "Khung vợt cầu lông Tectonic 3 - 4U Green",
+       "retailPrice": 1296000,
+       "wholesalePrice": 907200
+      },
+      {
+       "sku": "P-AYPT475-4",
+       "name": "Khung vợt cầu lông HC 1000 White",
+       "retailPrice": 1030909,
+       "wholesalePrice": 721636
+      },
+      {
+       "sku": "P-AYPU051-5",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 5U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPU039-4",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU049-5",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 5U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPU041-5",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 5U",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU049-4",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 4U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT289-5",
+       "name": "Khung vợt cầu lông Axforce BigBang - 5U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT291-4",
+       "name": "Khung vợt cầu lông Axforce BigBang - 4U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT413-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000D",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPU105-4",
+       "name": "Khung vợt cầu lông Axforce 10 - 4U",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      }
+     ]
+    },
+    {
+     "id": "g-km11-gift",
+     "name": "Danh mục hàng tặng",
+     "items": [
+      {
+       "sku": "P-AYPT563-4",
+       "name": "Khung vợt cầu lông Tubo chaging 10B",
+       "retailPrice": 1380000,
+       "wholesalePrice": 966000
+      },
+      {
+       "sku": "P-AYPM394-4",
+       "name": "Khung vợt cầu lông 3D Calibar200",
+       "retailPrice": 1450000,
+       "wholesalePrice": 1015000
+      },
+      {
+       "sku": "P-AYPP032-4",
+       "name": "Khung vợt cầu lông TuBo 01D",
+       "retailPrice": 1350000,
+       "wholesalePrice": 945000
+      },
+      {
+       "sku": "P-AYPT749-4",
+       "name": "Khung vợt cầu lông Tubo 20D",
+       "retailPrice": 1400000,
+       "wholesalePrice": 980000
+      },
+      {
+       "sku": "P-AYPT399-4",
+       "name": "Khung vợt cầu lông 3D Calibar 001",
+       "retailPrice": 1200000,
+       "wholesalePrice": 840000
+      },
+      {
+       "sku": "P-AYPT455-4",
+       "name": "Khung vợt cầu lông Lightning 2000 Red",
+       "retailPrice": 1200000,
+       "wholesalePrice": 840000
+      },
+      {
+       "sku": "P-AYPT457-4",
+       "name": "Khung vợt cầu lông Lightning 2000 Blue",
+       "retailPrice": 1200000,
+       "wholesalePrice": 840000
+      },
+      {
+       "sku": "P-AYPT467-4",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Fire Red",
+       "retailPrice": 1070000,
+       "wholesalePrice": 749000
+      },
+      {
+       "sku": "P-AYPT471-4",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Pale Gold",
+       "retailPrice": 1070000,
+       "wholesalePrice": 749000
+      },
+      {
+       "sku": "P-AYPT477-4",
+       "name": "Khung vợt cầu lông HC 1000 Black",
+       "retailPrice": 1050000,
+       "wholesalePrice": 735000
+      }
+     ]
+    }
+   ],
+   "rules": [
+    {
+     "id": "r-km11-tier",
+     "type": "tier_gift",
+     "name": "Mua vợt tặng vợt theo doanh số",
+     "sourceGroupIds": [
+      "g-km11-apply"
+     ],
+     "giftGroupId": "g-km11-gift",
+     "giftPriceBasis": "retail",
+     "tiers": [
+      {
+       "id": "t-km11-1",
+       "min": 10000000,
+       "limitType": "amount",
+       "limitValue": 1200000,
+       "maxQty": 1,
+       "allowedSkus": [
+        "P-AYPT399-4",
+        "P-AYPT455-4",
+        "P-AYPT457-4",
+        "P-AYPT467-4",
+        "P-AYPT471-4",
+        "P-AYPT477-4"
+       ]
+      },
+      {
+       "id": "t-km11-2",
+       "min": 20000000,
+       "limitType": "amount",
+       "limitValue": 3190000,
+       "maxQty": null,
+       "allowedSkus": null
+      },
+      {
+       "id": "t-km11-3",
+       "min": 50000000,
+       "limitType": "amount",
+       "limitValue": 11610000,
+       "maxQty": null,
+       "allowedSkus": null
+      },
+      {
+       "id": "t-km11-4",
+       "min": 120000000,
+       "limitType": "amount",
+       "limitValue": 35050000,
+       "maxQty": null,
+       "allowedSkus": null
+      },
+      {
+       "id": "t-km11-5",
+       "min": 200000000,
+       "limitType": "amount",
+       "limitValue": 72400000,
+       "maxQty": null,
+       "allowedSkus": null
+      }
+     ]
+    }
+   ],
+   "createdAt": "2026-11-20T00:00:00.000Z",
+   "updatedAt": "2026-11-20T00:00:00.000Z"
+  },
+  {
+   "id": "seed-bang-gia-sau-ck",
+   "name": "Bảng giá sỉ sau chiết khấu (Li-Ning, Ashaway)",
+   "brand": "Li-Ning, Ashaway",
+   "startDate": null,
+   "endDate": null,
+   "note": "Nhập từ file “VỢT SAU CK”. Giá lẻ là giá sau VAT 8%; giá sỉ thường = giá lẻ × 70%, hàng Mục 2 = giá lẻ × 55–60%. Điều kiện bán kèm của hàng “Kèm Mục 2” (vd “1 kèm 3 tối đa kèm 5”) đang lưu ở cột ghi chú của từng mã — hệ thống chưa tự kiểm tra điều kiện này.",
+   "groups": [
+    {
+     "id": "g-bg-thuong",
+     "name": "Li-Ning — Hàng thường",
+     "items": [
+      {
+       "sku": "P-AYPH044-3",
+       "name": "Khung vợt cầu lông A880T",
+       "retailPrice": 785455,
+       "wholesalePrice": 549818
+      },
+      {
+       "sku": "P-AYPJ008-4A",
+       "name": "Khung vợt cầu lông 80TF",
+       "retailPrice": 1620000,
+       "wholesalePrice": 1134000
+      },
+      {
+       "sku": "P-AYPK226-2",
+       "name": "Khung vợt cầu lông A762",
+       "retailPrice": 785455,
+       "wholesalePrice": 549818
+      },
+      {
+       "sku": "P-AYPM444-3",
+       "name": "Vợt cầu lông Aeronaut 4000C",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPP028-1",
+       "name": "Khung vợt cầu lông AERONAUT 7000i Green",
+       "retailPrice": 4516364,
+       "wholesalePrice": 3161455
+      },
+      {
+       "sku": "P-AYPP028-5",
+       "name": "Khung vợt cầu lông AERONAUT 7000i Green",
+       "retailPrice": 4516364,
+       "wholesalePrice": 3161455
+      },
+      {
+       "sku": "P-AYPP032-4E",
+       "name": "Khung vợt cầu lông TuBo 01D",
+       "retailPrice": 1325455,
+       "wholesalePrice": 927818
+      },
+      {
+       "sku": "P-AYPP238-1",
+       "name": "Khung vợt cầu lông Aeronut 7000i Pink",
+       "retailPrice": 4516364,
+       "wholesalePrice": 3161455
+      },
+      {
+       "sku": "P-AYPR004-1",
+       "name": "Khung vợt cầu lông Aeronaut 9000i",
+       "retailPrice": 4516364,
+       "wholesalePrice": 3161455
+      },
+      {
+       "sku": "P-AYPR264-1",
+       "name": "Khung vợt cầu lông Bladex 800-3U",
+       "retailPrice": 4123636,
+       "wholesalePrice": 2886545
+      },
+      {
+       "sku": "P-AYPR285-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Speed",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPR287-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Power",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPR291-1",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Control",
+       "retailPrice": 2287636,
+       "wholesalePrice": 1601345
+      },
+      {
+       "sku": "P-AYPR291-5",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Control",
+       "retailPrice": 2287636,
+       "wholesalePrice": 1601345
+      },
+      {
+       "sku": "P-AYPS053-1",
+       "name": "Khung vợt cầu lông Bladex 700 - 3U",
+       "retailPrice": 4320000,
+       "wholesalePrice": 3024000
+      },
+      {
+       "sku": "P-AYPS053-2",
+       "name": "Khung vợt cầu lông Bladex 700 - 3U",
+       "retailPrice": 4320000,
+       "wholesalePrice": 3024000
+      },
+      {
+       "sku": "P-AYPS057-1",
+       "name": "Khung vợt cầu lông Bladex 700 -5U",
+       "retailPrice": 4320000,
+       "wholesalePrice": 3024000
+      },
+      {
+       "sku": "P-AYPS095-1",
+       "name": "Khung vợt cầu lông Axforce 9 Black orange/ blue",
+       "retailPrice": 834545,
+       "wholesalePrice": 584182
+      },
+      {
+       "sku": "P-AYPT059-4",
+       "name": "Khung vợt cầu lông Phong BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT061-4",
+       "name": "Khung vợt cầu lông Lâm BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT063-4",
+       "name": "Khung vợt cầu lông Hỏa BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT065-4",
+       "name": "Khung vợt cầu lông Sơn BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT285-5",
+       "name": "Khung vợt cầu lông Axforce 50 - 5U Blue",
+       "retailPrice": 2552727,
+       "wholesalePrice": 1786909
+      },
+      {
+       "sku": "P-AYPT289-4",
+       "name": "Khung vợt cầu lông Axforce BigBang - 4U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT289-5",
+       "name": "Khung vợt cầu lông Axforce BigBang - 5U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT291-4",
+       "name": "Khung vợt cầu lông Axforce BigBang - 4U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT293-3A",
+       "name": "Khung vợt cầu lông Axforce 20 - 3U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT293-4A",
+       "name": "Khung vợt cầu lông Axforce 20 - 4U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT297-5",
+       "name": "Khung vợt cầu lông Axforce 80 JR - 5U Black",
+       "retailPrice": 2356364,
+       "wholesalePrice": 1649455
+      },
+      {
+       "sku": "P-AYPT307-4",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Black",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT307-4E",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Black",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT311-4",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 4U Pearl White",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT311-4E",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 4U Pearl White",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT311-5",
+       "name": "Khung vợt cầu lông Axforce Cannon - 5U White",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT315-2",
+       "name": "Khung vợt cầu lông Axforce 9 Black Orange",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPT317-2",
+       "name": "Khung vợt cầu lông Axforce 9 Black Purple",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPT319-2",
+       "name": "Khung vợt cầu lông Axforce 9 Green",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPT321-2",
+       "name": "Khung vợt cầu lông Axforce 9 Carmine Rose",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPT341-5",
+       "name": "Khung vợt cầu lông Bladex 600 - 5U",
+       "retailPrice": 3681818,
+       "wholesalePrice": 2577273
+      },
+      {
+       "sku": "P-AYPT355-6",
+       "name": "Khung vợt cầu lông Bladex 73 Light - 6U Smoke Pink",
+       "retailPrice": 2160000,
+       "wholesalePrice": 1512000
+      },
+      {
+       "sku": "P-AYPT357-4E",
+       "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT377-4",
+       "name": "Khung vợt cầu lông Halbertec 2000 - 4U White Gray",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT381-4",
+       "name": "Khung vợt cầu lông 3D Calibar 900 - 4U Golden Gray",
+       "retailPrice": 4565455,
+       "wholesalePrice": 3195818
+      },
+      {
+       "sku": "P-AYPT385-4E",
+       "name": "Khung vợt cầu lông 3D Calibar 600",
+       "retailPrice": 3141818,
+       "wholesalePrice": 2199273
+      },
+      {
+       "sku": "P-AYPT391-5",
+       "name": "Khung vợt cầu lông 3D Calibar 600I",
+       "retailPrice": 3141818,
+       "wholesalePrice": 2199273
+      },
+      {
+       "sku": "P-AYPT391-5E",
+       "name": "Khung vợt cầu lông 3D Calibar 600I",
+       "retailPrice": 3141818,
+       "wholesalePrice": 2199273
+      },
+      {
+       "sku": "P-AYPT393-4",
+       "name": "Khung vợt cầu lông 3D Calibar 300",
+       "retailPrice": 1472727,
+       "wholesalePrice": 1030909
+      },
+      {
+       "sku": "P-AYPT397-3",
+       "name": "Vợt cầu lông Calibar 300C",
+       "retailPrice": 1472727,
+       "wholesalePrice": 1030909
+      },
+      {
+       "sku": "P-AYPT413-3",
+       "name": "Vợt cầu lông Aeronaut 6000D",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT415-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000C",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT417-5",
+       "name": "Khung vợt cầu lông Aeronaut 6000I",
+       "retailPrice": 2356364,
+       "wholesalePrice": 1649455
+      },
+      {
+       "sku": "P-AYPT417-5A",
+       "name": "Khung vợt cầu lông Aeronaut 6000I",
+       "retailPrice": 2356364,
+       "wholesalePrice": 1649455
+      },
+      {
+       "sku": "P-AYPT419-4",
+       "name": "Khung vợt cầu lông Tectonic 3 -4U Green",
+       "retailPrice": 1296000,
+       "wholesalePrice": 907200
+      },
+      {
+       "sku": "P-AYPT423-4",
+       "name": "Vợt cầu lông Tectonic 1 - 4U",
+       "retailPrice": 903273,
+       "wholesalePrice": 632291
+      },
+      {
+       "sku": "P-AYPT449-5",
+       "name": "Vợt cầu lông WindStorm 79H",
+       "retailPrice": 1521818,
+       "wholesalePrice": 1065273
+      },
+      {
+       "sku": "P-AYPT463-3",
+       "name": "Khung vợt cầu lông Lightning 3000 Gray Black",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT465-3",
+       "name": "Khung vợt cầu lông Lightning 3000 Green Purple",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT467-4E",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Fire Red",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT471-4E",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Pale Gold",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT747-4",
+       "name": "Khung vợt cầu lông Tubo 50D",
+       "retailPrice": 1718182,
+       "wholesalePrice": 1202727
+      },
+      {
+       "sku": "P-AYPU009-4",
+       "name": "Khung vợt cầu lông Bladex 500 - 4U Pearl White",
+       "retailPrice": 2601818,
+       "wholesalePrice": 1821273
+      },
+      {
+       "sku": "P-AYPU015-3",
+       "name": "Khung vợt cầu lông Axforce 700 - 3U Yellow",
+       "retailPrice": 4418182,
+       "wholesalePrice": 3092727
+      },
+      {
+       "sku": "P-AYPU039-4",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU039-4E",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU041-4",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 4U",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU041-4E",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 4U",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU073-5",
+       "name": "Vợt cầu lông Halbertec Motor - 5U",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPU075-5",
+       "name": "Vợt cầu lông Halbertec Motor - 5U",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPU077-4",
+       "name": "Khung vợt cầu lông Turbo Charging Marshal - 4U Black",
+       "retailPrice": 2012727,
+       "wholesalePrice": 1408909
+      },
+      {
+       "sku": "P-AYPU079-4",
+       "name": "Khung vợt cầu lông Turbo Charging Marshal -4U White",
+       "retailPrice": 2012727,
+       "wholesalePrice": 1408909
+      },
+      {
+       "sku": "P-AYPU105-4",
+       "name": "Khung vợt cầu lông Axforce 10- 4U",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPU105-4E",
+       "name": "Khung vợt cầu lông Axforce 10- 4U",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPU105-5",
+       "name": "Khung vợt cầu lông Axforce 10 -5U White",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPU109-4",
+       "name": "Khung vợt cầu lông Axforce10 -4U Blue",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPU109-4E",
+       "name": "Khung vợt cầu lông Axforce10 -4U Blue",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPU115-88C",
+       "name": "Khung vợt cầu lông Combo Halbertec 9000 Olympic",
+       "retailPrice": 12076364,
+       "wholesalePrice": 8453455
+      },
+      {
+       "sku": "P-CB11AYPT281-4",
+       "name": "Khung vợt cầu lông Axforce 60 - 4U Pearl White",
+       "retailPrice": 3868364,
+       "wholesalePrice": 2707855
+      },
+      {
+       "sku": "P-AYPW007-4",
+       "name": "Khung vợt cầu lông Assassin",
+       "retailPrice": 1325455,
+       "wholesalePrice": 927818
+      },
+      {
+       "sku": "P-AYPW009-4",
+       "name": "Khung vợt cầu lông Assassin",
+       "retailPrice": 1325455,
+       "wholesalePrice": 927818
+      }
+     ]
+    },
+    {
+     "id": "g-bg-kem",
+     "name": "Li-Ning — Hàng kèm Mục 2",
+     "items": [
+      {
+       "sku": "P-AYPT235-4V",
+       "name": "Khung vợt cầu lông Axforce 100 - 4U Black Golden",
+       "retailPrice": 5792727,
+       "wholesalePrice": 4054909,
+       "note": "1 Kèm 3 tối đa kèm 5"
+      },
+      {
+       "sku": "P-AYPT239-4V",
+       "name": "Khung vợt cầu lông Axforce 90 Loong Max - 4U Blue",
+       "retailPrice": 5105455,
+       "wholesalePrice": 3573818,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPT243-4V",
+       "name": "Vợt cầu lông Axforce 90 Tiger Max - 4U Red",
+       "retailPrice": 5105455,
+       "wholesalePrice": 3573818,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPU011-4V",
+       "name": "Khung vợt cầu lông AXFORCE 40 - 4U Black",
+       "retailPrice": 2209091,
+       "wholesalePrice": 1546364,
+       "note": "1 Kèm 2 tối đa kèm 5"
+      },
+      {
+       "sku": "P-AYPV001-4V",
+       "name": "Vợt cầu lông Axforce 90 Black - 4U",
+       "retailPrice": 5105455,
+       "wholesalePrice": 3573818,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPV007-4V",
+       "name": "Khung vợt cầu lông Bladex 500 - 4U",
+       "retailPrice": 2160000,
+       "wholesalePrice": 1512000,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPV039-4V",
+       "name": "Khung vợt cầu lông Axforce 100 Gen II",
+       "retailPrice": 5792727,
+       "wholesalePrice": 4634182,
+       "note": "1 Kèm 3 tối đa kèm 5"
+      },
+      {
+       "sku": "P-AYPT369-4V",
+       "name": "Khung vợt cầu lông Halbertec 8000 - 4U",
+       "retailPrice": 4614545,
+       "wholesalePrice": 3230182,
+       "note": "1 Kèm 3 tối đa kèm 5"
+      },
+      {
+       "sku": "P-AYPW015-4V",
+       "name": "Khung vợt cầu lông Halbertec 7000 - 4U Twilight Pủple",
+       "retailPrice": 4025455,
+       "wholesalePrice": 2817818,
+       "note": "1 Kèm 3 tối đa kèm 5"
+      },
+      {
+       "sku": "P-AYPW005-4V",
+       "name": "BLADEX 800 power",
+       "retailPrice": 4516364,
+       "wholesalePrice": 3161455,
+       "note": "1 Kèm 3 tối đa kèm 5"
+      },
+      {
+       "sku": "P-AYPW003-4V",
+       "name": "BLADEX 800 speed",
+       "retailPrice": 4516364,
+       "wholesalePrice": 3161455
+      },
+      {
+       "sku": "P-AYPT405-4V",
+       "name": "Khung vợt cầu lông aeronaut 9000c",
+       "retailPrice": 4123636,
+       "wholesalePrice": 2886545
+      },
+      {
+       "sku": "P-AYPT437-6V",
+       "name": "winstom 72 Black",
+       "retailPrice": 2405455,
+       "wholesalePrice": 1683818,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPT431-6V",
+       "name": "Winstom 72 Aquarius",
+       "retailPrice": 2405455,
+       "wholesalePrice": 1683818,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPT395-4V",
+       "name": "CALIBAR 300B",
+       "retailPrice": 1570909,
+       "wholesalePrice": 1099636,
+       "note": "1 kèm 2 tối đa kèm 5"
+      },
+      {
+       "sku": "P-AYPW043-40V",
+       "name": "Khung vợt cầu lông Axfocer Cannon White New",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPW045-40V",
+       "name": "Khung vợt cầu lông Axfocer Cannon Pink New",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPT445-6V",
+       "name": "Khung vợt cầu lông Windstorm 74 Pink",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273,
+       "note": "1 kèm 1"
+      },
+      {
+       "sku": "P-AYPT427-6V",
+       "name": "Khung vợt cầu lông windStorm 72s Neon Pink",
+       "retailPrice": 2405455,
+       "wholesalePrice": 1683818
+      },
+      {
+       "sku": "P-AYPT443-6V",
+       "name": "Khung vợt cầu lông windStorm 74",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      }
+     ]
+    },
+    {
+     "id": "g-bg-muc2",
+     "name": "Li-Ning — Mục 2",
+     "items": [
+      {
+       "sku": "P-AYPJ008-4",
+       "name": "Khung vợt cầu lông 80TF",
+       "retailPrice": 1620000,
+       "wholesalePrice": 972000
+      },
+      {
+       "sku": "P-AYPM394-4",
+       "name": "Khung vợt cầu lông 3D Calibar200",
+       "retailPrice": 1423636,
+       "wholesalePrice": 854182
+      },
+      {
+       "sku": "P-AYPP032-4",
+       "name": "Khung vợt cầu lông TuBo 01D",
+       "retailPrice": 1325455,
+       "wholesalePrice": 729000
+      },
+      {
+       "sku": "P-AYPP042-3",
+       "name": "Khung vợt cầu lông Aeronaut 4000B",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1112400
+      },
+      {
+       "sku": "P-AYPR289-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Max",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1213527
+      },
+      {
+       "sku": "P-AYPT293-3",
+       "name": "Khung vợt cầu lông Axforce 20 - 3U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 648000
+      },
+      {
+       "sku": "P-AYPT293-4",
+       "name": "Khung vợt cầu lông Axforce 20 - 4U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 706909
+      },
+      {
+       "sku": "P-AYPT299-5",
+       "name": "Khung vợt cầu lông Axforce JR - 5U Black",
+       "retailPrice": 1129091,
+       "wholesalePrice": 621000
+      },
+      {
+       "sku": "P-AYPT301-5",
+       "name": "Khung vợt cầu lông Axforce JR - 5U White",
+       "retailPrice": 1129091,
+       "wholesalePrice": 621000
+      },
+      {
+       "sku": "P-AYPT349-3",
+       "name": "Khung vợt cầu lông Bladex Sonar - 3U Blue",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1242000
+      },
+      {
+       "sku": "P-AYPT349-4",
+       "name": "Khung vợt cầu lông Bladex Sonar - 4U Blue",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1242000
+      },
+      {
+       "sku": "P-AYPT353-6",
+       "name": "Khung vợt cầu lông Bladex 73 Light - 6U Flower Blue",
+       "retailPrice": 2110909,
+       "wholesalePrice": 1161000
+      },
+      {
+       "sku": "P-AYPT357-3",
+       "name": "Khung vợt cầu lông Bladex 200 - 3U",
+       "retailPrice": 1227273,
+       "wholesalePrice": 675000
+      },
+      {
+       "sku": "P-AYPT357-4",
+       "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+       "retailPrice": 1227273,
+       "wholesalePrice": 736364
+      },
+      {
+       "sku": "P-AYPT361-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U Yellow",
+       "retailPrice": 883636,
+       "wholesalePrice": 530182
+      },
+      {
+       "sku": "P-AYPT361-5",
+       "name": "Khung vợt cầu lông Bladex Spiral - 5U Yellow",
+       "retailPrice": 883636,
+       "wholesalePrice": 486000
+      },
+      {
+       "sku": "P-AYPT365-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U Pink",
+       "retailPrice": 883636,
+       "wholesalePrice": 530182
+      },
+      {
+       "sku": "P-AYPT365-5",
+       "name": "Khung vợt cầu lông Bladex Spiral -5U Pink",
+       "retailPrice": 883636,
+       "wholesalePrice": 486000
+      },
+      {
+       "sku": "P-AYPT377-3",
+       "name": "Khung vợt cầu lông Halbertec 2000 - 3U White Gray",
+       "retailPrice": 1129091,
+       "wholesalePrice": 621000
+      },
+      {
+       "sku": "P-AYPT399-4",
+       "name": "Khung vợt cầu lông 3D Calibar 001",
+       "retailPrice": 1178182,
+       "wholesalePrice": 648000
+      },
+      {
+       "sku": "P-AYPT401-3",
+       "name": "Khung vợt cầu lông 3D Calibar 001C",
+       "retailPrice": 1178182,
+       "wholesalePrice": 706909
+      },
+      {
+       "sku": "P-AYPT411-3",
+       "name": "Vợt cầu lông Aeronaut 6000",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1354909
+      },
+      {
+       "sku": "P-AYPT455-4",
+       "name": "Khung vợt cầu lông Lightning 2000 Red",
+       "retailPrice": 1178182,
+       "wholesalePrice": 648000
+      },
+      {
+       "sku": "P-AYPT457-4",
+       "name": "Khung vợt cầu lông Lightning 2000 Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 648000
+      },
+      {
+       "sku": "P-AYPT467-4",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Fire Red",
+       "retailPrice": 1050545,
+       "wholesalePrice": 577800
+      },
+      {
+       "sku": "P-AYPT471-4",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Pale Gold",
+       "retailPrice": 1050545,
+       "wholesalePrice": 577800
+      },
+      {
+       "sku": "P-AYPT475-4",
+       "name": "Khung vợt cầu lông HC 1000 White",
+       "retailPrice": 1030909,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT477-4",
+       "name": "Khung vợt cầu lông HC 1000 Black",
+       "retailPrice": 1030909,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT563-4",
+       "name": "Khung vợt cầu lông Tubo chaging 10B",
+       "retailPrice": 1354909,
+       "wholesalePrice": 812945
+      },
+      {
+       "sku": "P-AYPT749-4",
+       "name": "Khung vợt cầu lông Tubo 20D",
+       "retailPrice": 1374545,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPU009-3",
+       "name": "Khung vợt cầu lông Bladex 500 - 3U Pearl White",
+       "retailPrice": 2601818,
+       "wholesalePrice": 1431000
+      },
+      {
+       "sku": "P-AYPU039-5",
+       "name": "Khung vợt cầu lông Axforce Cannon - 5U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 589091
+      },
+      {
+       "sku": "P-AYPU041-5",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 5U",
+       "retailPrice": 981818,
+       "wholesalePrice": 540000
+      },
+      {
+       "sku": "P-AYPU043-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U",
+       "retailPrice": 883636,
+       "wholesalePrice": 486000
+      },
+      {
+       "sku": "P-AYPU049-4",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 4U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1237091
+      },
+      {
+       "sku": "P-AYPU049-5",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 5U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1237091
+      },
+      {
+       "sku": "P-AYPU051-4",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 4U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1237091
+      },
+      {
+       "sku": "P-AYPU051-5",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 5U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1237091
+      },
+      {
+       "sku": "P-AYPU109-5",
+       "name": "Khung vợt cầu lông Axforce 10 - 5U Blue",
+       "retailPrice": 932727,
+       "wholesalePrice": 559636
+      }
+     ]
+    },
+    {
+     "id": "g-bg-ashaway",
+     "name": "Ashaway",
+     "items": [
+      {
+       "sku": "AV1F",
+       "name": "Khung vợt cầu lông Flexred",
+       "retailPrice": 1150000,
+       "wholesalePrice": 1150000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV1X",
+       "name": "Khung vợt cầu lông Active X-1",
+       "retailPrice": 1100000,
+       "wholesalePrice": 1100000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV200",
+       "name": "Khung vợt cầu lông Dynamic 200",
+       "retailPrice": 750000,
+       "wholesalePrice": 750000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV2400TN",
+       "name": "Vợt tennis",
+       "retailPrice": 350000,
+       "wholesalePrice": 350000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV303",
+       "name": "Khung vợt cầu lông Superme 303",
+       "retailPrice": 1000000,
+       "wholesalePrice": 1000000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV400M",
+       "name": "Khung vợt cầu lông Phantom 400 Matt",
+       "retailPrice": 790000,
+       "wholesalePrice": 790000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV5000",
+       "name": "Khung vợt cầu lông Phantom 5000",
+       "retailPrice": 1450000,
+       "wholesalePrice": 1450000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV500M",
+       "name": "Khung vợt cầu lông Phantom 500 matt",
+       "retailPrice": 790000,
+       "wholesalePrice": 790000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV606",
+       "name": "Khung vợt cầu lông Superme 606",
+       "retailPrice": 1040000,
+       "wholesalePrice": 1040000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV7000SQ",
+       "name": "Khung vợt cầu lông TMP 7000SQ",
+       "retailPrice": 920000,
+       "wholesalePrice": 920000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV80",
+       "name": "Khung vợt cầu lông Nano80",
+       "retailPrice": 800000,
+       "wholesalePrice": 800000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV8000SQ",
+       "name": "Khung vợt cầu lông TMP 8000SQ",
+       "retailPrice": 920000,
+       "wholesalePrice": 920000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV8100",
+       "name": "Khung vợt cầu lông TMP 8100",
+       "retailPrice": 1185000,
+       "wholesalePrice": 1185000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV9000SQ",
+       "name": "Khung vợt cầu lông TMP 9000SQ",
+       "retailPrice": 920000,
+       "wholesalePrice": 920000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV9100",
+       "name": "Khung vợt cầu lông Tm9100",
+       "retailPrice": 1150000,
+       "wholesalePrice": 1150000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AV99SQ",
+       "name": "Khung vợt cầu lông TMP 99SQ",
+       "retailPrice": 1450000,
+       "wholesalePrice": 1450000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AVAE600",
+       "name": "Khung vợt cầu lông Aerotec 600 Matt",
+       "retailPrice": 750000,
+       "wholesalePrice": 750000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AVAE700",
+       "name": "Khung vợt cầu lông Aerotec 700 Matt",
+       "retailPrice": 780000,
+       "wholesalePrice": 780000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AVH700",
+       "name": "Khung vợt cầu lông Hunrricane 700 Matt",
+       "retailPrice": 850000,
+       "wholesalePrice": 850000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AVPTX",
+       "name": "Khung vợt cầu lông Phantom X-Shadow",
+       "retailPrice": 1800000,
+       "wholesalePrice": 1800000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AVQ1",
+       "name": "Khung vợt cầu lông Quantum Q1",
+       "retailPrice": 950000,
+       "wholesalePrice": 950000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AVQ11",
+       "name": "Khung vợt cầu lông Quantum Q11",
+       "retailPrice": 950000,
+       "wholesalePrice": 950000,
+       "note": "Mua 1 Tặng 1"
+      },
+      {
+       "sku": "AVXT1200",
+       "name": "Khung vợt cầu lông XT1200",
+       "retailPrice": 1950000,
+       "wholesalePrice": 1950000,
+       "note": "Mua 1 Tặng 1"
+      }
+     ]
+    }
+   ],
+   "rules": [
+    {
+     "id": "r-bg-ashaway",
+     "type": "buy_x_get_y",
+     "name": "Ashaway — Mua 1 tặng 1",
+     "sourceGroupIds": [
+      "g-bg-ashaway"
+     ],
+     "buyQty": 1,
+     "getQty": 1,
+     "giftMode": "same",
+     "giftGroupId": null,
+     "giftText": ""
+    }
+   ],
+   "createdAt": "2026-11-20T00:00:00.000Z",
+   "updatedAt": "2026-11-20T00:00:00.000Z"
+  },
+  {
+   "id": "seed-km-2026-he",
+   "name": "Khuyến mại Hè 2026",
+   "brand": "Li-Ning",
+   "startDate": "2026-05-20",
+   "endDate": "2026-06-10",
+   "note": "Dữ liệu của hệ thống cũ, gộp lại thành một chương trình. Mỗi sản phẩm chỉ tham gia 01 nội dung khuyến mại, không áp dụng đồng thời với CTKM khác.",
+   "groups": [
+    {
+     "id": "g-he-dm01",
+     "name": "Danh mục 01 (vợt trung cấp)",
+     "items": [
+      {
+       "sku": "P-AYPT417-5",
+       "name": "Khung vợt cầu lông Aeronaut 6000I",
+       "retailPrice": 2356364,
+       "wholesalePrice": 1649455
+      },
+      {
+       "sku": "P-AYPU109-4",
+       "name": "Khung vợt cầu lông Axforce10 -4U Blue",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPP028-1",
+       "name": "Khung vợt cầu lông AERONAUT 7000i Green",
+       "retailPrice": 4516364,
+       "wholesalePrice": 3161455
+      },
+      {
+       "sku": "P-AYPU077-4",
+       "name": "Khung vợt cầu lông Turbo Charging Marshal - 4U Black",
+       "retailPrice": 2012727,
+       "wholesalePrice": 1408909
+      },
+      {
+       "sku": "P-AYPJ008-4",
+       "name": "Khung vợt cầu lông 80TF",
+       "retailPrice": 1620000,
+       "wholesalePrice": 1134000
+      },
+      {
+       "sku": "P-AYPM394-4",
+       "name": "Khung vợt cầu lông 3D Calibar200",
+       "retailPrice": 1423636,
+       "wholesalePrice": 996545
+      },
+      {
+       "sku": "P-AYPP032-4",
+       "name": "Khung vợt cầu lông TuBo 01D",
+       "retailPrice": 1325455,
+       "wholesalePrice": 927819
+      },
+      {
+       "sku": "P-AYPP042-3",
+       "name": "Khung vợt cầu lông Aeronaut 4000B",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPR289-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Max",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPT293-3",
+       "name": "Khung vợt cầu lông Axforce 20 - 3U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT299-5",
+       "name": "Khung vợt cầu lông Axforce JR - 5U Black",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT301-5",
+       "name": "Khung vợt cầu lông Axforce JR - 5U White",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT349-3",
+       "name": "Khung vợt cầu lông Bladex Sonar - 3U Blue",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT357-3",
+       "name": "Khung vợt cầu lông Bladex 200 - 3U",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT357-4",
+       "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT361-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U Yellow",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT361-5",
+       "name": "Khung vợt cầu lông Bladex Spiral - 5U Yellow",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT365-5",
+       "name": "Khung vợt cầu lông Bladex Spiral - 5U Pink",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT377-3",
+       "name": "Khung vợt cầu lông Halbertec 2000 - 3U White Gray",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT399-4",
+       "name": "Khung vợt cầu lông 3D Calibar 001",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT401-3",
+       "name": "Khung vợt cầu lông 3D Calibar 001C",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT411-3",
+       "name": "Vợt cầu lông Aeronaut 6000",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT455-4",
+       "name": "Khung vợt cầu lông Lightning 2000 Red",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT457-4",
+       "name": "Khung vợt cầu lông Lightning 2000 Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT467-4",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Fire Red",
+       "retailPrice": 1050545,
+       "wholesalePrice": 735382
+      },
+      {
+       "sku": "P-AYPT471-4",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Pale Gold",
+       "retailPrice": 1050545,
+       "wholesalePrice": 735382
+      },
+      {
+       "sku": "P-AYPT477-4",
+       "name": "Khung vợt cầu lông HC 1000 Black",
+       "retailPrice": 1030909,
+       "wholesalePrice": 721636
+      },
+      {
+       "sku": "P-AYPT481-4",
+       "name": "Khung vợt cầu lông HC 1200",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT563-4",
+       "name": "Khung vợt cầu lông Tubo chaging 10B",
+       "retailPrice": 1354909,
+       "wholesalePrice": 948436
+      },
+      {
+       "sku": "P-AYPT749-4",
+       "name": "Khung vợt cầu lông Tubo 20D",
+       "retailPrice": 1374545,
+       "wholesalePrice": 962182
+      },
+      {
+       "sku": "P-AYPU043-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPU049-4",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 4U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPU049-5",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 5U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPU051-4",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 4U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT059-4",
+       "name": "Khung vợt cầu lông Phong BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT061-4",
+       "name": "Khung vợt cầu lông Lâm BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT293-4A",
+       "name": "Khung vợt cầu lông Axforce 20 - 4U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT413-3",
+       "name": "Vợt cầu lông Aeronaut 6000D",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT423-4",
+       "name": "Vợt cầu lông Tectonic 1 - 4U",
+       "retailPrice": 903273,
+       "wholesalePrice": 632291
+      },
+      {
+       "sku": "P-AYPT465-3",
+       "name": "Khung vợt cầu lông Lightning 3000 Green Purple",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPU009-3",
+       "name": "Khung vợt cầu lông Bladex 500 - 3U Pearl White",
+       "retailPrice": 2601818,
+       "wholesalePrice": 1821273
+      },
+      {
+       "sku": "P-AYPU011-3",
+       "name": "Khung vợt cầu lông AXFORCE 40 - 3U Black",
+       "retailPrice": 2209091,
+       "wholesalePrice": 1546364
+      },
+      {
+       "sku": "P-AYPJ008-4A",
+       "name": "Khung vợt cầu lông 80TF",
+       "retailPrice": 1620000,
+       "wholesalePrice": 1134000
+      },
+      {
+       "sku": "P-AYPP032-4E",
+       "name": "Khung vợt cầu lông TuBo 01D",
+       "retailPrice": 1325455,
+       "wholesalePrice": 927819
+      },
+      {
+       "sku": "P-AYPT293-3A",
+       "name": "Khung vợt cầu lông Axforce 20 - 3U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT467-4E",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Fire Red",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT471-4E",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Pale Gold",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT437-6V",
+       "name": "Khung vợt cầu lông WindStorm 72 Black",
+       "retailPrice": 2405455,
+       "wholesalePrice": 1683819
+      }
+     ]
+    },
+    {
+     "id": "g-he-dm02",
+     "name": "Danh mục 02 (vợt cao cấp)",
+     "items": [
+      {
+       "sku": "P-AYPT417-5",
+       "name": "Khung vợt cầu lông Aeronaut 6000I",
+       "retailPrice": 2356364,
+       "wholesalePrice": 1649455
+      },
+      {
+       "sku": "P-AYPU109-4",
+       "name": "Khung vợt cầu lông Axforce10 -4U Blue",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPP028-1",
+       "name": "Khung vợt cầu lông AERONAUT 7000i Green",
+       "retailPrice": 4516364,
+       "wholesalePrice": 3161455
+      },
+      {
+       "sku": "P-AYPU077-4",
+       "name": "Khung vợt cầu lông Turbo Charging Marshal - 4U Black",
+       "retailPrice": 2012727,
+       "wholesalePrice": 1408909
+      },
+      {
+       "sku": "P-AYPJ008-4",
+       "name": "Khung vợt cầu lông 80TF",
+       "retailPrice": 1620000,
+       "wholesalePrice": 1134000
+      },
+      {
+       "sku": "P-AYPM394-4",
+       "name": "Khung vợt cầu lông 3D Calibar200",
+       "retailPrice": 1423636,
+       "wholesalePrice": 996545
+      },
+      {
+       "sku": "P-AYPP032-4",
+       "name": "Khung vợt cầu lông TuBo 01D",
+       "retailPrice": 1325455,
+       "wholesalePrice": 927819
+      },
+      {
+       "sku": "P-AYPP042-3",
+       "name": "Khung vợt cầu lông Aeronaut 4000B",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPR289-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Max",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPT293-3",
+       "name": "Khung vợt cầu lông Axforce 20 - 3U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT299-5",
+       "name": "Khung vợt cầu lông Axforce JR - 5U Black",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT301-5",
+       "name": "Khung vợt cầu lông Axforce JR - 5U White",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT349-3",
+       "name": "Khung vợt cầu lông Bladex Sonar - 3U Blue",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT357-3",
+       "name": "Khung vợt cầu lông Bladex 200 - 3U",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT357-4",
+       "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT361-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U Yellow",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT361-5",
+       "name": "Khung vợt cầu lông Bladex Spiral - 5U Yellow",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT365-5",
+       "name": "Khung vợt cầu lông Bladex Spiral - 5U Pink",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT377-3",
+       "name": "Khung vợt cầu lông Halbertec 2000 - 3U White Gray",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT399-4",
+       "name": "Khung vợt cầu lông 3D Calibar 001",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT401-3",
+       "name": "Khung vợt cầu lông 3D Calibar 001C",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT411-3",
+       "name": "Vợt cầu lông Aeronaut 6000",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT455-4",
+       "name": "Khung vợt cầu lông Lightning 2000 Red",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT457-4",
+       "name": "Khung vợt cầu lông Lightning 2000 Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT467-4",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Fire Red",
+       "retailPrice": 1050545,
+       "wholesalePrice": 735382
+      },
+      {
+       "sku": "P-AYPT471-4",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Pale Gold",
+       "retailPrice": 1050545,
+       "wholesalePrice": 735382
+      },
+      {
+       "sku": "P-AYPT477-4",
+       "name": "Khung vợt cầu lông HC 1000 Black",
+       "retailPrice": 1030909,
+       "wholesalePrice": 721636
+      },
+      {
+       "sku": "P-AYPT481-4",
+       "name": "Khung vợt cầu lông HC 1200",
+       "retailPrice": 1129091,
+       "wholesalePrice": 790364
+      },
+      {
+       "sku": "P-AYPT563-4",
+       "name": "Khung vợt cầu lông Tubo chaging 10B",
+       "retailPrice": 1354909,
+       "wholesalePrice": 948436
+      },
+      {
+       "sku": "P-AYPT749-4",
+       "name": "Khung vợt cầu lông Tubo 20D",
+       "retailPrice": 1374545,
+       "wholesalePrice": 962182
+      },
+      {
+       "sku": "P-AYPU043-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPU049-4",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 4U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPU049-5",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 5U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPU051-4",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 4U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT059-4",
+       "name": "Khung vợt cầu lông Phong BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT061-4",
+       "name": "Khung vợt cầu lông Lâm BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT293-4A",
+       "name": "Khung vợt cầu lông Axforce 20 - 4U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT413-3",
+       "name": "Vợt cầu lông Aeronaut 6000D",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT423-4",
+       "name": "Vợt cầu lông Tectonic 1 - 4U",
+       "retailPrice": 903273,
+       "wholesalePrice": 632291
+      },
+      {
+       "sku": "P-AYPT465-3",
+       "name": "Khung vợt cầu lông Lightning 3000 Green Purple",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPU009-3",
+       "name": "Khung vợt cầu lông Bladex 500 - 3U Pearl White",
+       "retailPrice": 2601818,
+       "wholesalePrice": 1821273
+      },
+      {
+       "sku": "P-AYPU011-3",
+       "name": "Khung vợt cầu lông AXFORCE 40 - 3U Black",
+       "retailPrice": 2209091,
+       "wholesalePrice": 1546364
+      },
+      {
+       "sku": "P-AYPJ008-4A",
+       "name": "Khung vợt cầu lông 80TF",
+       "retailPrice": 1620000,
+       "wholesalePrice": 1134000
+      },
+      {
+       "sku": "P-AYPP032-4E",
+       "name": "Khung vợt cầu lông TuBo 01D",
+       "retailPrice": 1325455,
+       "wholesalePrice": 927819
+      },
+      {
+       "sku": "P-AYPT293-3A",
+       "name": "Khung vợt cầu lông Axforce 20 - 3U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT467-4E",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Fire Red",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT471-4E",
+       "name": "Khung vợt cầu lông Axforce Blackion - 4U Pale Gold",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT437-6V",
+       "name": "Khung vợt cầu lông WindStorm 72 Black",
+       "retailPrice": 2405455,
+       "wholesalePrice": 1683819
+      },
+      {
+       "sku": "P-AYPM444-3",
+       "name": "Vợt cầu lông Aeronaut 4000C",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPT291-5",
+       "name": "Khung vợt cầu lông Axforce BigBang - 5U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPP322-3",
+       "name": "Khung vợt cầu lông A880",
+       "retailPrice": 785455,
+       "wholesalePrice": 549819
+      },
+      {
+       "sku": "P-AYPU105-4",
+       "name": "Khung vợt cầu lông Axforce 10- 4U",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPU105-5",
+       "name": "Khung vợt cầu lông Axforce 10 - 5U White",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPT293-4",
+       "name": "Khung vợt cầu lông Axforce 20 - 4U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT349-4",
+       "name": "Khung vợt cầu lông Bladex Sonar - 4U Blue",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT365-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U Pink",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT475-4",
+       "name": "Khung vợt cầu lông HC 1000 White",
+       "retailPrice": 1030909,
+       "wholesalePrice": 721636
+      },
+      {
+       "sku": "P-AYPU051-5",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 5U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPU109-5",
+       "name": "Khung vợt cầu lông Axforce 10 - 5U Blue",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPR287-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Power",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPR291-5",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Control",
+       "retailPrice": 2287636,
+       "wholesalePrice": 1601345
+      },
+      {
+       "sku": "P-AYPT311-5",
+       "name": "Khung vợt cầu lông Axforce Cannon - 5U White",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT315-2",
+       "name": "Khung vợt cầu lông Axforce 9 Black Orange",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPT317-2",
+       "name": "Khung vợt cầu lông Axforce 9 Black Purple",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPU039-4E",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU041-4E",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 4U",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT357-4E",
+       "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT417-5A",
+       "name": "Khung vợt cầu lông Aeronaut 6000I",
+       "retailPrice": 2356364,
+       "wholesalePrice": 1649455
+      },
+      {
+       "sku": "P-AYPV007-4V",
+       "name": "Khung vợt cầu lông Bladex 500 - 4U",
+       "retailPrice": 2160000,
+       "wholesalePrice": 1512000
+      },
+      {
+       "sku": "P-AYPS053-1",
+       "name": "Khung vợt cầu lông Bladex 700 - 3U",
+       "retailPrice": 4320000,
+       "wholesalePrice": 3024000
+      },
+      {
+       "sku": "P-AYPT289-5",
+       "name": "Khung vợt cầu lông Axforce BigBang - 5U Black",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPT747-4",
+       "name": "Khung vợt cầu lông Tubo 50D",
+       "retailPrice": 1718182,
+       "wholesalePrice": 1202727
+      },
+      {
+       "sku": "P-AYPT065-4",
+       "name": "Khung vợt cầu lông Sơn BST Phong-Lâm- Hỏa- Sơn",
+       "retailPrice": 3043636,
+       "wholesalePrice": 2130545
+      },
+      {
+       "sku": "P-AYPT307-4",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Black",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT373-3",
+       "name": "Khung vợt cầu lông Halbertec 5000- 3U",
+       "retailPrice": 2552727,
+       "wholesalePrice": 1786909
+      },
+      {
+       "sku": "P-AYPT381-4",
+       "name": "Khung vợt cầu lông 3D Calibar 900 - 4U Golden Gray",
+       "retailPrice": 4565455,
+       "wholesalePrice": 3195819
+      },
+      {
+       "sku": "P-AYPT391-5E",
+       "name": "Khung vợt cầu lông 3D Calibar 600I",
+       "retailPrice": 3141818,
+       "wholesalePrice": 2199273
+      },
+      {
+       "sku": "P-AYPT353-6",
+       "name": "Khung vợt cầu lông Bladex 73 Light - 6U Flower Blue",
+       "retailPrice": 2110909,
+       "wholesalePrice": 1477636
+      },
+      {
+       "sku": "P-AYPU039-5",
+       "name": "Khung vợt cầu lông Axforce Cannon - 5U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU041-5",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 5U",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU039-4",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU041-4",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 4U",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT243-4V",
+       "name": "Vợt cầu lông Axforce 90 Tiger Max - 4U Red",
+       "retailPrice": 5105455,
+       "wholesalePrice": 3573819
+      }
+     ]
+    },
+    {
+     "id": "g-he-dm03",
+     "name": "Danh mục 03 (vợt mua kèm)",
+     "items": [
+      {
+       "sku": "P-AYPM444-3",
+       "name": "Vợt cầu lông Aeronaut 4000C",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPT291-5",
+       "name": "Khung vợt cầu lông Axforce BigBang - 5U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPP322-3",
+       "name": "Khung vợt cầu lông A880",
+       "retailPrice": 785455,
+       "wholesalePrice": 549819
+      },
+      {
+       "sku": "P-AYPU105-4",
+       "name": "Khung vợt cầu lông Axforce 10- 4U",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPU105-5",
+       "name": "Khung vợt cầu lông Axforce 10 -5U White",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPT293-4",
+       "name": "Khung vợt cầu lông Axforce 20 - 4U Blue",
+       "retailPrice": 1178182,
+       "wholesalePrice": 824727
+      },
+      {
+       "sku": "P-AYPT349-4",
+       "name": "Khung vợt cầu lông Bladex Sonar - 4U Blue",
+       "retailPrice": 2258182,
+       "wholesalePrice": 1580727
+      },
+      {
+       "sku": "P-AYPT365-4",
+       "name": "Khung vợt cầu lông Bladex Spiral - 4U Pink",
+       "retailPrice": 883636,
+       "wholesalePrice": 618545
+      },
+      {
+       "sku": "P-AYPT475-4",
+       "name": "Khung vợt cầu lông HC 1000 White",
+       "retailPrice": 1030909,
+       "wholesalePrice": 721636
+      },
+      {
+       "sku": "P-AYPU051-5",
+       "name": "Khung vợt cầu lông Axforce BigBang New - 5U White",
+       "retailPrice": 2061818,
+       "wholesalePrice": 1443273
+      },
+      {
+       "sku": "P-AYPU109-5",
+       "name": "Khung vợt cầu lông Axforce 10 - 5U Blue",
+       "retailPrice": 932727,
+       "wholesalePrice": 652909
+      },
+      {
+       "sku": "P-AYPR287-3",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Power",
+       "retailPrice": 2022545,
+       "wholesalePrice": 1415782
+      },
+      {
+       "sku": "P-AYPR291-5",
+       "name": "Khung vợt cầu lông Aeronaut 6000 Control",
+       "retailPrice": 2287636,
+       "wholesalePrice": 1601345
+      },
+      {
+       "sku": "P-AYPT311-5",
+       "name": "Khung vợt cầu lông Axforce Cannon - 5U White",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT315-2",
+       "name": "Khung vợt cầu lông Axforce 9 Black Orange",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPT317-2",
+       "name": "Khung vợt cầu lông Axforce 9 Black Purple",
+       "retailPrice": 471273,
+       "wholesalePrice": 329891
+      },
+      {
+       "sku": "P-AYPU039-4E",
+       "name": "Khung vợt cầu lông Axforce Cannon - 4U Deep Teal",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPU041-4E",
+       "name": "Khung vợt cầu lông Axforce Cannon Light - 4U",
+       "retailPrice": 981818,
+       "wholesalePrice": 687273
+      },
+      {
+       "sku": "P-AYPT357-4E",
+       "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+       "retailPrice": 1227273,
+       "wholesalePrice": 859091
+      },
+      {
+       "sku": "P-AYPT417-5A",
+       "name": "Khung vợt cầu lông Aeronaut 6000I",
+       "retailPrice": 2356364,
+       "wholesalePrice": 1649455
+      },
+      {
+       "sku": "P-AYPV007-4V",
+       "name": "Khung vợt cầu lông Bladex 500 - 4U",
+       "retailPrice": 2160000,
+       "wholesalePrice": 1512000
+      }
+     ]
+    }
+   ],
+   "rules": [
+    {
+     "id": "r-he-a",
+     "type": "discount",
+     "name": "Ưu đãi A — Giảm 45%",
+     "targetGroupIds": [
+      "g-he-dm01"
+     ],
+     "discountPercent": 45,
+     "discountBasis": "retail",
+     "minQty": 2,
+     "maxQty": 4,
+     "requireGroupIds": [
+      "g-he-dm03"
+     ],
+     "requireMinQty": 1
+    },
+    {
+     "id": "r-he-b1",
+     "type": "buy_x_get_y",
+     "name": "Ưu đãi B1 — Tặng cước N65",
+     "sourceGroupIds": [
+      "g-he-dm01"
+     ],
+     "buyQty": 1,
+     "getQty": 1,
+     "giftMode": "text",
+     "giftGroupId": null,
+     "giftText": "Cước cầu lông LiNing N65"
+    },
+    {
+     "id": "r-he-b2",
+     "type": "tier_gift",
+     "name": "Ưu đãi B2 — Mua vợt tặng vợt theo doanh số",
+     "sourceGroupIds": [
+      "g-he-dm02"
+     ],
+     "giftGroupId": "g-he-dm01",
+     "giftPriceBasis": "wholesale",
+     "tiers": [
+      {
+       "id": "t-he-1",
+       "min": 8000000,
+       "limitType": "percent",
+       "limitValue": 15,
+       "maxQty": null,
+       "allowedSkus": null
+      },
+      {
+       "id": "t-he-2",
+       "min": 20000000,
+       "limitType": "percent",
+       "limitValue": 18,
+       "maxQty": null,
+       "allowedSkus": null
+      },
+      {
+       "id": "t-he-3",
+       "min": 35000000,
+       "limitType": "percent",
+       "limitValue": 20,
+       "maxQty": null,
+       "allowedSkus": null
+      },
+      {
+       "id": "t-he-4",
+       "min": 50000000,
+       "limitType": "percent",
+       "limitValue": 27,
+       "maxQty": null,
+       "allowedSkus": null
+      }
+     ]
+    }
+   ],
+   "createdAt": "2026-11-20T00:00:00.000Z",
+   "updatedAt": "2026-11-20T00:00:00.000Z"
+  }
+ ],
+ "orders": [],
+ "settings": {
+  "salesperson": ""
+ }
+}
