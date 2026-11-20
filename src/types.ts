@@ -255,9 +255,21 @@ export interface Settings {
   salesperson: string; // tên sale mặc định khi tạo đơn
 }
 
+/**
+ * Tồn kho lấy từ file Excel của phần mềm kho. Mỗi mã hàng một con số, dùng chung cho mọi chương trình:
+ * cùng một mã nằm ở nhiều danh mục vẫn chỉ có một tồn kho.
+ */
+export interface Stock {
+  /** Mã hàng (đã chuẩn hóa) → số lượng tồn; có thể là 0 hoặc âm. Mã không có ở đây = chưa có số liệu. */
+  bySku: Record<string, number>;
+  /** Lần cập nhật gần nhất (ISO); null = chưa nhập tồn kho lần nào. */
+  updatedAt: string | null;
+}
+
 export interface DB {
   version: 1;
   programs: Program[];
   orders: Order[];
   settings: Settings;
+  stock: Stock;
 }

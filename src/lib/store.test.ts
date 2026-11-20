@@ -43,7 +43,7 @@ describe("normalizeDB — input that is not a database", () => {
   });
 
   it("accepts a file that has at least one of the two lists", () => {
-    const empty: DB = { version: 1, programs: [], orders: [], settings: { salesperson: "" } };
+    const empty: DB = { version: 1, programs: [], orders: [], settings: { salesperson: "" }, stock: { bySku: {}, updatedAt: null } };
     expect(normalizeDB({ programs: [] })).toEqual(empty);
     expect(normalizeDB({ orders: [] })).toEqual(empty);
     expect(normalizeDB({ programs: [], orders: "not a list" })).toEqual(empty);
@@ -496,6 +496,56 @@ describe("normalizeDB — reading back what the app itself saved", () => {
   });
 });
 
+// ───────────────────────── Stock ─────────────────────────
+
+describe("normalizeDB — stock", () => {
+  it("data saved before stock existed loads with an empty stock", () => {
+    const old = JSON.parse(JSON.stringify(seedDB()));
+    delete old.stock;
+    const db = normalizeDB(old);
+    expect(db.stock).toEqual({ bySku: {}, updatedAt: null });
+    expect(db.programs).toHaveLength(3);
+  });
+
+  it("keeps (SKU, number) pairs, normalises the SKU, allows zero and negative, rounds to 3 decimals", () => {
+    const db = normalizeDB({
+      programs: [],
+      stock: {
+        updatedAt: "2026-11-20T14:05:00.000Z",
+        bySku: { " p-aypr285-3 ": 24, AV1F: 0, AVPTX: -2, AV80: 2.50049, "": 5 },
+      },
+    });
+    expect(db.stock).toEqual({
+      updatedAt: "2026-11-20T14:05:00.000Z",
+      bySku: { "P-AYPR285-3": 24, AV1F: 0, AVPTX: -2, AV80: 2.5 },
+    });
+  });
+
+  it.each([
+    ["a number", 5],
+    ["a string", "24 chiếc"],
+    ["an array", [["AV1F", 3]]],
+    ["null", null],
+  ])("a stock that is %s becomes an empty stock", (_label, stock) => {
+    expect(normalizeDB({ programs: [], stock }).stock).toEqual({ bySku: {}, updatedAt: null });
+  });
+
+  it("drops values that are not finite numbers and a date it cannot read", () => {
+    const db = normalizeDB({
+      programs: [],
+      stock: { updatedAt: "hôm qua", bySku: { A1: "12", A2: null, A3: Number.NaN, A4: Number.POSITIVE_INFINITY, A5: {}, A6: 7 } },
+    });
+    expect(db.stock).toEqual({ bySku: { A6: 7 }, updatedAt: null });
+  });
+
+  it("survives a save / reload unchanged", () => {
+    const db = seedDB();
+    db.stock = { bySku: { "P-AYPR285-3": 24, AV1F: 0, AVPTX: -2, AV80: 0.5 }, updatedAt: "2026-11-20T14:05:00.000Z" };
+    expect(reload(db)).toEqual(db);
+    expect(JSON.stringify(reload(db))).toBe(JSON.stringify(db));
+  });
+});
+
 // ───────────────────────── Seed ─────────────────────────
 
 describe("seedDB", () => {
@@ -507,8 +557,8 @@ describe("seedDB", () => {
     expect(db.settings).toEqual({ salesperson: "" });
   });
 
-  it("is exactly the content of seed.json: normalisation loses nothing", () => {
-    expect(seedDB()).toEqual(seed);
+  it("is exactly the content of seed.json plus an empty stock: normalisation loses nothing", () => {
+    expect(seedDB()).toEqual({ ...seed, stock: { bySku: {}, updatedAt: null } });
   });
 
   it("returns a fresh copy every time", () => {

@@ -12,6 +12,13 @@ export function formatVND(n: number): string {
   return `${formatNumber(n)} đ`;
 }
 
+const quantityFormat = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 3 });
+
+/** Số lượng tồn kho: 1250 → "1.250", 2.5 → "2,5", -3 → "-3". */
+export function formatQty(n: number): string {
+  return quantityFormat.format(Number.isFinite(n) ? n : 0);
+}
+
 /** 45 → "45%", 12.5 → "12,5%" (dấu phẩy thập phân kiểu Việt Nam). */
 export function formatPercent(n: number): string {
   return `${String(n).replace(".", ",")}%`;

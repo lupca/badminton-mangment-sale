@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import {
   columnOptions,
   convertRows,
+  convertStockRows,
   defaultSheetIndex,
   detectLayout,
   parseNumber,
@@ -132,7 +133,7 @@ describe("nhận diện cột theo tiêu đề", () => {
   ])("%j", (header) => {
     expect(detectLayout([header, product])).toEqual({
       headerRow: 0,
-      mapping: { sku: 0, name: 1, retail: 2, wholesale: 3, unit: 4, note: 5 },
+      mapping: { sku: 0, name: 1, retail: 2, wholesale: 3, unit: 4, note: 5, stock: null },
       priceUnit: "thousand",
     });
   });
@@ -151,7 +152,7 @@ describe("nhận diện cột theo tiêu đề", () => {
       [1, "6902258696667", "P-AYPW039-4V", "Khung vợt cầu lông Axforce Warrior - 4U", 5, 1420, 7100],
       [2, "6905154065223", "P-AYPT243-4V", "Khung vợt cầu lông Axforce 90 Tiger Max - 4U Red", 2, 5200, 10400],
     ];
-    expect(detectLayout(rows).mapping).toEqual({ sku: 2, name: 3, retail: 5, wholesale: null, unit: null, note: null });
+    expect(detectLayout(rows).mapping).toEqual({ sku: 2, name: 3, retail: 5, wholesale: null, unit: null, note: null, stock: null });
   });
 });
 
@@ -161,7 +162,7 @@ describe("bảng có cột mã hàng lẫn mã vạch", () => {
   it("chọn cột chứa mã thật làm mã hàng dù cột đó mang nhãn «Tên Hàng»", () => {
     expect(detectLayout(BARCODE_SHEET)).toEqual({
       headerRow: 0,
-      mapping: { sku: 4, name: 1, retail: 3, wholesale: null, unit: 2, note: null },
+      mapping: { sku: 4, name: 1, retail: 3, wholesale: null, unit: 2, note: null, stock: null },
       priceUnit: "thousand",
     });
   });
@@ -200,7 +201,7 @@ describe("bảng có dòng tên nhóm và dòng tiêu đề lặp lại giữa c
   it("lấy «Giá sau Vat» làm giá lẻ khi có cả «GiaLe»", () => {
     expect(detectLayout(PROMO_SHEET)).toEqual({
       headerRow: 0,
-      mapping: { sku: 0, name: 1, retail: 3, wholesale: 4, unit: null, note: 5 },
+      mapping: { sku: 0, name: 1, retail: 3, wholesale: 4, unit: null, note: 5, stock: null },
       priceUnit: "thousand",
     });
   });
@@ -252,7 +253,7 @@ describe("bảng bắt đầu ở ô B3", () => {
     expect(rows[2].slice(0, 5)).toEqual([null, "Mã Hàng", "Tên Hàng", "Giá Lẻ", "Giá sỉ"]);
     expect(detectLayout(rows)).toEqual({
       headerRow: 2,
-      mapping: { sku: 1, name: 2, retail: 3, wholesale: 4, unit: null, note: null },
+      mapping: { sku: 1, name: 2, retail: 3, wholesale: 4, unit: null, note: null, stock: null },
       priceUnit: "thousand",
     });
     expect(columnOptions(rows, 2).map((column) => column.label)).toEqual([
@@ -332,7 +333,7 @@ describe("đơn vị giá và giá sỉ", () => {
   it("không có cột mã hàng thì không đọc dòng nào", () => {
     const rows: Cell[][] = [["Khung vợt Flexred", 1150], ["Khung vợt Nano80", 800]];
     expect(detectLayout(rows).mapping.sku).toBeNull();
-    expect(importRows(rows)).toEqual({ items: [], skipped: [], duplicateCount: 0 });
+    expect(importRows(rows)).toEqual({ items: [], skipped: [], duplicateCount: 0, stock: {} });
   });
 });
 
@@ -369,7 +370,7 @@ describe("dữ liệu dán từ Excel", () => {
     );
     expect(detectLayout(rows)).toEqual({
       headerRow: null,
-      mapping: { sku: 0, name: 1, retail: 3, wholesale: 4, unit: null, note: null },
+      mapping: { sku: 0, name: 1, retail: 3, wholesale: 4, unit: null, note: null, stock: null },
       priceUnit: "thousand",
     });
     expect(importRows(rows).items[0]).toEqual({
@@ -406,7 +407,7 @@ describe("dữ liệu dán từ Excel", () => {
 
   it("không có tiêu đề, có cột số lượng và thành tiền: không nhầm thành giá sỉ", () => {
     const rows: Cell[][] = OFFSET_TABLE.slice(1).map((row) => [row[0], row[1], row[2], row[3], row[4] ?? 10, row[5] ?? 40549]);
-    expect(detectLayout(rows).mapping).toEqual({ sku: 0, name: 1, retail: 2, wholesale: 3, unit: null, note: null });
+    expect(detectLayout(rows).mapping).toEqual({ sku: 0, name: 1, retail: 2, wholesale: 3, unit: null, note: null, stock: null });
   });
 
   it("không có tiêu đề, có cột số thứ tự: không nhầm số thứ tự thành giá", () => {
@@ -417,7 +418,7 @@ describe("dữ liệu dán từ Excel", () => {
         "3\tAV200\tKhung vợt cầu lông Dynamic 200\tCái\t750\t525",
       ].join("\n"),
     );
-    expect(detectLayout(rows).mapping).toEqual({ sku: 1, name: 2, retail: 4, wholesale: 5, unit: 3, note: null });
+    expect(detectLayout(rows).mapping).toEqual({ sku: 1, name: 2, retail: 4, wholesale: 5, unit: 3, note: null, stock: null });
   });
 
   it("dòng tiêu đề nằm giữa vùng dán không làm mất các dòng phía trên", () => {
@@ -525,5 +526,195 @@ describe("readWorkbook", () => {
   it("báo lỗi tiếng Việt khi file hỏng hoặc không có dữ liệu", async () => {
     await expect(readWorkbook(new Uint8Array([0x50, 0x4b, 3, 4, 1, 2, 3, 4, 5, 6, 7, 8]).buffer)).rejects.toThrow("Không đọc được file này");
     await expect(readWorkbook(toXlsx([{ name: "Sheet1", rows: [] }]))).rejects.toThrow("File không có dữ liệu");
+  });
+});
+
+// ───────────────────────── Tồn kho ─────────────────────────
+
+describe("cột tồn kho trong bảng giá", () => {
+  const product: Cell[] = ["AV1F", "Khung vợt cầu lông Flexred", 1150, 12];
+
+  it.each([
+    "Tồn kho",
+    "TỒN",
+    "SL tồn",
+    "Số lượng tồn",
+    "Số lượng tồn kho",
+    "Tổng tồn",
+    "Tồn cuối kỳ",
+    "Tồn kho hiện tại",
+    "Tồn thực tế",
+    "Tồn kho (chiếc)",
+    "Có thể bán",
+    "Stock",
+    "Qty on hand",
+  ])("nhận nhãn «%s» là tồn kho", (label) => {
+    const layout = detectLayout([["Mã hàng", "Tên hàng", "Giá lẻ", label], product]);
+    expect(layout.mapping).toMatchObject({ sku: 0, name: 1, retail: 2, stock: 3 });
+  });
+
+  it.each(["Tồn đầu kỳ", "Tồn nhỏ nhất", "Tồn lớn nhất", "Định mức tồn", "Giá trị tồn", "Số lượng", "SL", "KH đặt"])(
+    "không coi «%s» là tồn kho",
+    (label) => {
+      expect(detectLayout([["Mã hàng", "Tên hàng", "Giá lẻ", label], product]).mapping.stock).toBeNull();
+    },
+  );
+
+  it("có cả «Tồn kho» và «Có thể bán» thì lấy «Tồn kho»", () => {
+    const rows: Cell[][] = [["Mã hàng", "Tên hàng", "Giá lẻ", "Có thể bán", "Tồn kho"], [...product, 15]];
+    expect(detectLayout(rows).mapping.stock).toBe(4);
+  });
+
+  it("cột tồn kho không bị đoán thành cột giá khi file không có nhãn giá", () => {
+    const rows: Cell[][] = [
+      ["Mã hàng", "Tên hàng", "Tồn kho", "VAT 10%"],
+      ["AV1F", "Khung vợt cầu lông Flexred", 12, 1150],
+      ["AV80", "Khung vợt cầu lông Nano80", 3, 800],
+    ];
+    expect(detectLayout(rows).mapping).toMatchObject({ sku: 0, name: 1, stock: 2, retail: 3, wholesale: null });
+  });
+
+  it("trả tồn kho theo mã hàng: nhận 0 và số âm, ô trống thì không có số liệu, dòng trùng mã bị bỏ cả tồn kho", () => {
+    const rows: Cell[][] = [
+      ["Mã hàng", "Tên hàng", "Giá lẻ", "Tồn kho"],
+      [" av1f ", "Khung vợt cầu lông Flexred", 1150, 12],
+      ["AV80", "Khung vợt cầu lông Nano80", 800, 0],
+      ["AVPTX", "Khung vợt cầu lông Phantom X-Shadow", 1800, -2],
+      ["AV90", "Khung vợt cầu lông Nano90", 900, null],
+      ["AV95", "Khung vợt cầu lông Nano95", 950, "Hết"],
+      ["AV1F", "Khung vợt cầu lông Flexred (dòng trùng)", 1150, 99],
+    ];
+    const result = importRows(rows);
+    expect(result.items.map((item) => item.sku)).toEqual(["AV1F", "AV80", "AVPTX", "AV90", "AV95"]);
+    expect(result.stock).toEqual({ AV1F: 12, AV80: 0, AVPTX: -2 });
+    expect(result.duplicateCount).toBe(1);
+  });
+
+  it("file không có cột tồn kho thì không có số liệu tồn kho nào", () => {
+    expect(importRows(PROMO_SHEET).stock).toEqual({});
+    expect(detectLayout(PROMO_SHEET).mapping.stock).toBeNull();
+  });
+});
+
+describe("file tồn kho", () => {
+  const stockRows = (rows: Cell[][]) => convertStockRows(rows, detectLayout(rows, "stock"));
+
+  it("kiểu phần mềm bán hàng: lấy «Tồn kho», không lấy «Tồn nhỏ nhất» / «Tồn lớn nhất» / «KH đặt»", () => {
+    const rows: Cell[][] = [
+      ["Loại hàng", "Nhóm hàng(3 Cấp)", "Mã hàng", "Mã vạch", "Tên hàng", "Giá bán", "Giá vốn", "Tồn kho", "KH đặt", "Tồn nhỏ nhất", "Tồn lớn nhất", "ĐVT"],
+      ["Hàng hóa", "Vợt", "P-AYPR285-3", "6902258696667", "Khung vợt cầu lông Aeronaut 6000 Speed", 2060000, 1400000, 24, 2, 5, 100, "Chiếc"],
+      ["Hàng hóa", "Vợt", "P-AYPR287-3", "6905154065223", "Khung vợt cầu lông Aeronaut 6000 Power", 2060000, 1400000, 0, 0, 5, 100, "Chiếc"],
+    ];
+    expect(detectLayout(rows, "stock")).toMatchObject({ headerRow: 0, mapping: { sku: 2, name: 4, stock: 7 } });
+    expect(stockRows(rows).rows).toEqual([
+      { sku: "P-AYPR285-3", name: "Khung vợt cầu lông Aeronaut 6000 Speed", qty: 24 },
+      { sku: "P-AYPR287-3", name: "Khung vợt cầu lông Aeronaut 6000 Power", qty: 0 },
+    ]);
+  });
+
+  it("file chỉ có hai cột «Mã hàng» và «Tồn kho» vẫn nhận ra dòng tiêu đề", () => {
+    const rows: Cell[][] = [["Mã hàng", "Tồn kho"], ["AV1F", 12], ["AV80", 3]];
+    expect(detectLayout(rows, "stock")).toMatchObject({ headerRow: 0, mapping: { sku: 0, stock: 1 } });
+    expect(stockRows(rows).rows.map((row) => [row.sku, row.qty])).toEqual([["AV1F", 12], ["AV80", 3]]);
+  });
+
+  it.each(["Số lượng", "SL", "Qty", "Cuối kỳ"])("không có chữ «tồn»: nhận cột «%s»", (label) => {
+    const rows: Cell[][] = [["Mã hàng", "Tên hàng", "ĐVT", label], ["AV1F", "Khung vợt cầu lông Flexred", "Cái", 12]];
+    expect(detectLayout(rows, "stock").mapping).toMatchObject({ sku: 0, name: 1, stock: 3 });
+    // Khi nhập bảng giá thì cột này không được tự coi là tồn kho.
+    expect(detectLayout(rows).mapping.stock).toBeNull();
+  });
+
+  it("có cả «Số lượng» và «Tồn kho» thì lấy «Tồn kho»", () => {
+    const rows: Cell[][] = [["Mã hàng", "Số lượng", "Tồn kho"], ["AV1F", 5, 12]];
+    expect(detectLayout(rows, "stock").mapping.stock).toBe(2);
+  });
+
+  it("dán hai cột mã hàng + số lượng không có tiêu đề: cột số duy nhất là tồn kho", () => {
+    const rows = rowsFromText("P-AYPR285-3\t24\nP-AYPR287-3\t0\nAV1F\t1.250\n");
+    expect(detectLayout(rows, "stock")).toMatchObject({ headerRow: null, mapping: { sku: 0, stock: 1 } });
+    expect(stockRows(rows).rows.map((row) => [row.sku, row.qty])).toEqual([
+      ["P-AYPR285-3", 24],
+      ["P-AYPR287-3", 0],
+      ["AV1F", 1250],
+    ]);
+  });
+
+  it("không có tiêu đề mà có hai cột số: không đoán, để người dùng chọn cột", () => {
+    const rows: Cell[][] = [
+      ["P-AYPR285-3", "Khung vợt cầu lông Aeronaut 6000 Speed", 2060, 24],
+      ["P-AYPR287-3", "Khung vợt cầu lông Aeronaut 6000 Power", 2060, 7],
+    ];
+    const layout = detectLayout(rows, "stock");
+    expect(layout.mapping).toMatchObject({ sku: 0, name: 1, stock: null });
+    expect(convertStockRows(rows, layout)).toEqual({ rows: [], skipped: [], mergedSkus: [] });
+    // Người dùng chọn cột D:
+    const chosen = convertStockRows(rows, { ...layout, mapping: { ...layout.mapping, stock: 3 } });
+    expect(chosen.rows.map((row) => row.qty)).toEqual([24, 7]);
+  });
+
+  it("không có tiêu đề: cột số thứ tự và cột mã vạch không bị coi là tồn kho", () => {
+    const rows: Cell[][] = [
+      [1, "6902258696667", "P-AYPW039-4V", "Khung vợt cầu lông Axforce Warrior - 4U", 5],
+      [2, "6905154065223", "P-AYPT243-4V", "Khung vợt cầu lông Axforce 90 Tiger Max - 4U Red", 2],
+      [3, "6905154065650", "P-AYPT239-4V", "Khung vợt cầu lông Axforce 90 Loong Max - 4U Blue", 9],
+    ];
+    expect(detectLayout(rows, "stock").mapping).toMatchObject({ sku: 2, name: 3, stock: 4 });
+  });
+
+  it("mã nằm ở nhiều dòng thì cộng dồn; bỏ dòng tổng cộng, dòng thiếu mã và dòng ô tồn kho không phải số", () => {
+    const rows: Cell[][] = [
+      ["Kho", "Mã hàng", "Tên hàng", "Tồn kho"],
+      ["Hà Nội", "AV1F", "Khung vợt cầu lông Flexred", 12],
+      ["Hà Nội", "AV80", "Khung vợt cầu lông Nano80", 0.1],
+      ["TP.HCM", "av1f", "Khung vợt cầu lông Flexred", 8],
+      ["TP.HCM", "AV80", "Khung vợt cầu lông Nano80", 0.2],
+      ["TP.HCM", "AVPTX", "Khung vợt cầu lông Phantom X-Shadow", "Hết"],
+      ["TP.HCM", null, "Hàng chưa có mã", 4],
+      [null, "Tổng cộng", null, 24],
+      [null, null, null, null],
+    ];
+    const result = stockRows(rows);
+    expect(result.rows).toEqual([
+      { sku: "AV1F", name: "Khung vợt cầu lông Flexred", qty: 20 },
+      { sku: "AV80", name: "Khung vợt cầu lông Nano80", qty: 0.3 },
+    ]);
+    expect(result.mergedSkus).toEqual(["AV1F", "AV80"]);
+    expect(result.skipped.map((row) => [row.row, row.reason])).toEqual([
+      [6, "no_stock"],
+      [7, "no_sku"],
+      [8, "total"],
+    ]);
+  });
+
+  it("đọc số dán kiểu Việt Nam: «1.250» là 1250, «2,5» là 2,5; «-3», «(3)» và «−3» là số âm", () => {
+    const rows = rowsFromText("Mã hàng\tTồn kho\nA1\t1.250\nA2\t2,5\nA3\t-3\nA4\t(3)\nA5\t−3\nA6\t0\nA7\t12 cái\n");
+    const result = stockRows(rows);
+    expect(result.rows.map((row) => [row.sku, row.qty])).toEqual([
+      ["A1", 1250],
+      ["A2", 2.5],
+      ["A3", -3],
+      ["A4", -3],
+      ["A5", -3],
+      ["A6", 0],
+    ]);
+    expect(result.skipped.map((row) => row.reason)).toEqual(["no_stock"]);
+  });
+
+  it("chọn sẵn sheet có cột mã hàng và cột tồn kho", () => {
+    const sheets = [
+      { name: "Bảng giá", rows: PROMO_SHEET },
+      { name: "Tồn kho", rows: [["Mã hàng", "Tồn kho"], ["AV1F", 12]] as Cell[][] },
+    ];
+    expect(defaultSheetIndex(sheets, "stock")).toBe(1);
+    expect(defaultSheetIndex(sheets)).toBe(0);
+    expect(defaultSheetIndex([sheets[0]], "stock")).toBe(0);
+  });
+
+  it("đọc file .xlsx tồn kho từ đầu tới cuối", async () => {
+    const sheets = await readWorkbook(
+      toXlsx([{ name: "TonKho", rows: [["Mã hàng", "Tên hàng", "ĐVT", "Tồn cuối kỳ"], ["P-AYPR285-3", "Khung vợt Aeronaut 6000 Speed", "Chiếc", 24]] }]),
+    );
+    expect(stockRows(sheets[0].rows).rows).toEqual([{ sku: "P-AYPR285-3", name: "Khung vợt Aeronaut 6000 Speed", qty: 24 }]);
   });
 });

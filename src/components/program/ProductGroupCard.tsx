@@ -84,6 +84,7 @@ function ProductGroupCard({
   orderCount,
   isNew,
   update,
+  saveStock,
 }: {
   group: ProductGroup;
   programName: string;
@@ -93,6 +94,8 @@ function ProductGroupCard({
   /** Danh mục vừa được thêm: đưa con trỏ vào ô tên. */
   isNew: boolean;
   update: UpdateProgram;
+  /** Ghi tồn kho đọc được từ cột «Tồn kho» của file vừa nhập (mã hàng → số lượng). */
+  saveStock: (stock: Record<string, number>) => void;
 }) {
   const { id, items } = group;
   const [query, setQuery] = useState("");
@@ -108,19 +111,22 @@ function ProductGroupCard({
     return expanded || items.length <= COLLAPSE_OVER ? items : items.slice(0, COLLAPSED_ROWS);
   }, [items, searchText, expanded]);
 
-  const importItems = (incoming: ProductItem[], mode: "append" | "replace") => {
+  const importItems = (incoming: ProductItem[], mode: "append" | "replace", stock: Record<string, number>) => {
     update((p) =>
       updateGroup(p, id, (g) => ({ ...g, items: mode === "replace" ? incoming : mergeItems(g.items, incoming) })),
     );
+    const stockCount = Object.keys(stock).length;
+    if (stockCount > 0) saveStock(stock);
+    const stockNote = stockCount > 0 ? ` Đã cập nhật tồn kho của ${stockCount} mã.` : "";
     if (mode === "replace") {
-      toast(`Đã thay toàn bộ danh mục bằng ${incoming.length} sản phẩm.`);
+      toast(`Đã thay toàn bộ danh mục bằng ${incoming.length} sản phẩm.${stockNote}`);
     } else {
       const existing = new Set(items.map((item) => normalizeSku(item.sku)));
       const updated = incoming.filter((item) => existing.has(normalizeSku(item.sku))).length;
       toast(
-        updated > 0
+        (updated > 0
           ? `Đã nhập ${incoming.length} sản phẩm: ${incoming.length - updated} mã mới, ${updated} mã cập nhật.`
-          : `Đã nhập ${incoming.length} sản phẩm.`,
+          : `Đã nhập ${incoming.length} sản phẩm.`) + stockNote,
       );
     }
   };

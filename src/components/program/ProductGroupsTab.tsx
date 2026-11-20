@@ -1,5 +1,5 @@
 // Tab «Danh mục sản phẩm»: mỗi danh mục một khung, cuối trang là nút thêm danh mục.
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import type { ID, Program } from "../../types";
 import { newGroup, ruleGroupIds } from "../../lib/programOps";
@@ -9,8 +9,15 @@ import ProductGroupCard from "./ProductGroupCard";
 import type { UpdateProgram } from "./programEdits";
 
 export default function ProductGroupsTab({ program, update }: { program: Program; update: UpdateProgram }) {
-  const { orders } = useStore();
+  const { orders, updateStock } = useStore();
   const [newGroupId, setNewGroupId] = useState<ID | null>(null);
+
+  // Các khung danh mục được memo nên cần một hàm ghi tồn kho không đổi qua các lần vẽ lại (như `update`).
+  const latestUpdateStock = useRef(updateStock);
+  useEffect(() => {
+    latestUpdateStock.current = updateStock;
+  });
+  const saveStock = useCallback((stock: Record<string, number>) => latestUpdateStock.current(stock, "merge"), []);
 
   const addGroup = () => {
     const group = newGroup("Danh mục mới");
@@ -48,6 +55,7 @@ export default function ProductGroupsTab({ program, update }: { program: Program
           orderCount={ordersUsing(group.id)}
           isNew={group.id === newGroupId}
           update={update}
+          saveStock={saveStock}
         />
       ))}
 

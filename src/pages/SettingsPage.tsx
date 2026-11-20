@@ -2,6 +2,7 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import { Download, Upload } from "lucide-react";
 import { todayISO } from "../lib/format";
+import { newerStock } from "../lib/stock";
 import { normalizeDB, useStore } from "../lib/store";
 import type { DB } from "../types";
 import { Button, Card, Field, Input, Notice, PageHeader, toast } from "../ui";
@@ -46,10 +47,14 @@ function countSameId(incoming: Array<{ id: string }>, existing: Array<{ id: stri
 
 /** File hợp lệ đã chọn: cho biết trong file có gì và hai cách nhập. */
 function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: ImportMode) => void }) {
-  const { programs, orders } = useStore();
+  const { programs, orders, stock } = useStore();
   const incoming = file.data;
   const sameProgramCount = countSameId(incoming.programs, programs);
   const sameOrderCount = countSameId(incoming.orders, orders);
+  const stockCount = Object.keys(stock.bySku).length;
+  const incomingStockCount = Object.keys(incoming.stock.bySku).length;
+  // Khi thêm vào dữ liệu hiện có, tồn kho không trộn từng mã: bộ nào được cập nhật gần đây hơn thì giữ trọn bộ đó.
+  const fileStockWins = newerStock(stock, incoming.stock) === incoming.stock;
 
   if (incoming.programs.length === 0 && incoming.orders.length === 0) {
     return (
@@ -62,7 +67,13 @@ function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: 
     <>
       <Notice tone="info" className="mt-3">
         File «{file.name}» có <strong>{incoming.programs.length}</strong> chương trình và{" "}
-        <strong>{incoming.orders.length}</strong> đơn hàng. Chọn một trong hai cách nhập:
+        <strong>{incoming.orders.length}</strong> đơn hàng
+        {incomingStockCount > 0 ? (
+          <>
+            , cùng số liệu tồn kho của <strong>{incomingStockCount}</strong> mã hàng
+          </>
+        ) : null}
+        . Chọn một trong hai cách nhập:
       </Notice>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div className="rounded-md border border-gray-200 p-3">
@@ -78,14 +89,26 @@ function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: 
               Sẽ ghi đè {sameProgramCount} chương trình và {sameOrderCount} đơn hàng đang có.
             </p>
           ) : null}
+          {incomingStockCount > 0 && stockCount > 0 ? (
+            fileStockWins ? (
+              <p className="mt-1 text-sm text-amber-800">
+                Tồn kho trong file được cập nhật gần đây hơn nên sẽ thay số liệu tồn kho đang có.
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-gray-600">
+                Tồn kho trên máy này được cập nhật gần đây hơn nên giữ nguyên, không lấy tồn kho trong file.
+              </p>
+            )
+          ) : null}
         </div>
         <div className="rounded-md border border-gray-200 p-3">
           <Button variant="danger" onClick={() => onImport("replace")}>
             Thay toàn bộ dữ liệu hiện có
           </Button>
           <p className="mt-2 text-sm text-gray-600">
-            Xóa hết {programs.length} chương trình và {orders.length} đơn hàng đang có trên máy này, chỉ giữ dữ liệu
-            trong file.
+            Xóa hết {programs.length} chương trình và {orders.length} đơn hàng
+            {stockCount > 0 ? ` cùng số liệu tồn kho của ${stockCount} mã hàng` : ""} đang có trên máy này, chỉ giữ dữ
+            liệu trong file.
           </p>
         </div>
       </div>
@@ -94,7 +117,8 @@ function ImportOptions({ file, onImport }: { file: BackupFile; onImport: (mode: 
 }
 
 export default function SettingsPage() {
-  const { programs, orders, settings, updateSettings, exportJSON, importJSON, resetToSeed } = useStore();
+  const { programs, orders, stock, settings, updateSettings, exportJSON, importJSON, resetToSeed } = useStore();
+  const stockCount = Object.keys(stock.bySku).length;
   const fileInput = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<PickedFile | null>(null);
 
@@ -133,7 +157,9 @@ export default function SettingsPage() {
     if (mode === "replace") {
       const question =
         `Thay toàn bộ dữ liệu hiện có bằng dữ liệu trong file «${file.name}»?\n\n` +
-        `${programs.length} chương trình và ${orders.length} đơn hàng đang có trên máy này sẽ bị xóa. ` +
+        `${programs.length} chương trình và ${orders.length} đơn hàng` +
+        (stockCount > 0 ? ` cùng số liệu tồn kho của ${stockCount} mã hàng` : "") +
+        " đang có trên máy này sẽ bị xóa. " +
         "Không thể hoàn tác.";
       if (!window.confirm(question)) return;
     }
@@ -151,7 +177,7 @@ export default function SettingsPage() {
   };
 
   const restoreSeed = () => {
-    if (!window.confirm("Xóa toàn bộ chương trình và đơn hàng hiện có rồi nạp lại dữ liệu mẫu?")) return;
+    if (!window.confirm("Xóa toàn bộ chương trình, đơn hàng và số liệu tồn kho hiện có rồi nạp lại dữ liệu mẫu?")) return;
     keepingSalesperson(resetToSeed);
     toast("Đã nạp lại dữ liệu mẫu");
   };
@@ -162,15 +188,21 @@ export default function SettingsPage() {
       <div className="max-w-3xl space-y-4">
         <Card title="Sao lưu dữ liệu">
           <p className="text-sm text-gray-700">
-            Toàn bộ chương trình và đơn hàng được lưu ngay trong trình duyệt này, trên máy này, nên hãy xuất file sao
-            lưu thường xuyên để không mất dữ liệu khi hỏng máy hoặc xóa dữ liệu trình duyệt.
+            Toàn bộ chương trình, đơn hàng và số liệu tồn kho được lưu ngay trong trình duyệt này, trên máy này, nên
+            hãy xuất file sao lưu thường xuyên để không mất dữ liệu khi hỏng máy hoặc xóa dữ liệu trình duyệt.
           </p>
           <p className="mt-2 text-sm text-gray-700">
             Muốn chuyển sang máy khác hoặc gửi cho đồng nghiệp: xuất file ở đây, rồi sang máy kia vào mục «Nhập dữ liệu
             từ file».
           </p>
           <p className="mt-3 text-sm text-gray-900">
-            Hiện có <strong>{programs.length}</strong> chương trình và <strong>{orders.length}</strong> đơn hàng.
+            Hiện có <strong>{programs.length}</strong> chương trình và <strong>{orders.length}</strong> đơn hàng
+            {stockCount > 0 ? (
+              <>
+                , cùng số liệu tồn kho của <strong>{stockCount}</strong> mã hàng
+              </>
+            ) : null}
+            .
           </p>
           <Button variant="primary" className="mt-3" onClick={exportBackup}>
             <Download className="h-4 w-4" /> Xuất file sao lưu
@@ -208,8 +240,8 @@ export default function SettingsPage() {
 
         <Card title="Khôi phục dữ liệu mẫu">
           <p className="text-sm text-gray-700">
-            Xóa toàn bộ chương trình và đơn hàng hiện có, nạp lại các chương trình mẫu ban đầu. Nên xuất file sao lưu
-            trước khi làm.
+            Xóa toàn bộ chương trình, đơn hàng và số liệu tồn kho hiện có, nạp lại các chương trình mẫu ban đầu. Nên
+            xuất file sao lưu trước khi làm.
           </p>
           <Button variant="danger" className="mt-3" onClick={restoreSeed}>
             Khôi phục dữ liệu mẫu

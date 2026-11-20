@@ -1,15 +1,12 @@
 // Hộp thoại nhập sản phẩm vào một danh mục: chọn file Excel / CSV hoặc dán vùng dữ liệu copy từ Excel,
 // kiểm tra cột + giá trên bảng xem trước rồi bấm nhập.
-import { useId, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
-import { Upload } from "lucide-react";
+import { useId, useMemo, useState } from "react";
 import {
   columnOptions,
   convertRows,
   defaultSheetIndex,
   detectLayout,
   detectPriceUnit,
-  readWorkbook,
-  rowsFromText,
   type ColumnMapping,
   type ColumnRole,
   type ConvertResult,
@@ -17,9 +14,10 @@ import {
   type SheetData,
   type SkipReason,
 } from "../lib/excel";
-import { formatVND, parseDecimal } from "../lib/format";
+import { formatQty, formatVND, parseDecimal } from "../lib/format";
 import type { ProductItem } from "../types";
-import { Button, Field, Input, Modal, Notice, Select, Textarea, cx, numCls, tableCls, tableWrapCls, tdCls, thCls } from "../ui";
+import { Button, Field, Input, Modal, Notice, Select, cx, numCls, tableCls, tableWrapCls, tdCls, thCls } from "../ui";
+import { Choice, SheetSourceBox, SkippedRows, useSheetSource } from "./SheetSourceBox";
 
 export interface ImportProductsDialogProps {
   open: boolean;
@@ -31,9 +29,10 @@ export interface ImportProductsDialogProps {
   /**
    * Người dùng bấm "Nhập". `items` đã chuẩn hóa (mã viết hoa, giá là số nguyên VND, không trùng mã).
    * mode "append" = thêm/cập nhật theo mã hàng (dùng mergeItems); "replace" = thay toàn bộ danh mục.
+   * `stock` = tồn kho đọc được từ cột «Tồn kho» của file (mã hàng → số lượng); rỗng nếu file không có cột này.
    * Hộp thoại tự đóng sau khi gọi onImport.
    */
-  onImport: (items: ProductItem[], mode: "append" | "replace") => void;
+  onImport: (items: ProductItem[], mode: "append" | "replace", stock: Record<string, number>) => void;
 }
 
 const ROLES: Array<{ role: ColumnRole; label: string }> = [
@@ -41,6 +40,7 @@ const ROLES: Array<{ role: ColumnRole; label: string }> = [
   { role: "name", label: "Tên hàng" },
   { role: "retail", label: "Giá lẻ" },
   { role: "wholesale", label: "Giá sỉ" },
+  { role: "stock", label: "Tồn kho" },
   { role: "unit", label: "ĐVT" },
   { role: "note", label: "Ghi chú" },
 ];
@@ -53,12 +53,12 @@ const UNITS: Array<{ unit: PriceUnit; label: string }> = [
 const SKIP_REASON: Record<SkipReason, string> = {
   no_sku: "không có mã hàng",
   no_price: "không có giá",
+  no_stock: "không có số tồn kho",
   duplicate: "trùng mã với dòng phía trên",
   total: "dòng tổng cộng",
 };
 
 const PREVIEW_ROWS = 50;
-const SKIPPED_ROWS_SHOWN = 100;
 
 /** Dữ liệu đang xem: các sheet đã đọc và thiết lập của sheet đang chọn. */
 interface Loaded {
@@ -93,16 +93,9 @@ export default function ImportProductsDialog(props: ImportProductsDialogProps) {
 
 function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportProductsDialogProps) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [fileName, setFileName] = useState("");
-  const [text, setText] = useState("");
-  const [reading, setReading] = useState(false);
-  const [error, setError] = useState("");
-  const [dragging, setDragging] = useState(false);
   const [vatFrom10To8, setVatFrom10To8] = useState(false);
   const [mode, setMode] = useState<"append" | "replace">("append");
-  const fileInput = useRef<HTMLInputElement>(null);
-  /** Số thứ tự lần nạp dữ liệu gần nhất: file đọc xong trễ của một lần nạp cũ sẽ bị bỏ. */
-  const latestLoad = useRef(0);
+  const source = useSheetSource((sheets) => setLoaded(sheets ? openSheet(sheets, defaultSheetIndex(sheets)) : null));
   const radioName = useId();
 
   const rows = loaded?.sheets[loaded.sheetIndex].rows;
@@ -127,11 +120,6 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
     [rows, headerRow, mapping, priceUnit, vatFrom10To8, discount, discountValid],
   );
   const count = result?.items.length ?? 0;
-  const sourceStatus = reading
-    ? "Đang đọc file…"
-    : fileName
-      ? `Đang dùng file ${fileName}`
-      : "hoặc kéo thả file .xlsx, .xls, .csv vào đây";
 
   let problem = "";
   if (mapping && mapping.sku == null) {
@@ -141,42 +129,6 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
   } else if (result && count === 0) {
     problem =
       "Không đọc được sản phẩm nào. Mỗi dòng cần có mã hàng và giá là số — hãy kiểm tra lại các cột đã chọn bên dưới.";
-  }
-
-  async function loadFile(file: File | undefined) {
-    if (!file) return;
-    const load = ++latestLoad.current;
-    setLoaded(null);
-    setFileName("");
-    setText("");
-    setError("");
-    if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
-      setReading(false);
-      setError("Chỉ nhận file Excel (.xlsx, .xls) hoặc file .csv.");
-      return;
-    }
-    setReading(true);
-    try {
-      const sheets = await readWorkbook(file);
-      if (load !== latestLoad.current) return;
-      setFileName(file.name);
-      setLoaded(openSheet(sheets, defaultSheetIndex(sheets)));
-    } catch (cause) {
-      if (load !== latestLoad.current) return;
-      setError(cause instanceof Error ? cause.message : "Không đọc được file này.");
-    } finally {
-      if (load === latestLoad.current) setReading(false);
-    }
-  }
-
-  function changeText(value: string) {
-    latestLoad.current++;
-    setReading(false);
-    setFileName("");
-    setError("");
-    setText(value);
-    const pasted = rowsFromText(value);
-    setLoaded(pasted.length > 0 ? openSheet([{ name: "", rows: pasted }], 0) : null);
   }
 
   function changeColumn(role: ColumnRole, value: string) {
@@ -189,23 +141,6 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
       mapping: next,
       priceUnit: redetect ? detectPriceUnit(rows, loaded.headerRow, next) : loaded.priceUnit,
     });
-  }
-
-  // Thả file ở bất cứ đâu trong thân hộp thoại đều nhận; kéo chữ (không phải file) thì để trình duyệt tự xử lý.
-  const carriesFile = (event: DragEvent) => event.dataTransfer.types.includes("Files");
-  function onDragOver(event: DragEvent) {
-    if (!carriesFile(event)) return;
-    event.preventDefault();
-    setDragging(true);
-  }
-  function onDragLeave(event: DragEvent) {
-    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
-  }
-  function onDrop(event: DragEvent) {
-    if (!carriesFile(event)) return;
-    event.preventDefault();
-    setDragging(false);
-    void loadFile(event.dataTransfer.files[0]);
   }
 
   return (
@@ -222,7 +157,7 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
             disabled={count === 0 || !discountValid}
             onClick={() => {
               if (!result) return;
-              onImport(result.items, mode);
+              onImport(result.items, mode, result.stock);
               onClose();
             }}
           >
@@ -231,37 +166,10 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
         </>
       }
     >
-      <div className="space-y-4" onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
-        <div className={cx("rounded-md border border-dashed p-3", dragging ? "border-blue-500 bg-blue-50" : "border-gray-300")}>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <Button onClick={() => fileInput.current?.click()}>
-              <Upload className="h-4 w-4" /> Chọn file Excel
-            </Button>
-            <input
-              ref={fileInput}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
-              onChange={(e) => {
-                void loadFile(e.target.files?.[0]);
-                e.target.value = ""; // để chọn lại đúng file đó vẫn được đọc lại
-              }}
-            />
-            <span className="min-w-0 break-words text-sm text-gray-600">{sourceStatus}</span>
-          </div>
-          <Field className="mt-3" label="Hoặc dán vùng dữ liệu đã copy từ Excel vào đây">
-            <Textarea
-              rows={3}
-              wrap="off"
-              spellCheck={false}
-              placeholder="Bấm vào đây rồi dán (Ctrl+V)"
-              value={text}
-              onChange={(e) => changeText(e.target.value)}
-            />
-          </Field>
-        </div>
+      <div className="space-y-4" {...source.dropProps}>
+        <SheetSourceBox source={source} />
 
-        {error ? <Notice tone="error">{error}</Notice> : null}
+        {source.error ? <Notice tone="error">{source.error}</Notice> : null}
         {problem ? <Notice tone="error">{problem}</Notice> : null}
 
         {loaded && mapping ? (
@@ -284,9 +192,10 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
             <section>
               <h3 className="text-sm font-semibold text-gray-900">Cột trong file</h3>
               <p className="text-xs text-gray-500">
-                Các cột đã được chọn sẵn. Nếu bảng xem trước bên dưới chưa đúng thì chọn lại.
+                Các cột đã được chọn sẵn. Nếu bảng xem trước bên dưới chưa đúng thì chọn lại. File có cột tồn kho thì
+                số tồn được lưu theo mã hàng và hiện ở màn hình «Sản phẩm».
               </p>
-              <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {ROLES.map(({ role, label }) => (
                   <Field key={role} label={label}>
                     <Select value={mapping[role] ?? ""} onChange={(e) => changeColumn(role, e.target.value)}>
@@ -344,7 +253,7 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
               </Field>
             </section>
 
-            {result && count > 0 ? <Preview result={result} /> : null}
+            {result && count > 0 ? <Preview result={result} withStock={mapping.stock != null} /> : null}
 
             {existingCount > 0 ? (
               <fieldset>
@@ -376,57 +285,25 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
   );
 }
 
-/** Một lựa chọn dạng radio / ô tích kèm nhãn. */
-function Choice({
-  type,
-  name,
-  checked,
-  onChange,
-  children,
-}: {
-  type: "radio" | "checkbox";
-  name?: string;
-  checked: boolean;
-  onChange: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start gap-2 text-sm text-gray-800">
-      <input type={type} name={name} checked={checked} onChange={onChange} className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600" />
-      <span>{children}</span>
-    </label>
-  );
-}
-
-function Preview({ result }: { result: ConvertResult }) {
-  const { items, skipped, duplicateCount } = result;
+function Preview({ result, withStock }: { result: ConvertResult; withStock: boolean }) {
+  const { items, skipped, duplicateCount, stock } = result;
   // Đường kẻ dưới vẽ bằng bóng đổ để nó đi theo dòng tiêu đề khi cuộn (viền của bảng gộp viền thì không).
   const th = cx(thCls, "sticky top-0 shadow-[inset_0_-1px_0_#e5e7eb] max-sm:px-2");
   const td = cx(tdCls, "max-sm:px-2");
+  const stockCount = Object.keys(stock).length;
   return (
     <section>
       <p className="text-sm font-semibold text-gray-900">
         Đọc được {items.length} sản phẩm, bỏ qua {skipped.length} dòng
         {duplicateCount > 0 ? ` (${duplicateCount} mã trùng)` : ""}
       </p>
-      {skipped.length > 0 ? (
-        <details className="mt-1 text-sm">
-          <summary className="cursor-pointer text-blue-700">Xem các dòng bị bỏ qua</summary>
-          <ul
-            className={cx(
-              "mt-1 max-h-40 space-y-0.5 overflow-y-auto rounded-md border border-gray-200 bg-gray-50",
-              "px-3 py-2 text-xs text-gray-700",
-            )}
-          >
-            {skipped.slice(0, SKIPPED_ROWS_SHOWN).map((row) => (
-              <li key={row.row}>
-                Dòng {row.row} ({SKIP_REASON[row.reason]}): {row.text}
-              </li>
-            ))}
-            {skipped.length > SKIPPED_ROWS_SHOWN ? <li>… và {skipped.length - SKIPPED_ROWS_SHOWN} dòng khác</li> : null}
-          </ul>
-        </details>
+      {withStock ? (
+        <p className="text-sm text-gray-700">
+          Tồn kho: có số liệu của {stockCount} / {items.length} sản phẩm
+          {stockCount < items.length ? " — các dòng còn lại không có số ở ô tồn kho nên giữ nguyên số liệu đang có." : "."}
+        </p>
       ) : null}
+      <SkippedRows skipped={skipped} reasons={SKIP_REASON} />
       <div className={cx(tableWrapCls, "mt-2 max-h-72 overflow-y-auto")}>
         <table className={tableCls}>
           <thead>
@@ -437,6 +314,7 @@ function Preview({ result }: { result: ConvertResult }) {
               <th className={cx(th, "max-sm:hidden")}>Tên hàng</th>
               <th className={cx(th, numCls)}>Giá lẻ</th>
               <th className={cx(th, numCls)}>Giá sỉ</th>
+              {withStock ? <th className={cx(th, numCls)}>Tồn kho</th> : null}
               <th className={cx(th, "max-sm:hidden")}>Ghi chú</th>
             </tr>
           </thead>
@@ -445,13 +323,16 @@ function Preview({ result }: { result: ConvertResult }) {
               <tr key={item.sku}>
                 <td className={td}>
                   <div className="whitespace-nowrap font-medium">{item.sku}</div>
-                  {/* Màn hình hẹp: tên và ghi chú nằm dưới mã hàng để hai cột giá luôn nằm trong màn hình. */}
+                  {/* Màn hình hẹp: tên và ghi chú nằm dưới mã hàng để các cột số luôn nằm trong màn hình. */}
                   <div className="text-gray-600 sm:hidden">{item.name}</div>
                   <div className="text-xs text-gray-500 sm:hidden">{item.note}</div>
                 </td>
                 <td className={cx(td, "min-w-48 max-sm:hidden")}>{item.name}</td>
                 <td className={cx(td, numCls)}>{formatVND(item.retailPrice)}</td>
                 <td className={cx(td, numCls)}>{formatVND(item.wholesalePrice)}</td>
+                {withStock ? (
+                  <td className={cx(td, numCls)}>{typeof stock[item.sku] === "number" ? formatQty(stock[item.sku]) : ""}</td>
+                ) : null}
                 <td className={cx(td, "text-gray-600 max-sm:hidden")}>{item.note}</td>
               </tr>
             ))}

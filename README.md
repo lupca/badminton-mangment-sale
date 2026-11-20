@@ -5,6 +5,7 @@ Công cụ cho sale của hãng (Li-Ning, Yonex, Ashaway…) bán hàng cho đ�
 - **Chương trình**: tạo và sửa chương trình khuyến mãi — danh mục hàng (nhập từ Excel) và quy tắc khuyến mãi.
 - **Đơn hàng**: nhập số lượng, hệ thống tính ngay tiền phải trả, mức khuyến mãi đạt được, còn thiếu bao nhiêu để lên mức kế tiếp và quà được chọn.
 - **Tổng hợp**: theo từng chương trình — hàng bán theo mã, quà tặng theo mã, doanh số theo đại lý.
+- **Sản phẩm**: toàn bộ sản phẩm của các chương trình theo từng danh mục, kèm giá lẻ và tồn kho.
 
 ## Chạy
 
@@ -25,6 +26,15 @@ Chưa có backend. Dữ liệu lưu trong trình duyệt (localStorage) của t�
 - Lần chạy đầu tiên nạp dữ liệu mẫu trong `src/seed/seed.json`.
 - Muốn nhiều người dùng chung một bộ dữ liệu thì cần thêm backend: chỉ phải thay hai hàm `readStorage` / `writeStorage` trong `src/lib/store.tsx`.
 
+## Sản phẩm và tồn kho
+
+Sản phẩm và giá được nhập từ Excel vào danh mục của từng chương trình. Tồn kho được ghi theo mã hàng, dùng chung cho mọi chương trình, và có hai cách đưa vào:
+
+- Màn hình **Sản phẩm** → «Cập nhật tồn kho»: chọn file tồn kho xuất từ phần mềm kho (hoặc dán từ Excel). File chỉ cần cột mã hàng và cột số lượng tồn; mã nằm ở nhiều dòng (mỗi kho một dòng) thì cộng dồn.
+- Khi nhập sản phẩm vào danh mục: nếu file có cột «Tồn kho» thì số tồn được ghi luôn.
+
+Mã chưa có số liệu hiện dấu «—», tồn bằng 0 hiện «Hết hàng». Hệ thống không tự trừ tồn kho khi chốt đơn — số tồn chỉ đổi khi nhập file mới.
+
 ## Ba loại quy tắc khuyến mãi
 
 | Loại | Ví dụ |
@@ -42,7 +52,8 @@ src/
   types.ts            mô hình dữ liệu
   lib/engine.ts       tính đơn theo quy tắc (hàm thuần, có kiểm thử)
   lib/store.tsx       kho dữ liệu + lưu localStorage + nhập/xuất JSON
-  lib/excel.ts        đọc file Excel / dữ liệu dán thành danh sách sản phẩm
+  lib/excel.ts        đọc file Excel / dữ liệu dán thành danh sách sản phẩm và số lượng tồn
+  lib/stock.ts        tồn kho theo mã hàng + danh sách sản phẩm theo danh mục
   lib/programOps.ts   thao tác trên chương trình và quy tắc
   pages/              các màn hình
   components/         hộp thoại nhập Excel, bảng tổng hợp, các phần của màn hình

@@ -1,5 +1,5 @@
-// Đọc bảng giá từ file Excel / CSV hoặc văn bản dán: nhận diện dòng tiêu đề, các cột và đơn vị giá,
-// rồi chuyển thành danh sách sản phẩm. Các hàm đều thuần (không đụng tới giao diện) để kiểm thử được.
+// Đọc bảng giá hoặc bảng tồn kho từ file Excel / CSV hoặc văn bản dán: nhận diện dòng tiêu đề, các cột và đơn vị giá,
+// rồi chuyển thành danh sách sản phẩm / số lượng tồn. Các hàm đều thuần (không đụng tới giao diện) để kiểm thử được.
 import type { CellObject, WorkSheet } from "xlsx";
 import type { ProductItem } from "../types";
 import { normalizeSku, searchKey } from "./format";
@@ -14,11 +14,14 @@ export interface SheetData {
   rows: Cell[][];
 }
 
-export type ColumnRole = "sku" | "name" | "retail" | "wholesale" | "unit" | "note";
+export type ColumnRole = "sku" | "name" | "retail" | "wholesale" | "unit" | "note" | "stock";
 /** Vai trò → vị trí cột (0 = cột A); null = không có cột này. */
 export type ColumnMapping = Record<ColumnRole, number | null>;
 /** Đơn vị của các số giá trong file: nghìn đồng (1420 = 1.420.000 đ) hay đồng. */
 export type PriceUnit = "thousand" | "dong";
+
+/** File đang đọc để làm gì: nhập sản phẩm vào danh mục (bảng giá) hay cập nhật tồn kho. */
+export type LayoutPurpose = "products" | "stock";
 
 export interface SheetLayout {
   /** Vị trí dòng tiêu đề trong `rows`; null = không có dòng tiêu đề, dữ liệu bắt đầu từ dòng đầu. */
@@ -34,7 +37,7 @@ export interface ConvertOptions extends SheetLayout {
   wholesaleDiscountPercent: number | null;
 }
 
-export type SkipReason = "no_sku" | "no_price" | "duplicate" | "total";
+export type SkipReason = "no_sku" | "no_price" | "no_stock" | "duplicate" | "total";
 
 export interface SkippedRow {
   /** Số thứ tự dòng trong sheet, tính từ 1 như Excel. */
@@ -51,6 +54,24 @@ export interface ConvertResult {
   skipped: SkippedRow[];
   /** Số dòng bị bỏ vì trùng mã với một dòng phía trên. */
   duplicateCount: number;
+  /** Tồn kho của các sản phẩm đọc được (mã hàng → số lượng), chỉ gồm những dòng có số ở cột tồn kho. */
+  stock: Record<string, number>;
+}
+
+export interface StockRow {
+  sku: string;
+  /** Tên hàng ghi trong file (rỗng nếu file không có cột tên). */
+  name: string;
+  qty: number;
+}
+
+export interface StockConvertResult {
+  /** Mỗi mã hàng một dòng, theo thứ tự xuất hiện trong file; mã nằm ở nhiều dòng thì số lượng được cộng dồn. */
+  rows: StockRow[];
+  /** Các dòng có dữ liệu nhưng không đọc được tồn kho. */
+  skipped: SkippedRow[];
+  /** Các mã xuất hiện ở từ hai dòng trở lên (vd mỗi kho một dòng) — đã cộng dồn. */
+  mergedSkus: string[];
 }
 
 export interface ColumnOption {
@@ -225,9 +246,41 @@ function columnPrices(rows: Cell[][], column: number | null): Array<number | nul
   return values.map((value) => toPrice(value, decimal));
 }
 
+/**
+ * Số lượng tồn trong ô. Khác với giá: nhận cả 0 và số âm (kho bị âm), kể cả kiểu «-5» và «(5)» của sổ sách.
+ * Ô trống hoặc ô chữ («Hết», «12 cái») → null. Làm tròn 3 chữ số lẻ.
+ */
+function toQuantity(value: Cell | undefined, decimal: DecimalSeparator = null): number | null {
+  let n: number | null;
+  if (typeof value === "string") {
+    const text = value.trim();
+    const negative = /^[-−–]/.test(text) || /^\(.+\)$/.test(text);
+    n = parseNumber(negative ? text.replace(/^[-−–]\s*|^\(\s*|\s*\)$/g, "") : text, decimal);
+    if (n != null && negative) n = -n;
+  } else {
+    n = parseNumber(value, decimal);
+  }
+  return n == null ? null : Math.round(n * 1000) / 1000 || 0;
+}
+
+/** Số lượng tồn của từng dòng trong một cột (null = ô không có số), đọc số theo quy ước chung của cả cột. */
+function columnQuantities(rows: Cell[][], column: number | null): Array<number | null> {
+  const values = rows.map((row) => (column == null ? null : row[column]));
+  const decimal = decimalSeparator(values);
+  return values.map((value) => toQuantity(value, decimal));
+}
+
 // ───────────────────────── Nhận diện dòng tiêu đề và các cột ─────────────────────────
 
-const NO_MAPPING: ColumnMapping = { sku: null, name: null, retail: null, wholesale: null, unit: null, note: null };
+const NO_MAPPING: ColumnMapping = {
+  sku: null,
+  name: null,
+  retail: null,
+  wholesale: null,
+  unit: null,
+  note: null,
+  stock: null,
+};
 
 interface LabelRule {
   role: ColumnRole;
@@ -249,15 +302,35 @@ const LABEL_RULES: LabelRule[] = [
   { role: "name", rank: 1, pattern: /^(ten|name|san pham|hang hoa)$|^ten (hang|sp|san pham|hh|vat tu)\b|^(item|product) name$/ },
   { role: "unit", rank: 1, pattern: /^(dvt|dv|unit|don vi( tinh)?)$/ },
   { role: "note", rank: 1, pattern: /^(ghi chu|chu thich|notes?)\b/ },
+  // Tồn kho: nhãn nói rõ đây là số đang tồn («Tồn kho», «SL tồn», «Tồn cuối kỳ»…). Các cột định mức và đầu kỳ
+  // («Tồn nhỏ nhất», «Tồn lớn nhất», «Tồn đầu kỳ», «Giá trị tồn») không khớp.
+  {
+    role: "stock",
+    rank: 2,
+    pattern: /^((sl|so luong|tong|tong sl|tong so luong) )?ton( kho)?( (hien tai|thuc te|cuoi|cuoi ky|kha dung|co the ban))?$/,
+  },
+  {
+    role: "stock",
+    rank: 1,
+    pattern: /^(co the ban|kha dung|sl kha dung|stock|in stock|on hand|(qty|quantity) on hand|stock (qty|quantity)|inventory|available)$/,
+  },
 ];
 
-function matchLabel(value: Cell | undefined): LabelRule | null {
+/** Nhãn cột số lượng không nói rõ là tồn kho: chỉ dùng khi người dùng đang nhập một file tồn kho. */
+const LOOSE_STOCK_LABEL = /^(so luong|sl|sl thuc te|so luong thuc te|qty|quantity|cuoi ky)$/;
+
+/** Chữ của ô tiêu đề đưa về dạng để so khớp: bỏ dấu, viết thường, bỏ phần trong ngoặc và các ký hiệu. */
+function labelKey(value: Cell | undefined): string | null {
   if (typeof value !== "string" || value.length > 40) return null;
-  const key = searchKey(value)
+  return searchKey(value)
     .replace(/\(.*?\)/g, " ")
     .replace(/[^a-z0-9%]+/g, " ")
     .trim();
-  return LABEL_RULES.find((rule) => rule.pattern.test(key)) ?? null;
+}
+
+function matchLabel(value: Cell | undefined): LabelRule | null {
+  const key = labelKey(value);
+  return key == null ? null : (LABEL_RULES.find((rule) => rule.pattern.test(key)) ?? null);
 }
 
 /** Mã hàng: liền một khối, có cả chữ lẫn số (P-AYPR285-3, AV8000SQ). */
@@ -382,8 +455,18 @@ const VAT_8_OVER_10 = 1.08 / 1.1;
 /** Số dòng đầu (có giá) dùng để nhận diện cột — đủ đại diện mà file rất dài vẫn nhanh. */
 const SAMPLE_ROWS = 500;
 
-/** Tìm dòng tiêu đề, gán cột cho từng vai trò (theo nhãn trước, theo nội dung cột sau) và đoán đơn vị giá. */
-export function detectLayout(rows: Cell[][]): SheetLayout {
+/** Cột toàn số (kể cả 0 và số âm) mà không phải số thứ tự: ứng viên cho cột số lượng tồn. */
+function isQuantityColumn(data: Cell[][], column: number): boolean {
+  const filled = data.map((row) => row[column]).filter((value) => !isBlank(value));
+  const numbers = filled.filter((value) => toQuantity(value) != null);
+  return filled.length > 0 && numbers.length >= filled.length * 0.8 && !isRunningNumber(data, column);
+}
+
+/**
+ * Tìm dòng tiêu đề, gán cột cho từng vai trò (theo nhãn trước, theo nội dung cột sau) và đoán đơn vị giá.
+ * `purpose` = "stock" khi đang đọc một file tồn kho: cột «Số lượng» cũng được nhận là tồn kho, và không đoán cột giá.
+ */
+export function detectLayout(rows: Cell[][], purpose: LayoutPurpose = "products"): SheetLayout {
   const headerRow = findHeaderRow(rows);
   const labels = headerRow == null ? [] : rows[headerRow].map(matchLabel);
   // Chỉ thống kê trên các dòng có giá: dòng tên nhóm hay dòng tiêu đề lặp lại không làm lệch tỷ lệ.
@@ -428,8 +511,21 @@ export function detectLayout(rows: Cell[][]): SheetLayout {
   mapping.note = labelled("note").find(free) ?? null;
   mapping.retail = labelled("retail").find(free) ?? null;
   mapping.wholesale = labelled("wholesale").find(free) ?? null;
+  mapping.stock = labelled("stock").find(free) ?? null;
 
-  if (mapping.retail == null && mapping.wholesale == null) {
+  if (purpose === "stock") {
+    if (mapping.stock == null && headerRow != null) {
+      // File tồn kho không ghi chữ «tồn»: nhận cột «Số lượng» / «SL».
+      const header = rows[headerRow];
+      mapping.stock = columns.find((c) => free(c) && LOOSE_STOCK_LABEL.test(labelKey(header[c]) ?? "")) ?? null;
+    } else if (mapping.stock == null) {
+      // Bảng không có dòng tiêu đề (vd dán hai cột mã hàng + số lượng): chỉ có đúng một cột số thì đó là tồn kho.
+      const numeric = columns.filter(
+        (c) => free(c) && common(c) && stats[c].barcode === 0 && isQuantityColumn(data, c),
+      );
+      if (numeric.length === 1) mapping.stock = numeric[0];
+    }
+  } else if (mapping.retail == null && mapping.wholesale == null) {
     // Không có nhãn giá nào: đoán theo nội dung. Giá lẻ là cột số đầu tiên (không tính cột số thứ tự) — nhưng nếu
     // có cột bằng đúng (cột đó ÷ 1,1 × 1,08) thì đấy là "giá sau VAT" và được ưu tiên. Giá sỉ là cột số kế tiếp
     // không cao hơn giá lẻ (cột số lượng, thành tiền lệch quá xa nên bị loại).
@@ -450,11 +546,11 @@ export function detectLayout(rows: Cell[][]): SheetLayout {
   return { headerRow, mapping, priceUnit: detectPriceUnit(rows, headerRow, mapping) };
 }
 
-/** Sheet nên chọn sẵn: sheet đầu tiên nhận ra được cột mã hàng và cột giá. */
-export function defaultSheetIndex(sheets: SheetData[]): number {
+/** Sheet nên chọn sẵn: sheet đầu tiên nhận ra được cột mã hàng và cột giá (file tồn kho: cột mã hàng và cột tồn kho). */
+export function defaultSheetIndex(sheets: SheetData[], purpose: LayoutPurpose = "products"): number {
   const index = sheets.findIndex((sheet) => {
-    const { mapping } = detectLayout(sheet.rows);
-    return mapping.sku != null && (mapping.retail ?? mapping.wholesale) != null;
+    const { mapping } = detectLayout(sheet.rows, purpose);
+    return mapping.sku != null && (purpose === "stock" ? mapping.stock : (mapping.retail ?? mapping.wholesale)) != null;
   });
   return Math.max(index, 0);
 }
@@ -484,13 +580,24 @@ export function columnOptions(rows: Cell[][], headerRow: number | null): ColumnO
 
 const TOTAL_ROW = /^(grand total|total|tong cong|tong|cong)[:.]?$/;
 
+/** Nội dung một dòng, rút gọn, để người dùng nhận ra dòng bị bỏ qua. */
+function describeRow(row: Cell[]): string {
+  return shorten(
+    row
+      .filter((value) => !isBlank(value))
+      .map(cellText)
+      .join(" | "),
+    80,
+  );
+}
+
 /**
  * Chuyển các dòng dưới dòng tiêu đề thành sản phẩm. Dòng hợp lệ phải có mã hàng và ít nhất một giá là số > 0,
  * nhờ vậy dòng trống, dòng tên nhóm ("ASHAWAY") và dòng tiêu đề lặp lại tự bị bỏ qua. Mã trùng: giữ dòng đầu tiên.
  */
 export function convertRows(rows: Cell[][], options: ConvertOptions): ConvertResult {
   const { mapping } = options;
-  const result: ConvertResult = { items: [], skipped: [], duplicateCount: 0 };
+  const result: ConvertResult = { items: [], skipped: [], duplicateCount: 0, stock: {} };
   if (mapping.sku == null) return result;
 
   const multiplier = options.priceUnit === "thousand" ? 1000 : 1;
@@ -499,15 +606,13 @@ export function convertRows(rows: Cell[][], options: ConvertOptions): ConvertRes
   const at = (row: Cell[], column: number | null) => (column == null ? null : row[column]);
   const retailPrices = columnPrices(rows, mapping.retail);
   const wholesalePrices = columnPrices(rows, mapping.wholesale);
+  const quantities = columnQuantities(rows, mapping.stock);
   const seen = new Set<string>();
 
   for (let r = options.headerRow == null ? 0 : options.headerRow + 1; r < rows.length; r++) {
     const row = rows[r];
     if (row.every(isBlank)) continue;
-    const skip = (reason: SkipReason) => {
-      const text = row.filter((value) => !isBlank(value)).map(cellText).join(" | ");
-      result.skipped.push({ row: r + 1, reason, text: shorten(text, 80) });
-    };
+    const skip = (reason: SkipReason) => result.skipped.push({ row: r + 1, reason, text: describeRow(row) });
 
     const sku = normalizeSku(at(row, mapping.sku));
     const retailInFile = retailPrices[r];
@@ -539,7 +644,49 @@ export function convertRows(rows: Cell[][], options: ConvertOptions): ConvertRes
       if (unit) item.unit = unit;
       if (note) item.note = note;
       result.items.push(item);
+      const quantity = quantities[r];
+      if (quantity != null) result.stock[sku] = quantity;
     }
   }
+  return result;
+}
+
+/**
+ * Đọc bảng tồn kho: mỗi dòng hợp lệ cần mã hàng và một số ở cột tồn kho (không cần giá). Mã nằm ở nhiều dòng —
+ * file kho hay ghi mỗi kho một dòng — thì cộng dồn số lượng.
+ */
+export function convertStockRows(rows: Cell[][], layout: Pick<SheetLayout, "headerRow" | "mapping">): StockConvertResult {
+  const { mapping } = layout;
+  const result: StockConvertResult = { rows: [], skipped: [], mergedSkus: [] };
+  if (mapping.sku == null || mapping.stock == null) return result;
+
+  const quantities = columnQuantities(rows, mapping.stock);
+  const bySku = new Map<string, StockRow>();
+  const merged = new Set<string>();
+
+  for (let r = layout.headerRow == null ? 0 : layout.headerRow + 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (row.every(isBlank)) continue;
+    const skip = (reason: SkipReason) => result.skipped.push({ row: r + 1, reason, text: describeRow(row) });
+
+    const sku = normalizeSku(row[mapping.sku]);
+    const quantity = quantities[r];
+    const existing = bySku.get(sku);
+    if (!sku) {
+      skip("no_sku");
+    } else if (TOTAL_ROW.test(searchKey(cellText(row[mapping.sku])))) {
+      skip("total");
+    } else if (quantity == null) {
+      skip("no_stock");
+    } else if (existing) {
+      existing.qty = Math.round((existing.qty + quantity) * 1000) / 1000 || 0;
+      merged.add(sku);
+    } else {
+      const item: StockRow = { sku, name: mapping.name == null ? "" : cellText(row[mapping.name]), qty: quantity };
+      bySku.set(sku, item);
+      result.rows.push(item);
+    }
+  }
+  result.mergedSkus = [...merged];
   return result;
 }

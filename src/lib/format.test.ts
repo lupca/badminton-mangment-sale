@@ -9,6 +9,7 @@ import {
   formatDateTime,
   formatNumber,
   formatPeriod,
+  formatQty,
   formatVND,
   matchesSearch,
   newId,
@@ -28,6 +29,22 @@ afterEach(() => {
 });
 
 // ───────────────────────── Numbers ─────────────────────────
+
+describe("formatQty", () => {
+  it("groups thousands with a dot and keeps up to 3 decimals with a comma", () => {
+    expect(formatQty(0)).toBe("0");
+    expect(formatQty(24)).toBe("24");
+    expect(formatQty(1250)).toBe("1.250");
+    expect(formatQty(2.5)).toBe("2,5");
+    expect(formatQty(1234.5678)).toBe("1.234,568");
+  });
+
+  it("shows negative stock with a minus sign and treats non-numbers as 0", () => {
+    expect(formatQty(-3)).toBe("-3");
+    expect(formatQty(Number.NaN)).toBe("0");
+    expect(formatQty(Number.POSITIVE_INFINITY)).toBe("0");
+  });
+});
 
 describe("formatNumber / formatVND", () => {
   it.each([

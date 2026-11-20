@@ -8,11 +8,13 @@ const ProgramsPage = lazy(() => import("./pages/ProgramsPage"));
 const ProgramEditPage = lazy(() => import("./pages/ProgramEditPage"));
 const OrdersPage = lazy(() => import("./pages/OrdersPage"));
 const OrderEditPage = lazy(() => import("./pages/OrderEditPage"));
+const ProductsPage = lazy(() => import("./pages/ProductsPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 
 const NAV = [
   { to: "/programs", section: "programs", label: "Chương trình" },
   { to: "/orders", section: "orders", label: "Đơn hàng" },
+  { to: "/products", section: "products", label: "Sản phẩm" },
   { to: "/settings", section: "settings", label: "Dữ liệu" },
 ];
 
@@ -45,6 +47,7 @@ function Shell() {
   let page: ReactNode;
   if (section === "programs") page = id ? <ProgramEditPage key={id} programId={id} /> : <ProgramsPage />;
   else if (section === "orders") page = id ? <OrderEditPage key={id} orderId={id} /> : <OrdersPage />;
+  else if (section === "products") page = <ProductsPage />;
   else if (section === "settings") page = <SettingsPage />;
   else page = <ProgramsPage />;
 
@@ -55,13 +58,14 @@ function Shell() {
           <Link to="/programs" className="py-3 text-base font-semibold text-gray-900">
             Quản lý khuyến mãi
           </Link>
-          <nav className="flex gap-1">
+          {/* Điện thoại: thu hẹp lề từng mục để bốn mục vừa một hàng; hẹp hơn nữa thì thanh mục cuộn ngang. */}
+          <nav className="flex max-w-full overflow-x-auto sm:gap-1">
             {NAV.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cx(
-                  "border-b-2 px-3 py-3 text-sm font-medium",
+                  "shrink-0 whitespace-nowrap border-b-2 px-1.5 py-3 text-sm font-medium sm:px-3",
                   section === item.section
                     ? "border-blue-600 text-blue-700"
                     : "border-transparent text-gray-600 hover:text-gray-900",

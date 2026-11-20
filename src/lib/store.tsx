@@ -14,8 +14,10 @@ import type {
   Program,
   Rule,
   Settings,
+  Stock,
 } from "../types";
 import { newId, normalizeSku } from "./format";
+import { applyStock, newerStock, stockQty } from "./stock";
 
 const STORAGE_KEY = "kmdb.v1";
 
@@ -187,6 +189,21 @@ function normalizeOrder(raw: any): Order {
   return order;
 }
 
+/** Tồn kho: chỉ giữ các cặp (mã hàng, số). Dữ liệu lưu trước khi có tồn kho thì không có mục này → tồn kho rỗng. */
+function normalizeStock(raw: any): Stock {
+  const bySku: Record<string, number> = {};
+  const source = raw?.bySku;
+  if (source && typeof source === "object" && !Array.isArray(source)) {
+    for (const [key, value] of Object.entries(source)) {
+      const sku = normalizeSku(key);
+      const amount = stockQty(value);
+      if (sku && amount != null) bySku[sku] = amount;
+    }
+  }
+  const updatedAt = typeof raw?.updatedAt === "string" && !Number.isNaN(Date.parse(raw.updatedAt)) ? raw.updatedAt : null;
+  return { bySku, updatedAt };
+}
+
 export function normalizeDB(raw: any): DB {
   if (!raw || typeof raw !== "object" || (!Array.isArray(raw.programs) && !Array.isArray(raw.orders))) {
     throw new Error("File không đúng định dạng dữ liệu của hệ thống (thiếu danh sách chương trình / đơn hàng).");
@@ -196,6 +213,7 @@ export function normalizeDB(raw: any): DB {
     programs: records(raw.programs).map(normalizeProgram),
     orders: records(raw.orders).map(normalizeOrder),
     settings: { salesperson: str(raw.settings?.salesperson) },
+    stock: normalizeStock(raw.stock),
   };
 }
 
@@ -278,6 +296,8 @@ export interface Store {
   programs: Program[];
   orders: Order[];
   settings: Settings;
+  /** Tồn kho theo mã hàng, dùng chung cho mọi chương trình. */
+  stock: Stock;
   /** false nếu lần ghi gần nhất xuống trình duyệt thất bại (vd hết dung lượng). */
   saveOk: boolean;
 
@@ -302,11 +322,17 @@ export interface Store {
 
   updateSettings(patch: Partial<Settings>): void;
 
+  /**
+   * Ghi tồn kho đọc từ file (mã hàng → số lượng). "merge" = chỉ cập nhật các mã có trong `entries`, giữ số liệu của
+   * các mã khác; "replace" = bỏ hết số liệu cũ. Thời điểm cập nhật được ghi tự động.
+   */
+  updateStock(entries: Record<string, number>, mode: "merge" | "replace"): void;
+
   /** Toàn bộ dữ liệu dạng JSON (để sao lưu / gửi cho người khác). */
   exportJSON(): string;
   /**
-   * Nhập dữ liệu JSON. "replace" = thay toàn bộ; "merge" = thêm vào, bản ghi trùng id thì ghi đè.
-   * Ném Error (thông báo tiếng Việt) nếu file không hợp lệ.
+   * Nhập dữ liệu JSON. "replace" = thay toàn bộ; "merge" = thêm vào, bản ghi trùng id thì ghi đè, còn tồn kho
+   * thì lấy trọn bộ được cập nhật gần đây hơn. Ném Error (thông báo tiếng Việt) nếu file không hợp lệ.
    */
   importJSON(text: string, mode: "replace" | "merge"): { programs: number; orders: number };
   /** Xóa hết và nạp lại dữ liệu mẫu. */
@@ -380,6 +406,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       programs: db.programs,
       orders: db.orders,
       settings: db.settings,
+      stock: db.stock,
       saveOk,
 
       getProgram: (id) => (id ? db.programs.find((p) => p.id === id) : undefined),
@@ -468,6 +495,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         commit({ ...cur, settings: { ...cur.settings, ...patch } });
       },
 
+      updateStock(entries, mode) {
+        const cur = dbRef.current;
+        commit({ ...cur, stock: applyStock(mode === "replace" ? null : cur.stock, entries, now()) });
+      },
+
       exportJSON: () => JSON.stringify(dbRef.current, null, 2),
       importJSON(text, mode) {
         let parsed: unknown;
@@ -487,6 +519,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             ...cur,
             programs: [...incoming.programs, ...cur.programs.filter((p) => !programIds.has(p.id))],
             orders: [...incoming.orders, ...cur.orders.filter((o) => !orderIds.has(o.id))],
+            stock: newerStock(cur.stock, incoming.stock),
           });
         }
         return { programs: incoming.programs.length, orders: incoming.orders.length };
