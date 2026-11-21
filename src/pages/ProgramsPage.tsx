@@ -269,7 +269,7 @@ export default function ProgramsPage() {
           hint={
             manager
               ? "Tạo chương trình đầu tiên, nhập danh mục sản phẩm từ Excel rồi khai báo quy tắc khuyến mãi." +
-                (mode === "cloud" ? " Hoặc vào mục «Dữ liệu» để nạp chương trình mẫu hay đưa dữ liệu cũ của máy này lên." : "")
+                (mode === "cloud" ? " Hoặc vào mục «Cài đặt» để nạp chương trình mẫu hay đưa dữ liệu cũ của máy này lên." : "")
               : "Chương trình khuyến mãi do người quản lý tạo. Khi có chương trình, bạn mở ra xem và tạo đơn ở đây."
           }
           action={
@@ -277,7 +277,7 @@ export default function ProgramsPage() {
               <>
                 {createButton}
                 <Link to="/settings" className={buttonCls()}>
-                  Đến mục «Dữ liệu»
+                  Đến mục «Cài đặt»
                 </Link>
               </>
             ) : (

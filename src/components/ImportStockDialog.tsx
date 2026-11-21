@@ -110,7 +110,7 @@ function StockDialog({ onClose, products, existingCount, onImport }: ImportStock
               onClose();
             }}
           >
-            Cập nhật tồn kho {count} mã
+            {count > 0 ? `Cập nhật tồn kho ${count} mã` : "Cập nhật tồn kho"}
           </Button>
         </>
       }

@@ -124,7 +124,7 @@ export default function ResetPasswordDialog({ account, onClose }: { account: Pro
           </p>
           <p className="mt-3 text-sm text-gray-500">
             Người đó đăng nhập bằng email <span className="wrap-anywhere">{account.email}</span> và mật khẩu trên, rồi nên tự
-            đổi mật khẩu ở mục «Dữ liệu».
+            đổi mật khẩu ở mục «Cài đặt».
           </p>
         </>
       )}

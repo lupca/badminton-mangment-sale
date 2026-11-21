@@ -37,13 +37,13 @@ const SALE_TOPICS: Topic[] = [
   {
     id: "tao-don",
     title: "Tạo đơn cho đại lý",
-    why: "Nhập hàng đại lý đặt, hệ thống tự tính giá sau khuyến mại và quà được tặng.",
+    why: "Nhập hàng đại lý đặt, hệ thống tự tính giá sau khuyến mãi và quà được tặng.",
     steps: [
-      <>Vào <B>Đơn hàng</B>, bấm <B>Tạo đơn</B> rồi chọn chương trình khuyến mại.</>,
+      <>Vào <B>Đơn hàng</B>, bấm <B>Tạo đơn</B> rồi chọn chương trình khuyến mãi.</>,
       <>Ghi <B>tên và số điện thoại đại lý</B>. Tên sale tự điền sẵn.</>,
       <>Gõ <B>số lượng</B> vào ô cạnh từng mã hàng. Có sẵn danh sách trong Excel / Zalo thì bấm <B>Dán mã + số lượng</B>.</>,
       <>Xem khung bên phải: <B>tiền thanh toán</B> và <B>quà tặng</B> tự cập nhật. Có quà được chọn thì chọn ở mục «Quà tặng».</>,
-      <>Bấm <B>Chốt đơn</B>. Gửi cho đại lý bằng <B>Sao chép</B> (dán vào Zalo), <B>In</B> hoặc <B>Xuất Excel</B>.</>,
+      <>Bấm <B>Chốt đơn</B>. Gửi cho đại lý bằng <B>Sao chép nội dung</B> (dán vào Zalo), <B>In</B> hoặc <B>Xuất Excel</B>.</>,
     ],
     shot: { src: shotOrderEdit, alt: "Màn hình nhập đơn: danh sách hàng bên trái, tiền và quà tặng bên phải" },
     go: { to: "/orders", label: "Mở Đơn hàng" },
@@ -63,7 +63,7 @@ const SALE_TOPICS: Topic[] = [
   {
     id: "xem-gia-ton",
     title: "Xem giá và tồn kho trước khi báo giá",
-    why: "Biết mã nào còn hàng, giá lẻ bao nhiêu, đang nằm trong khuyến mại nào.",
+    why: "Biết mã nào còn hàng, giá lẻ bao nhiêu, đang nằm trong khuyến mãi nào.",
     steps: [
       <>Vào <B>Sản phẩm</B>. Gõ mã hoặc tên vào ô tìm (không cần gõ dấu).</>,
       <>Lọc theo <B>hãng</B>, <B>loại hàng</B>, <B>mức giá</B>. Bấm ô <B>Sắp hết</B> / <B>Hết hàng</B> để xem riêng các mã đó.</>,
@@ -90,14 +90,14 @@ const SALE_TOPICS: Topic[] = [
 const MANAGER_TOPICS: Topic[] = [
   {
     id: "tao-chuong-trinh",
-    title: "Tạo chương trình khuyến mại",
-    why: "Mỗi đợt khuyến mại là một chương trình: thời gian, danh mục hàng và quy tắc riêng.",
+    title: "Tạo chương trình khuyến mãi",
+    why: "Mỗi đợt khuyến mãi là một chương trình: thời gian, danh mục hàng và quy tắc riêng.",
     steps: [
       <>Vào <B>Chương trình</B>, bấm <B>Tạo chương trình</B>.</>,
       <>Tab <B>Thông tin</B>: đặt tên, hãng, thời gian áp dụng (để trống = không thời hạn).</>,
       <>Có đợt cũ gần giống: bấm <B>Nhân bản</B> ở đợt cũ rồi sửa, nhanh hơn làm từ đầu.</>,
     ],
-    shot: { src: shotPrograms, alt: "Danh sách chương trình khuyến mại" },
+    shot: { src: shotPrograms, alt: "Danh sách chương trình khuyến mãi" },
     go: { to: "/programs", label: "Mở Chương trình" },
   },
   {
@@ -116,15 +116,15 @@ const MANAGER_TOPICS: Topic[] = [
   },
   {
     id: "quy-tac",
-    title: "Khai báo quy tắc khuyến mại",
+    title: "Khai báo quy tắc khuyến mãi",
     why: "Quy tắc quyết định đơn được giảm gì, tặng gì. Sale không phải tự tính.",
     steps: [
       <>Mở chương trình, tab <B>Quy tắc khuyến mãi</B>, bấm <B>Thêm quy tắc</B>.</>,
       <>Chọn kiểu: <B>Giảm giá</B> (theo %), <B>Mua X tặng Y</B>, hoặc <B>Tặng theo doanh số</B> (đạt mức tiền thì được chọn quà trong hạn mức).</>,
       <>Chọn danh mục áp dụng, danh mục quà và các mức. Quy tắc thiếu thông tin sẽ báo đỏ.</>,
-      <>Thử ngay: tạo một đơn nháp của chương trình, nhập vài mã và xem kết quả bên phải.</>,
+      <>Thử ngay: tạo một đơn nháp của chương trình, nhập vài mã và xem phần Tổng đơn hàng bên phải.</>,
     ],
-    shot: { src: shotRules, alt: "Tab quy tắc khuyến mại của một chương trình" },
+    shot: { src: shotRules, alt: "Tab quy tắc khuyến mãi của một chương trình" },
     go: { to: "/programs", label: "Mở Chương trình" },
     tip: <>Sửa quy tắc không làm đổi đơn đã chốt: đơn đã chốt giữ quy tắc lúc chốt.</>,
   },
@@ -136,7 +136,7 @@ const MANAGER_TOPICS: Topic[] = [
       <>Xuất file tồn kho từ phần mềm kho (chỉ cần cột mã hàng và số lượng tồn).</>,
       <>Vào <B>Sản phẩm</B>, bấm <B>Cập nhật tồn kho</B>, chọn file.</>,
       <>Mặc định chỉ cập nhật các mã có trong file; mã khác giữ số cũ. Bấm nút <B>Cập nhật tồn kho … mã</B>.</>,
-      <>Ngưỡng «sắp hết» (mặc định 5) đổi ở mục <B>Dữ liệu</B>.</>,
+      <>Ngưỡng «sắp hết» (mặc định 5) đổi ở mục <B>Cài đặt</B>.</>,
     ],
     shot: { src: shotStock, alt: "Hộp cập nhật tồn kho từ file Excel" },
     go: { to: "/products", label: "Mở Sản phẩm" },

@@ -182,7 +182,7 @@ function OrderEditor({ order }: { order: Order }) {
     calc.totalQty === 0
       ? "Đơn chưa có dòng hàng nào."
       : calc.hasError
-        ? "Đơn còn lỗi cần sửa trước khi chốt (xem phần Kết quả)."
+        ? "Đơn còn lỗi cần sửa trước khi chốt (xem phần Tổng đơn hàng)."
         : null;
   const confirmButton = (className?: string) => (
     <Button
@@ -229,8 +229,8 @@ function OrderEditor({ order }: { order: Order }) {
           }
           actions={
             <>
-              <Button onClick={copySummary}>
-                <Copy className="h-4 w-4" /> Sao chép
+              <Button onClick={copySummary} title="Sao chép nội dung đơn để dán vào Zalo / tin nhắn gửi đại lý">
+                <Copy className="h-4 w-4" /> Sao chép nội dung
               </Button>
               <Button onClick={() => window.print()}>
                 <Printer className="h-4 w-4" /> In

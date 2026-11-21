@@ -17,7 +17,7 @@ const TONE_CLS: Record<StatusTone, string> = {
 /** Tình trạng khuyến mãi của đơn, gói trong một dòng. */
 function promoStatus(calc: CalcResult): { tone: StatusTone; text: string } {
   const errors = calc.issues.filter((issue) => issue.level === "error").length;
-  if (errors > 0) return { tone: "error", text: `Có ${errors} lỗi cần sửa — xem kết quả` };
+  if (errors > 0) return { tone: "error", text: `Có ${errors} lỗi cần sửa — xem chi tiết` };
   if (calc.totalQty === 0) return { tone: "muted", text: "Chưa nhập hàng" };
 
   const parts: string[] = [];
@@ -70,7 +70,7 @@ export function MobileBar({
           <div className="text-xs text-gray-500">Thanh toán</div>
           <div className="text-lg leading-tight font-bold tabular-nums text-gray-900">{formatVND(calc.totalAmount)}</div>
         </div>
-        <Button onClick={onToggle}>{atResult ? "Về chọn hàng" : "Xem kết quả"}</Button>
+        <Button onClick={onToggle}>{atResult ? "Về chọn hàng" : "Xem tổng đơn"}</Button>
       </div>
       <p className={cx("mt-0.5 line-clamp-2 text-xs", TONE_CLS[status.tone])}>{status.text}</p>
       {/* Thêm đúng một dòng, chi tiết từng mã nằm ở phần kết quả. */}

@@ -26,11 +26,11 @@ const ItemsTable = memo(function ItemsTable({
       <table className={tableCls}>
         <thead>
           <tr>
-            <th className={thCls}>Mã hàng</th>
+            <th className={cx(thCls, "max-sm:hidden")}>Mã hàng</th>
             <th className={thCls}>Tên hàng</th>
-            <th className={cx(thCls, numCls)}>Giá lẻ</th>
-            <th className={cx(thCls, numCls)}>Giá sỉ</th>
-            <th className={thCls}>Ghi chú</th>
+            <th className={cx(thCls, numCls, "max-sm:hidden")}>Giá lẻ</th>
+            <th className={cx(thCls, numCls, "max-sm:hidden")}>Giá sỉ</th>
+            <th className={cx(thCls, "max-sm:hidden")}>Ghi chú</th>
             <th className={thCls} aria-label="Thao tác" />
           </tr>
         </thead>
@@ -38,13 +38,21 @@ const ItemsTable = memo(function ItemsTable({
           {/* key theo vị trí: dòng không có trạng thái riêng, và dữ liệu nhập từ file có thể trùng mã */}
           {items.map((item, index) => (
             <tr key={index} className="hover:bg-gray-50">
-              <td className={cx(tdCls, "whitespace-nowrap font-medium")}>{item.sku}</td>
-              <td className={cx(tdCls, "min-w-48")}>{item.name}</td>
-              <td className={cx(tdCls, numCls)}>{formatVND(item.retailPrice)}</td>
-              <td className={cx(tdCls, numCls)}>{formatVND(item.wholesalePrice)}</td>
-              <td className={cx(tdCls, "text-gray-600")}>{item.note}</td>
+              <td className={cx(tdCls, "whitespace-nowrap font-medium max-sm:hidden")}>{item.sku}</td>
+              <td className={cx(tdCls, "sm:min-w-48")}>
+                {/* Điện thoại: gộp mã, tên, giá vào một ô để không phải kéo ngang mới thấy giá. */}
+                <span className="block text-xs font-medium text-gray-900 sm:hidden">{item.sku}</span>
+                {item.name}
+                <span className="mt-0.5 block text-xs tabular-nums text-gray-600 sm:hidden">
+                  Lẻ {formatVND(item.retailPrice)} · Sỉ {formatVND(item.wholesalePrice)}
+                </span>
+                {item.note ? <span className="block text-xs text-gray-500 sm:hidden">{item.note}</span> : null}
+              </td>
+              <td className={cx(tdCls, numCls, "max-sm:hidden")}>{formatVND(item.retailPrice)}</td>
+              <td className={cx(tdCls, numCls, "max-sm:hidden")}>{formatVND(item.wholesalePrice)}</td>
+              <td className={cx(tdCls, "text-gray-600 max-sm:hidden")}>{item.note}</td>
               <td className={tdCls}>
-                <div className="flex justify-end gap-1.5">
+                <div className="flex justify-end gap-1.5 max-sm:flex-col">
                   <Button size="sm" onClick={() => onEdit(item)}>
                     Sửa
                   </Button>

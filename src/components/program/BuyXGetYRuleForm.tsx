@@ -115,12 +115,12 @@ export default function BuyXGetYRuleForm({
             </label>
             <label className="block">
               <span className="mb-1 block text-xs text-gray-500">
-                Giá trị 1 món (đ) — không bắt buộc
+                Giá trị 1 món (đ)
               </span>
               <MoneyInput
                 aria-label="Giá trị 1 món quà (đ)"
                 title="Để tính vào tổng giá trị quà; để trống nếu không cần"
-                placeholder="Giá trị (đ), không bắt buộc"
+                placeholder="Không bắt buộc"
                 value={rule.giftTextValue ?? 0}
                 onChange={(value) => {
                   const { giftTextValue: _old, ...rest } = rule;

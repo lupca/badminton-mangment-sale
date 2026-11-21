@@ -82,7 +82,7 @@ export function exportProgramReport(report: {
         ["Số đơn đã chốt", confirmedCount],
         [includeDrafts ? "Số đơn nháp" : "Số đơn nháp (không tính)", draftCount],
         ["Số lượng bán", summary.totalQty],
-        ["Thanh toán", summary.totalAmount],
+        ["Doanh thu", summary.totalAmount],
         ["Số lượng quà", summary.giftQty],
         ["Giá trị quà", summary.giftValue],
       ],
@@ -109,7 +109,7 @@ export function exportProgramReport(report: {
     {
       name: "Theo sale",
       rows: [
-        ["Sale", "Số đơn", "SL", "Thanh toán", "Giá trị quà"],
+        ["Sale", "Số đơn", "SL", "Doanh thu", "Giá trị quà"],
         ...summary.sales.map((sale) => [
           sale.name || NO_SALES_NAME,
           sale.orderCount,
@@ -124,7 +124,7 @@ export function exportProgramReport(report: {
     {
       name: "Theo đại lý",
       rows: [
-        ["Đại lý", "Số đơn", "Thanh toán", "Giá trị quà"],
+        ["Đại lý", "Số đơn", "Doanh thu", "Giá trị quà"],
         ...summary.dealers.map((dealer) => [
           dealer.name || NO_DEALER_NAME,
           dealer.orderCount,

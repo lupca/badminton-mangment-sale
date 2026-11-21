@@ -2,7 +2,7 @@
 import { formatDate, formatDateTime, formatNumber, formatVND } from "../../lib/format";
 import { Link } from "../../lib/router";
 import type { Order, Program } from "../../types";
-import { Badge, Button, buttonCls, cx, numCls, tableCls, tableScrollCls, tdCls, thCls } from "../../ui";
+import { Badge, Button, buttonCls, cx, numCls, tableCls, tableScrollCls, tdCls, thCls, useMediaQuery } from "../../ui";
 import { NO_DEALER_NAME, NO_PROGRAM_NAME, ORDER_STATUS_LABEL } from "./labels";
 import type { OrderCalc, OrderTotals } from "./totals";
 
@@ -99,6 +99,86 @@ function OrderTableRow({
   );
 }
 
+/** Danh sách dạng thẻ cho điện thoại: mỗi đơn một thẻ, thấy ngay tiền, quà và trạng thái mà không phải kéo ngang. */
+function OrderCards({
+  rows,
+  totals,
+  allCount,
+  onDuplicate,
+  onDelete,
+}: {
+  rows: OrderRow[];
+  totals: OrderTotals;
+  allCount: number;
+  onDuplicate: (order: Order) => void;
+  onDelete: (order: Order) => void;
+}) {
+  return (
+    <>
+      <ul className="divide-y divide-gray-100">
+        {rows.map(({ order, program, calc }) => {
+          const path = `/orders/${encodeURIComponent(order.id)}`;
+          return (
+            <li key={order.id} className="px-3 py-3">
+              <Link to={path} className="block">
+                <span className="flex items-start justify-between gap-2">
+                  <span className="min-w-0">
+                    <span className="block font-medium text-blue-700">{order.code || "(chưa có mã)"}</span>
+                    <span className="block text-sm text-gray-900">
+                      {order.customerName.trim() || <span className="text-gray-400">{NO_DEALER_NAME}</span>}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 flex-col items-end gap-1">
+                    <Badge tone={order.status === "confirmed" ? "green" : "gray"} dot>
+                      {ORDER_STATUS_LABEL[order.status]}
+                    </Badge>
+                    {calc.hasError ? <Badge tone="red">Có lỗi</Badge> : null}
+                  </span>
+                </span>
+                <span className="mt-0.5 block text-xs text-gray-500">
+                  {formatDate(order.createdAt)}
+                  {order.salesperson.trim() ? ` · Sale: ${order.salesperson.trim()}` : ""}
+                </span>
+                <span className="mt-0.5 block truncate text-xs text-gray-500">{program?.name ?? NO_PROGRAM_NAME}</span>
+                <span className="mt-2 flex items-end justify-between gap-2">
+                  <span className="text-xs text-gray-600">
+                    {formatNumber(calc.totalQty)} sản phẩm
+                    {calc.giftQty > 0 ? ` · quà ${formatNumber(calc.giftQty)} (${formatVND(calc.giftValue)})` : ""}
+                  </span>
+                  <span className="text-base font-semibold tabular-nums text-gray-900">{formatVND(calc.totalAmount)}</span>
+                </span>
+              </Link>
+              <span className="mt-2 flex justify-end gap-1.5">
+                <Button size="sm" onClick={() => onDuplicate(order)}>
+                  Nhân bản
+                </Button>
+                <Button size="sm" variant="danger" onClick={() => onDelete(order)}>
+                  Xóa
+                </Button>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="border-t border-gray-100 bg-gray-50 px-3 py-3 text-sm">
+        <div className="flex justify-between font-semibold">
+          <span>
+            Tổng: {formatNumber(totals.orderCount)} đơn
+            {totals.orderCount < allCount ? (
+              <span className="font-normal text-gray-500"> (lọc từ {formatNumber(allCount)})</span>
+            ) : null}
+          </span>
+          <span className="tabular-nums">{formatVND(totals.totalAmount)}</span>
+        </div>
+        <div className="mt-0.5 text-xs text-gray-600">
+          {formatNumber(totals.totalQty)} sản phẩm
+          {totals.giftQty > 0 ? ` · quà ${formatNumber(totals.giftQty)} (${formatVND(totals.giftValue)})` : ""}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function OrdersTable({
   rows,
   totals,
@@ -115,6 +195,8 @@ export default function OrdersTable({
   onDuplicate: (order: Order) => void;
   onDelete: (order: Order) => void;
 }) {
+  const wide = useMediaQuery("(min-width: 768px)");
+  if (!wide) return <OrderCards rows={rows} totals={totals} allCount={allCount} onDuplicate={onDuplicate} onDelete={onDelete} />;
   return (
     <div className={tableScrollCls}>
       <table className={ordersTableCls}>

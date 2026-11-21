@@ -1,5 +1,5 @@
 import { Component, Suspense, useMemo, type ReactNode } from "react";
-import { CircleHelp, Database, Package, ReceiptText, Tags, UserCircle, Users, type LucideIcon } from "lucide-react";
+import { CircleHelp, Package, ReceiptText, Settings, Tags, UserCircle, Users, type LucideIcon } from "lucide-react";
 import { LockedScreen, PendingScreen } from "./components/account/WaitingScreens";
 import { usePendingAccountCount } from "./lib/cloud/accounts";
 import { AuthProvider, useAuth, useOptionalAuth } from "./lib/cloud/auth";
@@ -28,7 +28,7 @@ const NAV: Array<{ to: string; section: string; label: string; icon: LucideIcon 
   { to: "/programs", section: "programs", label: "Chương trình", icon: Tags },
   { to: "/orders", section: "orders", label: "Đơn hàng", icon: ReceiptText },
   { to: "/products", section: "products", label: "Sản phẩm", icon: Package },
-  { to: "/settings", section: "settings", label: "Dữ liệu", icon: Database },
+  { to: "/settings", section: "settings", label: "Cài đặt", icon: Settings },
 ];
 // Chỉ có khi chạy với máy chủ, và chỉ người quản lý thấy.
 const ACCOUNTS_NAV = { to: "/accounts", section: "accounts", label: "Tài khoản", icon: Users };
@@ -187,7 +187,7 @@ function Shell() {
       <main className="mx-auto max-w-7xl px-4 py-6 print:max-w-none print:p-0">
         {!saveOk ? (
           <Notice tone="error" className="mb-4 print:hidden">
-            Không lưu được dữ liệu xuống trình duyệt (có thể đã hết dung lượng). Hãy vào mục «Dữ liệu» để xuất file sao
+            Không lưu được dữ liệu xuống trình duyệt (có thể đã hết dung lượng). Hãy vào mục «Cài đặt» để xuất file sao
             lưu ngay.
           </Notice>
         ) : null}

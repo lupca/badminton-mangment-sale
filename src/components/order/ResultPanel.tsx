@@ -39,13 +39,13 @@ export function ResultPanel({
 
   return (
     <>
-      <Card title="Kết quả" className="lg:shrink-0">
+      <Card title="Tổng đơn hàng" className="lg:shrink-0">
         <Totals calc={calc} />
         {action}
       </Card>
 
       <div className="mt-4 space-y-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-        {calc.issues.length > 0 || stockWarnings.length > 0 ? (
+        {calc.issues.some((issue) => !disabled || issue.level !== "info") || stockWarnings.length > 0 ? (
           <div className="space-y-2">
             <IssueList issues={issuesOf("error")} />
             {orphanGifts.length > 0 ? (
@@ -70,7 +70,8 @@ export function ResultPanel({
               </Notice>
             ) : null}
             <IssueList issues={issuesOf("warning")} />
-            <IssueList issues={issuesOf("info")} />
+            {/* Gợi ý «mua thêm … để lên mức» chỉ có ích khi còn sửa được đơn. */}
+            {disabled ? null : <IssueList issues={issuesOf("info")} />}
           </div>
         ) : null}
 
@@ -117,7 +118,7 @@ function Totals({ calc }: { calc: CalcResult }) {
         <TotalRow label="Giảm giá" value={`−${formatVND(calc.discountAmount)}`} valueClassName="text-green-700" />
       ) : null}
       <div className="flex items-baseline justify-between gap-3 border-t border-gray-200 pt-2">
-        <dt className="font-semibold text-gray-900">Thanh toán</dt>
+        <dt className="font-semibold text-gray-900">Tổng thanh toán</dt>
         <dd className="text-2xl font-bold tabular-nums text-gray-900">{formatVND(calc.totalAmount)}</dd>
       </div>
       <TotalRow

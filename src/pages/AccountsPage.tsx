@@ -145,7 +145,7 @@ function RowActions({
       <span className="text-xs text-gray-500">
         Tài khoản của bạn — đổi mật khẩu ở{" "}
         <Link to="/settings" className="whitespace-nowrap text-blue-700 hover:underline">
-          mục «Dữ liệu»
+          mục «Cài đặt»
         </Link>
         .
       </span>

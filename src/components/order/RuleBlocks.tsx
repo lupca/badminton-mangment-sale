@@ -115,10 +115,13 @@ function TierGiftBlock({
       </ol>
 
       {result.nextTier ? (
-        <p className="text-sm text-gray-800">
-          Còn thiếu <strong className="tabular-nums">{formatVND(result.amountToNextTier)}</strong> để{" "}
-          {result.tier ? "lên mức kế tiếp" : "đạt mức đầu tiên"}.
-        </p>
+        // Đơn đã chốt thì thôi nhắc «còn thiếu bao nhiêu để lên mức».
+        disabled ? null : (
+          <p className="text-sm text-gray-800">
+            Còn thiếu <strong className="tabular-nums">{formatVND(result.amountToNextTier)}</strong> để{" "}
+            {result.tier ? "lên mức kế tiếp" : "đạt mức đầu tiên"}.
+          </p>
+        )
       ) : result.tier ? (
         <p className="text-sm text-gray-800">Đã đạt mức cao nhất.</p>
       ) : null}

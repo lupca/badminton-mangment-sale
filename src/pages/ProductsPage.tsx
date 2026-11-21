@@ -1,6 +1,6 @@
 // Màn hình «Sản phẩm»: mỗi mã hàng một dòng, kèm hãng, loại hàng, giá lẻ và tồn kho.
 // Tìm, lọc (hãng, loại hàng, mức giá, tình trạng tồn kho), sắp xếp theo cột, phân trang.
-// Chương trình khuyến mại chứa mã hàng nằm trong khung chi tiết mở ra khi bấm vào một dòng.
+// Chương trình khuyến mãi chứa mã hàng nằm trong khung chi tiết mở ra khi bấm vào một dòng.
 import { memo, useCallback, useDeferredValue, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -263,7 +263,7 @@ const ProductCards = memo(function ProductCards({
   );
 });
 
-/** Khung chi tiết của một mã: thông tin chung và mọi chương trình khuyến mại có mã này. */
+/** Khung chi tiết của một mã: thông tin chung và mọi chương trình khuyến mãi có mã này. */
 function ProductDrawer({ product, onClose }: { product: CatalogProduct | null; onClose: () => void }) {
   return (
     <Drawer
@@ -311,7 +311,7 @@ function ProductDrawer({ product, onClose }: { product: CatalogProduct | null; o
 
           <section>
             <h3 className="mb-2 text-sm font-semibold text-gray-900">
-              Có trong {formatNumber(product.sources.length)} danh mục khuyến mại
+              Có trong {formatNumber(product.sources.length)} danh mục khuyến mãi
             </h3>
             <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200">
               {product.sources.map((source, index) => (
@@ -414,7 +414,7 @@ export default function ProductsPage() {
 
   const exportList = async () => {
     const rows = [
-      ["STT", "Mã hàng", "Tên hàng", "Hãng", "Loại hàng", "Đơn vị", "Giá lẻ", "Tồn kho", "Trạng thái", "Số danh mục khuyến mại"],
+      ["STT", "Mã hàng", "Tên hàng", "Hãng", "Loại hàng", "Đơn vị", "Giá lẻ", "Tồn kho", "Trạng thái", "Số danh mục khuyến mãi"],
       ...visible.map((p, index) => [
         index + 1,
         p.sku,
@@ -473,7 +473,7 @@ export default function ProductsPage() {
     <>
       <PageHeader
         title="Sản phẩm và tồn kho"
-        subtitle="Mỗi mã hàng một dòng, kèm hãng, giá bán lẻ và số tồn kho. Bấm vào một mã để xem các chương trình khuyến mại có mã đó."
+        subtitle="Mỗi mã hàng một dòng, kèm hãng, giá bán lẻ và số tồn kho. Bấm vào một mã để xem các chương trình khuyến mãi có mã đó."
         actions={
           <>
             <HelpLink role={manager ? "manager" : "sale"} topic={manager ? "ton-kho" : "xem-gia-ton"} />
@@ -541,7 +541,7 @@ export default function ProductsPage() {
                         {" "}
                         Ngưỡng «sắp hết» đổi ở mục{" "}
                         <Link to="/settings" className="font-medium underline">
-                          Dữ liệu
+                          Cài đặt
                         </Link>
                         .
                       </>

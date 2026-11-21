@@ -164,12 +164,14 @@ export function ProductPicker({
 
   return (
     <Card
-      title="Chọn hàng"
+      title={disabled ? "Hàng trong đơn" : "Chọn hàng"}
       bodyClassName="@container"
       actions={
-        <Button size="sm" onClick={onPaste} disabled={disabled || !hasItems}>
-          <ClipboardPaste className="h-4 w-4" /> Dán mã + số lượng
-        </Button>
+        disabled ? null : (
+          <Button size="sm" onClick={onPaste} disabled={!hasItems} title="Dán danh sách mã hàng và số lượng copy từ Excel hoặc tin nhắn">
+            <ClipboardPaste className="h-4 w-4" /> Dán mã + số lượng
+          </Button>
+        )
       }
     >
       {!hasItems ? (
@@ -247,7 +249,7 @@ export function ProductPicker({
                         >
                           {group.name}
                           {groupQty > 0 ? (
-                            <span className="ml-2 font-normal text-gray-600">· đã nhập {formatNumber(groupQty)} sản phẩm</span>
+                            <span className="ml-2 font-normal text-gray-600">· đã chọn {formatNumber(groupQty)} sản phẩm</span>
                           ) : null}
                         </th>
                       </tr>

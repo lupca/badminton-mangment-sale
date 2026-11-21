@@ -414,7 +414,7 @@ function checkProgramReportRender(db: DB, programId: string, includeDrafts: bool
     const f = figures(html);
     expect(num(f.get("Số đơn")!)).toBe(r.count);
     expect(num(f.get("Số lượng bán")!)).toBe(r.qty);
-    expect(num(f.get("Thanh toán")!)).toBe(r.amount);
+    expect(num(f.get("Doanh thu")!)).toBe(r.amount);
     expect(num(f.get("Số lượng quà")!)).toBe(r.giftQty);
     expect(num(f.get("Giá trị quà")!)).toBe(r.giftValue);
 
@@ -477,7 +477,7 @@ async function checkReportExcel(db: DB, programId: string, includeDrafts: boolea
   expect(head.get("Số đơn đã chốt")).toBe(confirmedCount);
   expect(head.get(includeDrafts ? "Số đơn nháp" : "Số đơn nháp (không tính)")).toBe(all.length - confirmedCount);
   expect(head.get("Số lượng bán")).toBe(r.qty);
-  expect(head.get("Thanh toán")).toBe(r.amount);
+  expect(head.get("Doanh thu")).toBe(r.amount);
   expect(head.get("Số lượng quà")).toBe(r.giftQty);
   expect(head.get("Giá trị quà")).toBe(r.giftValue);
 
@@ -676,7 +676,7 @@ describe("demo data (17 orders, 4 salespeople) — exact numbers", () => {
     // Spot-check literal formatting once.
     h.store = storeOf(demo);
     const html = renderToStaticMarkup(createElement(ProgramReport, { programId: KM11 }));
-    expect(text(html)).toContain("Thanh toán96.816.118 đ");
+    expect(text(html)).toContain("Doanh thu96.816.118 đ");
   });
 
   it("rendered OrdersPage footer = Σ of all orders (not only the visible page); program filter in URL", () => {

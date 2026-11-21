@@ -439,8 +439,8 @@ function LocalSettings() {
           ))}
         </fieldset>
         <p className="mt-3 text-xs text-gray-500">
-          Hệ thống chưa có đăng nhập nên vai trò là thiết lập của từng máy: ai dùng máy này cũng đổi được. Muốn mỗi
-          người một tài khoản, quyền gắn với tài khoản, thì cần thêm máy chủ (backend).
+          Bản dùng thử này không cần đăng nhập: vai trò chọn theo từng máy, ai dùng máy này cũng đổi được. Bản chính
+          thức có đăng nhập, mỗi người một tài khoản và quyền theo tài khoản.
         </p>
       </Card>
 
@@ -497,7 +497,7 @@ export default function SettingsPage() {
   const { mode } = useStore();
   return (
     <>
-      <PageHeader title="Dữ liệu" />
+      <PageHeader title="Cài đặt" />
       <div className="max-w-3xl space-y-4">{mode === "cloud" ? <CloudSettings /> : <LocalSettings />}</div>
     </>
   );

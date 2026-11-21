@@ -20,7 +20,7 @@ export default function SaleRoleNote() {
       Máy này đang dùng vai trò {ROLE_LABEL[settings.role]}: xem chương trình và tạo đơn. Tạo, sửa chương trình là việc
       của người quản lý; đổi vai trò ở{" "}
       <Link to="/settings" className="whitespace-nowrap text-blue-700 hover:underline">
-        mục «Dữ liệu»
+        mục «Cài đặt»
       </Link>
       .
     </>

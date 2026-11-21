@@ -679,6 +679,7 @@ export function useMediaQuery(query: string): boolean {
       return () => media.removeEventListener("change", callback);
     },
     () => window.matchMedia(query).matches,
+    () => query.includes("min-width"), // Dựng sẵn ngoài trình duyệt (kiểm thử): coi như màn hình máy tính.
   );
 }
 

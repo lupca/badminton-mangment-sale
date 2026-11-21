@@ -161,7 +161,7 @@ function ImportDialog({ onClose, targetName, existingCount, onImport }: ImportPr
               onClose();
             }}
           >
-            Nhập {count} sản phẩm
+            {count > 0 ? `Nhập ${count} sản phẩm` : "Nhập sản phẩm"}
           </Button>
         </>
       }

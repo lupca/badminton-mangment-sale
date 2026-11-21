@@ -114,7 +114,7 @@ function SalesTable({ rows, totals }: { rows: SalesTotal[]; totals: OrderTotals 
               <th className={thCls}>Sale</th>
               <th className={cx(thCls, numCls)}>Số đơn</th>
               <th className={cx(thCls, numCls)}>SL</th>
-              <th className={cx(thCls, numCls)}>Thanh toán</th>
+              <th className={cx(thCls, numCls)}>Doanh thu</th>
               <th className={cx(thCls, numCls)}>Giá trị quà</th>
             </tr>
           </thead>
@@ -252,7 +252,7 @@ export default function ProgramReport({ programId }: { programId: string }) {
               note={includeDrafts ? `${confirmedCount} đã chốt · ${draftCount} nháp` : "chỉ đơn đã chốt"}
             />
             <Figure label="Số lượng bán" value={formatNumber(summary.totalQty)} />
-            <Figure label="Thanh toán" value={formatVND(summary.totalAmount)} />
+            <Figure label="Doanh thu" value={formatVND(summary.totalAmount)} />
             <Figure label="Số lượng quà" value={formatNumber(summary.giftQty)} />
             <Figure label="Giá trị quà" value={formatVND(summary.giftValue)} />
           </dl>
@@ -286,7 +286,7 @@ export default function ProgramReport({ programId }: { programId: string }) {
                       <tr>
                         <th className={thCls}>Đại lý</th>
                         <th className={cx(thCls, numCls)}>Số đơn</th>
-                        <th className={cx(thCls, numCls)}>Thanh toán</th>
+                        <th className={cx(thCls, numCls)}>Doanh thu</th>
                         <th className={cx(thCls, numCls)}>Giá trị quà</th>
                       </tr>
                     </thead>
