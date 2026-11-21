@@ -1,0 +1,1823 @@
+{
+  "orders": [
+    {
+      "id": "demo-o08",
+      "code": "DH261121-001",
+      "programId": "seed-km-2026-11",
+      "customerName": "Cầu lông Sài Gòn Pro",
+      "customerPhone": "0978 444 555",
+      "salesperson": "Trần Thị Bình",
+      "salespersonPhone": "0912 345 678",
+      "note": "",
+      "status": "draft",
+      "lines": [
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU041-5",
+          "name": "Khung vợt cầu lông Axforce Cannon Light - 5U",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPR285-3",
+          "name": "Khung vợt cầu lông Aeronaut 6000 Speed",
+          "retailPrice": 2022545,
+          "wholesalePrice": 1415782,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU039-5",
+          "name": "Khung vợt cầu lông Axforce Cannon - 5U Deep Teal",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT291-4",
+          "name": "Khung vợt cầu lông Axforce BigBang - 4U White",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 4
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-11-21T10:09:00.000Z",
+      "updatedAt": "2026-11-21T10:09:00.000Z"
+    },
+    {
+      "id": "demo-o13",
+      "code": "DH261121-002",
+      "programId": "seed-bang-gia-sau-ck",
+      "customerName": "Thể thao Phương Nam",
+      "customerPhone": "0868 666 777",
+      "salesperson": "Lê Hoàng Cường",
+      "salespersonPhone": "0933 456 789",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPT297-5",
+          "name": "Khung vợt cầu lông Axforce 80 JR - 5U Black",
+          "retailPrice": 2356364,
+          "wholesalePrice": 1649455,
+          "qty": 3
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPT391-5E",
+          "name": "Khung vợt cầu lông 3D Calibar 600I",
+          "retailPrice": 3141818,
+          "wholesalePrice": 2199273,
+          "qty": 2
+        },
+        {
+          "groupId": "g-bg-ashaway",
+          "sku": "AV7000SQ",
+          "name": "Khung vợt cầu lông TMP 7000SQ",
+          "retailPrice": 920000,
+          "wholesalePrice": 920000,
+          "qty": 1
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-11-21T04:17:00.000Z",
+      "updatedAt": "2026-11-21T04:17:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-bg-ashaway",
+          "type": "buy_x_get_y",
+          "name": "Ashaway — Mua 1 tặng 1",
+          "sourceGroupIds": [
+            "g-bg-ashaway"
+          ],
+          "buyQty": 1,
+          "getQty": 1,
+          "giftMode": "same",
+          "giftGroupId": null,
+          "giftText": ""
+        }
+      ]
+    },
+    {
+      "id": "demo-o07",
+      "code": "DH261120-001",
+      "programId": "seed-km-2026-11",
+      "customerName": "Shop Vợt Hà Nội",
+      "customerPhone": "0915 222 333",
+      "salesperson": "Nguyễn Văn An",
+      "salespersonPhone": "0901 234 567",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU051-5",
+          "name": "Khung vợt cầu lông Axforce BigBang New - 5U White",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 3
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT747-4",
+          "name": "Khung vợt cầu lông Tubo 50D",
+          "retailPrice": 1718182,
+          "wholesalePrice": 1202727,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT311-5",
+          "name": "Khung vợt cầu lông Axforce Cannon - 5U White",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 3
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT475-4",
+          "name": "Khung vợt cầu lông HC 1000 White",
+          "retailPrice": 1030909,
+          "wholesalePrice": 721636,
+          "qty": 1
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-11-20T04:51:00.000Z",
+      "updatedAt": "2026-11-20T04:51:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-km11-tier",
+          "type": "tier_gift",
+          "name": "Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-km11-apply"
+          ],
+          "giftGroupId": "g-km11-gift",
+          "giftPriceBasis": "retail",
+          "tiers": [
+            {
+              "id": "t-km11-1",
+              "min": 10000000,
+              "limitType": "amount",
+              "limitValue": 1200000,
+              "maxQty": 1,
+              "allowedSkus": [
+                "P-AYPT399-4",
+                "P-AYPT455-4",
+                "P-AYPT457-4",
+                "P-AYPT467-4",
+                "P-AYPT471-4",
+                "P-AYPT477-4"
+              ]
+            },
+            {
+              "id": "t-km11-2",
+              "min": 20000000,
+              "limitType": "amount",
+              "limitValue": 3190000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-3",
+              "min": 50000000,
+              "limitType": "amount",
+              "limitValue": 11610000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-4",
+              "min": 120000000,
+              "limitType": "amount",
+              "limitValue": 35050000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-5",
+              "min": 200000000,
+              "limitType": "amount",
+              "limitValue": 72400000,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o06",
+      "code": "DH261119-001",
+      "programId": "seed-km-2026-11",
+      "customerName": "Shop Vợt Hà Nội",
+      "customerPhone": "0915 222 333",
+      "salesperson": "Nguyễn Văn An",
+      "salespersonPhone": "0901 234 567",
+      "note": "",
+      "status": "draft",
+      "lines": [
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT417-5",
+          "name": "Khung vợt cầu lông Aeronaut 6000I",
+          "retailPrice": 2356364,
+          "wholesalePrice": 1649455,
+          "qty": 3
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU041-5",
+          "name": "Khung vợt cầu lông Axforce Cannon Light - 5U",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 3
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT349-4",
+          "name": "Khung vợt cầu lông Bladex Sonar - 4U Blue",
+          "retailPrice": 2258182,
+          "wholesalePrice": 1580727,
+          "qty": 4
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT365-4",
+          "name": "Khung vợt cầu lông Bladex Spiral - 4U Pink",
+          "retailPrice": 883636,
+          "wholesalePrice": 618545,
+          "qty": 4
+        }
+      ],
+      "gifts": [
+        {
+          "ruleId": "r-km11-tier",
+          "groupId": "g-km11-gift",
+          "sku": "P-AYPT455-4",
+          "name": "Khung vợt cầu lông Lightning 2000 Red",
+          "retailPrice": 1200000,
+          "wholesalePrice": 840000,
+          "qty": 1
+        }
+      ],
+      "createdAt": "2026-11-19T09:51:00.000Z",
+      "updatedAt": "2026-11-19T09:51:00.000Z"
+    },
+    {
+      "id": "demo-o12",
+      "code": "DH261118-001",
+      "programId": "seed-bang-gia-sau-ck",
+      "customerName": "Đại lý Thể thao Hoàng Gia",
+      "customerPhone": "0936 333 444",
+      "salesperson": "Phạm Thu Dung",
+      "salespersonPhone": "0987 654 321",
+      "note": "",
+      "status": "draft",
+      "lines": [
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPR291-1",
+          "name": "Khung vợt cầu lông Aeronaut 6000 Control",
+          "retailPrice": 2287636,
+          "wholesalePrice": 1601345,
+          "qty": 1
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPU105-5",
+          "name": "Khung vợt cầu lông Axforce 10 -5U White",
+          "retailPrice": 932727,
+          "wholesalePrice": 652909,
+          "qty": 2
+        },
+        {
+          "groupId": "g-bg-ashaway",
+          "sku": "AV1F",
+          "name": "Khung vợt cầu lông Flexred",
+          "retailPrice": 1150000,
+          "wholesalePrice": 1150000,
+          "qty": 2
+        },
+        {
+          "groupId": "g-bg-ashaway",
+          "sku": "AV9000SQ",
+          "name": "Khung vợt cầu lông TMP 9000SQ",
+          "retailPrice": 920000,
+          "wholesalePrice": 920000,
+          "qty": 1
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-11-18T05:58:00.000Z",
+      "updatedAt": "2026-11-18T05:58:00.000Z"
+    },
+    {
+      "id": "demo-o05",
+      "code": "DH261117-001",
+      "programId": "seed-km-2026-11",
+      "customerName": "Đại lý Bình An",
+      "customerPhone": "0389 777 888",
+      "salesperson": "Trần Thị Bình",
+      "salespersonPhone": "0912 345 678",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT317-2",
+          "name": "Khung vợt cầu lông Axforce 9 Black Purple",
+          "retailPrice": 471273,
+          "wholesalePrice": 329891,
+          "qty": 2
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU051-5",
+          "name": "Khung vợt cầu lông Axforce BigBang New - 5U White",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 3
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT419-4",
+          "name": "Khung vợt cầu lông Tectonic 3 - 4U Green",
+          "retailPrice": 1296000,
+          "wholesalePrice": 907200,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU049-5",
+          "name": "Khung vợt cầu lông Axforce BigBang New - 5U Black",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 3
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT413-3",
+          "name": "Khung vợt cầu lông Aeronaut 6000D",
+          "retailPrice": 2258182,
+          "wholesalePrice": 1580727,
+          "qty": 4
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPR287-3",
+          "name": "Khung vợt cầu lông Aeronaut 6000 Power",
+          "retailPrice": 2022545,
+          "wholesalePrice": 1415782,
+          "qty": 2
+        }
+      ],
+      "gifts": [
+        {
+          "ruleId": "r-km11-tier",
+          "groupId": "g-km11-gift",
+          "sku": "P-AYPT455-4",
+          "name": "Khung vợt cầu lông Lightning 2000 Red",
+          "retailPrice": 1200000,
+          "wholesalePrice": 840000,
+          "qty": 1
+        }
+      ],
+      "createdAt": "2026-11-17T06:25:00.000Z",
+      "updatedAt": "2026-11-17T06:25:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-km11-tier",
+          "type": "tier_gift",
+          "name": "Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-km11-apply"
+          ],
+          "giftGroupId": "g-km11-gift",
+          "giftPriceBasis": "retail",
+          "tiers": [
+            {
+              "id": "t-km11-1",
+              "min": 10000000,
+              "limitType": "amount",
+              "limitValue": 1200000,
+              "maxQty": 1,
+              "allowedSkus": [
+                "P-AYPT399-4",
+                "P-AYPT455-4",
+                "P-AYPT457-4",
+                "P-AYPT467-4",
+                "P-AYPT471-4",
+                "P-AYPT477-4"
+              ]
+            },
+            {
+              "id": "t-km11-2",
+              "min": 20000000,
+              "limitType": "amount",
+              "limitValue": 3190000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-3",
+              "min": 50000000,
+              "limitType": "amount",
+              "limitValue": 11610000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-4",
+              "min": 120000000,
+              "limitType": "amount",
+              "limitValue": 35050000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-5",
+              "min": 200000000,
+              "limitType": "amount",
+              "limitValue": 72400000,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o11",
+      "code": "DH261115-001",
+      "programId": "seed-bang-gia-sau-ck",
+      "customerName": "Cầu lông Sài Gòn Pro",
+      "customerPhone": "0978 444 555",
+      "salesperson": "Nguyễn Văn An",
+      "salespersonPhone": "0901 234 567",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPT417-5",
+          "name": "Khung vợt cầu lông Aeronaut 6000I",
+          "retailPrice": 2356364,
+          "wholesalePrice": 1649455,
+          "qty": 3
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPT357-4E",
+          "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+          "retailPrice": 1227273,
+          "wholesalePrice": 859091,
+          "qty": 1
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-CB11AYPT281-4",
+          "name": "Khung vợt cầu lông Axforce 60 - 4U Pearl White",
+          "retailPrice": 3868364,
+          "wholesalePrice": 2707855,
+          "qty": 2
+        },
+        {
+          "groupId": "g-bg-ashaway",
+          "sku": "AVQ11",
+          "name": "Khung vợt cầu lông Quantum Q11",
+          "retailPrice": 950000,
+          "wholesalePrice": 950000,
+          "qty": 2
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-11-15T04:50:00.000Z",
+      "updatedAt": "2026-11-15T04:50:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-bg-ashaway",
+          "type": "buy_x_get_y",
+          "name": "Ashaway — Mua 1 tặng 1",
+          "sourceGroupIds": [
+            "g-bg-ashaway"
+          ],
+          "buyQty": 1,
+          "getQty": 1,
+          "giftMode": "same",
+          "giftGroupId": null,
+          "giftText": ""
+        }
+      ]
+    },
+    {
+      "id": "demo-o04",
+      "code": "DH261114-001",
+      "programId": "seed-km-2026-11",
+      "customerName": "Shop Vợt Hà Nội",
+      "customerPhone": "0915 222 333",
+      "salesperson": "Lê Hoàng Cường",
+      "salespersonPhone": "0933 456 789",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT289-5",
+          "name": "Khung vợt cầu lông Axforce BigBang - 5U Black",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 4
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT377-3",
+          "name": "Khung vợt cầu lông Halbertec 2000 - 3U White Gray",
+          "retailPrice": 1129091,
+          "wholesalePrice": 790364,
+          "qty": 3
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT475-4",
+          "name": "Khung vợt cầu lông HC 1000 White",
+          "retailPrice": 1030909,
+          "wholesalePrice": 721636,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPR287-3",
+          "name": "Khung vợt cầu lông Aeronaut 6000 Power",
+          "retailPrice": 2022545,
+          "wholesalePrice": 1415782,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU039-4",
+          "name": "Khung vợt cầu lông Axforce Cannon - 4U Deep Teal",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 2
+        }
+      ],
+      "gifts": [
+        {
+          "ruleId": "r-km11-tier",
+          "groupId": "g-km11-gift",
+          "sku": "P-AYPT399-4",
+          "name": "Khung vợt cầu lông 3D Calibar 001",
+          "retailPrice": 1200000,
+          "wholesalePrice": 840000,
+          "qty": 1
+        }
+      ],
+      "createdAt": "2026-11-14T06:31:00.000Z",
+      "updatedAt": "2026-11-14T06:31:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-km11-tier",
+          "type": "tier_gift",
+          "name": "Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-km11-apply"
+          ],
+          "giftGroupId": "g-km11-gift",
+          "giftPriceBasis": "retail",
+          "tiers": [
+            {
+              "id": "t-km11-1",
+              "min": 10000000,
+              "limitType": "amount",
+              "limitValue": 1200000,
+              "maxQty": 1,
+              "allowedSkus": [
+                "P-AYPT399-4",
+                "P-AYPT455-4",
+                "P-AYPT457-4",
+                "P-AYPT467-4",
+                "P-AYPT471-4",
+                "P-AYPT477-4"
+              ]
+            },
+            {
+              "id": "t-km11-2",
+              "min": 20000000,
+              "limitType": "amount",
+              "limitValue": 3190000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-3",
+              "min": 50000000,
+              "limitType": "amount",
+              "limitValue": 11610000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-4",
+              "min": 120000000,
+              "limitType": "amount",
+              "limitValue": 35050000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-5",
+              "min": 200000000,
+              "limitType": "amount",
+              "limitValue": 72400000,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o03",
+      "code": "DH261111-001",
+      "programId": "seed-km-2026-11",
+      "customerName": "Shop Vợt Hà Nội",
+      "customerPhone": "0915 222 333",
+      "salesperson": "Phạm Thu Dung",
+      "salespersonPhone": "0987 654 321",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU039-4",
+          "name": "Khung vợt cầu lông Axforce Cannon - 4U Deep Teal",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 4
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU039-5",
+          "name": "Khung vợt cầu lông Axforce Cannon - 5U Deep Teal",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 4
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT065-4",
+          "name": "Khung vợt cầu lông Sơn BST Phong-Lâm- Hỏa- Sơn",
+          "retailPrice": 3043636,
+          "wholesalePrice": 2130545,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT747-4",
+          "name": "Khung vợt cầu lông Tubo 50D",
+          "retailPrice": 1718182,
+          "wholesalePrice": 1202727,
+          "qty": 3
+        }
+      ],
+      "gifts": [
+        {
+          "ruleId": "r-km11-tier",
+          "groupId": "g-km11-gift",
+          "sku": "P-AYPT457-4",
+          "name": "Khung vợt cầu lông Lightning 2000 Blue",
+          "retailPrice": 1200000,
+          "wholesalePrice": 840000,
+          "qty": 1
+        }
+      ],
+      "createdAt": "2026-11-11T01:14:00.000Z",
+      "updatedAt": "2026-11-11T01:14:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-km11-tier",
+          "type": "tier_gift",
+          "name": "Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-km11-apply"
+          ],
+          "giftGroupId": "g-km11-gift",
+          "giftPriceBasis": "retail",
+          "tiers": [
+            {
+              "id": "t-km11-1",
+              "min": 10000000,
+              "limitType": "amount",
+              "limitValue": 1200000,
+              "maxQty": 1,
+              "allowedSkus": [
+                "P-AYPT399-4",
+                "P-AYPT455-4",
+                "P-AYPT457-4",
+                "P-AYPT467-4",
+                "P-AYPT471-4",
+                "P-AYPT477-4"
+              ]
+            },
+            {
+              "id": "t-km11-2",
+              "min": 20000000,
+              "limitType": "amount",
+              "limitValue": 3190000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-3",
+              "min": 50000000,
+              "limitType": "amount",
+              "limitValue": 11610000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-4",
+              "min": 120000000,
+              "limitType": "amount",
+              "limitValue": 35050000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-5",
+              "min": 200000000,
+              "limitType": "amount",
+              "limitValue": 72400000,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o10",
+      "code": "DH261110-001",
+      "programId": "seed-bang-gia-sau-ck",
+      "customerName": "Cửa hàng cầu lông Minh Tâm",
+      "customerPhone": "0904 111 222",
+      "salesperson": "Trần Thị Bình",
+      "salespersonPhone": "0912 345 678",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPT307-4E",
+          "name": "Khung vợt cầu lông Axforce Cannon - 4U Black",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 3
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPP028-5",
+          "name": "Khung vợt cầu lông AERONAUT 7000i Green",
+          "retailPrice": 4516364,
+          "wholesalePrice": 3161455,
+          "qty": 1
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPT449-5",
+          "name": "Vợt cầu lông WindStorm 79H",
+          "retailPrice": 1521818,
+          "wholesalePrice": 1065273,
+          "qty": 1
+        },
+        {
+          "groupId": "g-bg-ashaway",
+          "sku": "AV5000",
+          "name": "Khung vợt cầu lông Phantom 5000",
+          "retailPrice": 1450000,
+          "wholesalePrice": 1450000,
+          "qty": 2
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-11-10T10:50:00.000Z",
+      "updatedAt": "2026-11-10T10:50:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-bg-ashaway",
+          "type": "buy_x_get_y",
+          "name": "Ashaway — Mua 1 tặng 1",
+          "sourceGroupIds": [
+            "g-bg-ashaway"
+          ],
+          "buyQty": 1,
+          "getQty": 1,
+          "giftMode": "same",
+          "giftGroupId": null,
+          "giftText": ""
+        }
+      ]
+    },
+    {
+      "id": "demo-o02",
+      "code": "DH261108-001",
+      "programId": "seed-km-2026-11",
+      "customerName": "Thể thao Phương Nam",
+      "customerPhone": "0868 666 777",
+      "salesperson": "Lê Hoàng Cường",
+      "salespersonPhone": "0933 456 789",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPR285-3",
+          "name": "Khung vợt cầu lông Aeronaut 6000 Speed",
+          "retailPrice": 2022545,
+          "wholesalePrice": 1415782,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT413-3",
+          "name": "Khung vợt cầu lông Aeronaut 6000D",
+          "retailPrice": 2258182,
+          "wholesalePrice": 1580727,
+          "qty": 4
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU039-5",
+          "name": "Khung vợt cầu lông Axforce Cannon - 5U Deep Teal",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 2
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-11-08T10:25:00.000Z",
+      "updatedAt": "2026-11-08T10:25:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-km11-tier",
+          "type": "tier_gift",
+          "name": "Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-km11-apply"
+          ],
+          "giftGroupId": "g-km11-gift",
+          "giftPriceBasis": "retail",
+          "tiers": [
+            {
+              "id": "t-km11-1",
+              "min": 10000000,
+              "limitType": "amount",
+              "limitValue": 1200000,
+              "maxQty": 1,
+              "allowedSkus": [
+                "P-AYPT399-4",
+                "P-AYPT455-4",
+                "P-AYPT457-4",
+                "P-AYPT467-4",
+                "P-AYPT471-4",
+                "P-AYPT477-4"
+              ]
+            },
+            {
+              "id": "t-km11-2",
+              "min": 20000000,
+              "limitType": "amount",
+              "limitValue": 3190000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-3",
+              "min": 50000000,
+              "limitType": "amount",
+              "limitValue": 11610000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-4",
+              "min": 120000000,
+              "limitType": "amount",
+              "limitValue": 35050000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-5",
+              "min": 200000000,
+              "limitType": "amount",
+              "limitValue": 72400000,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o01",
+      "code": "DH261106-001",
+      "programId": "seed-km-2026-11",
+      "customerName": "Đại lý Thể thao Hoàng Gia",
+      "customerPhone": "0936 333 444",
+      "salesperson": "Lê Hoàng Cường",
+      "salespersonPhone": "0933 456 789",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPU049-5",
+          "name": "Khung vợt cầu lông Axforce BigBang New - 5U Black",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 1
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT417-5",
+          "name": "Khung vợt cầu lông Aeronaut 6000I",
+          "retailPrice": 2356364,
+          "wholesalePrice": 1649455,
+          "qty": 3
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPR285-3",
+          "name": "Khung vợt cầu lông Aeronaut 6000 Speed",
+          "retailPrice": 2022545,
+          "wholesalePrice": 1415782,
+          "qty": 4
+        },
+        {
+          "groupId": "g-km11-apply",
+          "sku": "P-AYPT311-4",
+          "name": "Khung vợt cầu lông Axforce Cannon Pearl White",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 1
+        }
+      ],
+      "gifts": [
+        {
+          "ruleId": "r-km11-tier",
+          "groupId": "g-km11-gift",
+          "sku": "P-AYPT457-4",
+          "name": "Khung vợt cầu lông Lightning 2000 Blue",
+          "retailPrice": 1200000,
+          "wholesalePrice": 840000,
+          "qty": 1
+        }
+      ],
+      "createdAt": "2026-11-06T09:12:00.000Z",
+      "updatedAt": "2026-11-06T09:12:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-km11-tier",
+          "type": "tier_gift",
+          "name": "Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-km11-apply"
+          ],
+          "giftGroupId": "g-km11-gift",
+          "giftPriceBasis": "retail",
+          "tiers": [
+            {
+              "id": "t-km11-1",
+              "min": 10000000,
+              "limitType": "amount",
+              "limitValue": 1200000,
+              "maxQty": 1,
+              "allowedSkus": [
+                "P-AYPT399-4",
+                "P-AYPT455-4",
+                "P-AYPT457-4",
+                "P-AYPT467-4",
+                "P-AYPT471-4",
+                "P-AYPT477-4"
+              ]
+            },
+            {
+              "id": "t-km11-2",
+              "min": 20000000,
+              "limitType": "amount",
+              "limitValue": 3190000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-3",
+              "min": 50000000,
+              "limitType": "amount",
+              "limitValue": 11610000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-4",
+              "min": 120000000,
+              "limitType": "amount",
+              "limitValue": 35050000,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-km11-5",
+              "min": 200000000,
+              "limitType": "amount",
+              "limitValue": 72400000,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o09",
+      "code": "DH261103-001",
+      "programId": "seed-bang-gia-sau-ck",
+      "customerName": "Shop Vợt Hà Nội",
+      "customerPhone": "0915 222 333",
+      "salesperson": "Lê Hoàng Cường",
+      "salespersonPhone": "0933 456 789",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPH044-3",
+          "name": "Khung vợt cầu lông A880T",
+          "retailPrice": 785455,
+          "wholesalePrice": 549818,
+          "qty": 1
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPT413-3",
+          "name": "Vợt cầu lông Aeronaut 6000D",
+          "retailPrice": 2258182,
+          "wholesalePrice": 1580727,
+          "qty": 3
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPT391-5E",
+          "name": "Khung vợt cầu lông 3D Calibar 600I",
+          "retailPrice": 3141818,
+          "wholesalePrice": 2199273,
+          "qty": 2
+        },
+        {
+          "groupId": "g-bg-thuong",
+          "sku": "P-AYPU105-4",
+          "name": "Khung vợt cầu lông Axforce 10- 4U",
+          "retailPrice": 932727,
+          "wholesalePrice": 652909,
+          "qty": 1
+        },
+        {
+          "groupId": "g-bg-ashaway",
+          "sku": "AV7000SQ",
+          "name": "Khung vợt cầu lông TMP 7000SQ",
+          "retailPrice": 920000,
+          "wholesalePrice": 920000,
+          "qty": 2
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-11-03T04:08:00.000Z",
+      "updatedAt": "2026-11-03T04:08:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-bg-ashaway",
+          "type": "buy_x_get_y",
+          "name": "Ashaway — Mua 1 tặng 1",
+          "sourceGroupIds": [
+            "g-bg-ashaway"
+          ],
+          "buyQty": 1,
+          "getQty": 1,
+          "giftMode": "same",
+          "giftGroupId": null,
+          "giftText": ""
+        }
+      ]
+    },
+    {
+      "id": "demo-o17",
+      "code": "DH260608-001",
+      "programId": "seed-km-2026-he",
+      "customerName": "Đại lý Bình An",
+      "customerPhone": "0389 777 888",
+      "salesperson": "Trần Thị Bình",
+      "salespersonPhone": "0912 345 678",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-he-dm01",
+          "sku": "P-AYPT357-4",
+          "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+          "retailPrice": 1227273,
+          "wholesalePrice": 859091,
+          "qty": 2
+        },
+        {
+          "groupId": "g-he-dm01",
+          "sku": "P-AYPT455-4",
+          "name": "Khung vợt cầu lông Lightning 2000 Red",
+          "retailPrice": 1178182,
+          "wholesalePrice": 824727,
+          "qty": 2
+        },
+        {
+          "groupId": "g-he-dm03",
+          "sku": "P-AYPT317-2",
+          "name": "Khung vợt cầu lông Axforce 9 Black Purple",
+          "retailPrice": 471273,
+          "wholesalePrice": 329891,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPU051-5",
+          "name": "Khung vợt cầu lông Axforce BigBang New - 5U White",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 3
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPU041-5",
+          "name": "Khung vợt cầu lông Axforce Cannon Light - 5U",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 2
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-06-08T01:29:00.000Z",
+      "updatedAt": "2026-06-08T01:29:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-he-a",
+          "type": "discount",
+          "name": "Ưu đãi A — Giảm 45%",
+          "targetGroupIds": [
+            "g-he-dm01"
+          ],
+          "discountPercent": 45,
+          "discountBasis": "retail",
+          "minQty": 2,
+          "maxQty": 4,
+          "requireGroupIds": [
+            "g-he-dm03"
+          ],
+          "requireMinQty": 1
+        },
+        {
+          "id": "r-he-b1",
+          "type": "buy_x_get_y",
+          "name": "Ưu đãi B1 — Tặng cước N65",
+          "sourceGroupIds": [
+            "g-he-dm01"
+          ],
+          "buyQty": 1,
+          "getQty": 1,
+          "giftMode": "text",
+          "giftGroupId": null,
+          "giftText": "Cước cầu lông LiNing N65"
+        },
+        {
+          "id": "r-he-b2",
+          "type": "tier_gift",
+          "name": "Ưu đãi B2 — Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-he-dm02"
+          ],
+          "giftGroupId": "g-he-dm01",
+          "giftPriceBasis": "wholesale",
+          "tiers": [
+            {
+              "id": "t-he-1",
+              "min": 8000000,
+              "limitType": "percent",
+              "limitValue": 15,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-2",
+              "min": 20000000,
+              "limitType": "percent",
+              "limitValue": 18,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-3",
+              "min": 35000000,
+              "limitType": "percent",
+              "limitValue": 20,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-4",
+              "min": 50000000,
+              "limitType": "percent",
+              "limitValue": 27,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o16",
+      "code": "DH260602-001",
+      "programId": "seed-km-2026-he",
+      "customerName": "Đại lý Thể thao Hoàng Gia",
+      "customerPhone": "0936 333 444",
+      "salesperson": "Nguyễn Văn An",
+      "salespersonPhone": "0901 234 567",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-he-dm01",
+          "sku": "P-AYPT059-4",
+          "name": "Khung vợt cầu lông Phong BST Phong-Lâm- Hỏa- Sơn",
+          "retailPrice": 3043636,
+          "wholesalePrice": 2130545,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm01",
+          "sku": "P-AYPT417-5",
+          "name": "Khung vợt cầu lông Aeronaut 6000I",
+          "retailPrice": 2356364,
+          "wholesalePrice": 1649455,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm03",
+          "sku": "P-AYPT365-4",
+          "name": "Khung vợt cầu lông Bladex Spiral - 4U Pink",
+          "retailPrice": 883636,
+          "wholesalePrice": 618545,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPU041-4",
+          "name": "Khung vợt cầu lông Axforce Cannon Light - 4U",
+          "retailPrice": 981818,
+          "wholesalePrice": 687273,
+          "qty": 3
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPT357-4E",
+          "name": "Khung vợt cầu lông Bladex 200 - 4U Blue",
+          "retailPrice": 1227273,
+          "wholesalePrice": 859091,
+          "qty": 3
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPJ008-4A",
+          "name": "Khung vợt cầu lông 80TF",
+          "retailPrice": 1620000,
+          "wholesalePrice": 1134000,
+          "qty": 1
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-06-02T09:00:00.000Z",
+      "updatedAt": "2026-06-02T09:00:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-he-a",
+          "type": "discount",
+          "name": "Ưu đãi A — Giảm 45%",
+          "targetGroupIds": [
+            "g-he-dm01"
+          ],
+          "discountPercent": 45,
+          "discountBasis": "retail",
+          "minQty": 2,
+          "maxQty": 4,
+          "requireGroupIds": [
+            "g-he-dm03"
+          ],
+          "requireMinQty": 1
+        },
+        {
+          "id": "r-he-b1",
+          "type": "buy_x_get_y",
+          "name": "Ưu đãi B1 — Tặng cước N65",
+          "sourceGroupIds": [
+            "g-he-dm01"
+          ],
+          "buyQty": 1,
+          "getQty": 1,
+          "giftMode": "text",
+          "giftGroupId": null,
+          "giftText": "Cước cầu lông LiNing N65"
+        },
+        {
+          "id": "r-he-b2",
+          "type": "tier_gift",
+          "name": "Ưu đãi B2 — Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-he-dm02"
+          ],
+          "giftGroupId": "g-he-dm01",
+          "giftPriceBasis": "wholesale",
+          "tiers": [
+            {
+              "id": "t-he-1",
+              "min": 8000000,
+              "limitType": "percent",
+              "limitValue": 15,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-2",
+              "min": 20000000,
+              "limitType": "percent",
+              "limitValue": 18,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-3",
+              "min": 35000000,
+              "limitType": "percent",
+              "limitValue": 20,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-4",
+              "min": 50000000,
+              "limitType": "percent",
+              "limitValue": 27,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o15",
+      "code": "DH260527-001",
+      "programId": "seed-km-2026-he",
+      "customerName": "Shop Smash Đà Nẵng",
+      "customerPhone": "0905 555 666",
+      "salesperson": "Trần Thị Bình",
+      "salespersonPhone": "0912 345 678",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-he-dm01",
+          "sku": "P-AYPU049-5",
+          "name": "Khung vợt cầu lông Axforce BigBang New - 5U Black",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm01",
+          "sku": "P-AYPP042-3",
+          "name": "Khung vợt cầu lông Aeronaut 4000B",
+          "retailPrice": 2022545,
+          "wholesalePrice": 1415782,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm03",
+          "sku": "P-AYPV007-4V",
+          "name": "Khung vợt cầu lông Bladex 500 - 4U",
+          "retailPrice": 2160000,
+          "wholesalePrice": 1512000,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPJ008-4",
+          "name": "Khung vợt cầu lông 80TF",
+          "retailPrice": 1620000,
+          "wholesalePrice": 1134000,
+          "qty": 3
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPT437-6V",
+          "name": "Khung vợt cầu lông WindStorm 72 Black",
+          "retailPrice": 2405455,
+          "wholesalePrice": 1683819,
+          "qty": 1
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-05-27T07:11:00.000Z",
+      "updatedAt": "2026-05-27T07:11:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-he-a",
+          "type": "discount",
+          "name": "Ưu đãi A — Giảm 45%",
+          "targetGroupIds": [
+            "g-he-dm01"
+          ],
+          "discountPercent": 45,
+          "discountBasis": "retail",
+          "minQty": 2,
+          "maxQty": 4,
+          "requireGroupIds": [
+            "g-he-dm03"
+          ],
+          "requireMinQty": 1
+        },
+        {
+          "id": "r-he-b1",
+          "type": "buy_x_get_y",
+          "name": "Ưu đãi B1 — Tặng cước N65",
+          "sourceGroupIds": [
+            "g-he-dm01"
+          ],
+          "buyQty": 1,
+          "getQty": 1,
+          "giftMode": "text",
+          "giftGroupId": null,
+          "giftText": "Cước cầu lông LiNing N65"
+        },
+        {
+          "id": "r-he-b2",
+          "type": "tier_gift",
+          "name": "Ưu đãi B2 — Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-he-dm02"
+          ],
+          "giftGroupId": "g-he-dm01",
+          "giftPriceBasis": "wholesale",
+          "tiers": [
+            {
+              "id": "t-he-1",
+              "min": 8000000,
+              "limitType": "percent",
+              "limitValue": 15,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-2",
+              "min": 20000000,
+              "limitType": "percent",
+              "limitValue": 18,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-3",
+              "min": 35000000,
+              "limitType": "percent",
+              "limitValue": 20,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-4",
+              "min": 50000000,
+              "limitType": "percent",
+              "limitValue": 27,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "demo-o14",
+      "code": "DH260522-001",
+      "programId": "seed-km-2026-he",
+      "customerName": "Đại lý Bình An",
+      "customerPhone": "0389 777 888",
+      "salesperson": "Lê Hoàng Cường",
+      "salespersonPhone": "0933 456 789",
+      "note": "",
+      "status": "confirmed",
+      "lines": [
+        {
+          "groupId": "g-he-dm01",
+          "sku": "P-AYPT061-4",
+          "name": "Khung vợt cầu lông Lâm BST Phong-Lâm- Hỏa- Sơn",
+          "retailPrice": 3043636,
+          "wholesalePrice": 2130545,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm01",
+          "sku": "P-AYPU109-4",
+          "name": "Khung vợt cầu lông Axforce10 -4U Blue",
+          "retailPrice": 932727,
+          "wholesalePrice": 652909,
+          "qty": 2
+        },
+        {
+          "groupId": "g-he-dm03",
+          "sku": "P-AYPU051-5",
+          "name": "Khung vợt cầu lông Axforce BigBang New - 5U White",
+          "retailPrice": 2061818,
+          "wholesalePrice": 1443273,
+          "qty": 1
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPJ008-4A",
+          "name": "Khung vợt cầu lông 80TF",
+          "retailPrice": 1620000,
+          "wholesalePrice": 1134000,
+          "qty": 2
+        },
+        {
+          "groupId": "g-he-dm02",
+          "sku": "P-AYPT477-4",
+          "name": "Khung vợt cầu lông HC 1000 Black",
+          "retailPrice": 1030909,
+          "wholesalePrice": 721636,
+          "qty": 1
+        }
+      ],
+      "gifts": [],
+      "createdAt": "2026-05-22T01:49:00.000Z",
+      "updatedAt": "2026-05-22T01:49:00.000Z",
+      "frozenRules": [
+        {
+          "id": "r-he-a",
+          "type": "discount",
+          "name": "Ưu đãi A — Giảm 45%",
+          "targetGroupIds": [
+            "g-he-dm01"
+          ],
+          "discountPercent": 45,
+          "discountBasis": "retail",
+          "minQty": 2,
+          "maxQty": 4,
+          "requireGroupIds": [
+            "g-he-dm03"
+          ],
+          "requireMinQty": 1
+        },
+        {
+          "id": "r-he-b1",
+          "type": "buy_x_get_y",
+          "name": "Ưu đãi B1 — Tặng cước N65",
+          "sourceGroupIds": [
+            "g-he-dm01"
+          ],
+          "buyQty": 1,
+          "getQty": 1,
+          "giftMode": "text",
+          "giftGroupId": null,
+          "giftText": "Cước cầu lông LiNing N65"
+        },
+        {
+          "id": "r-he-b2",
+          "type": "tier_gift",
+          "name": "Ưu đãi B2 — Mua vợt tặng vợt theo doanh số",
+          "sourceGroupIds": [
+            "g-he-dm02"
+          ],
+          "giftGroupId": "g-he-dm01",
+          "giftPriceBasis": "wholesale",
+          "tiers": [
+            {
+              "id": "t-he-1",
+              "min": 8000000,
+              "limitType": "percent",
+              "limitValue": 15,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-2",
+              "min": 20000000,
+              "limitType": "percent",
+              "limitValue": 18,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-3",
+              "min": 35000000,
+              "limitType": "percent",
+              "limitValue": 20,
+              "maxQty": null,
+              "allowedSkus": null
+            },
+            {
+              "id": "t-he-4",
+              "min": 50000000,
+              "limitType": "percent",
+              "limitValue": 27,
+              "maxQty": null,
+              "allowedSkus": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "stock": {
+    "bySku": {
+      "AV1F": 10,
+      "AV1X": 47,
+      "AV200": 77,
+      "AV2400TN": 71,
+      "AV303": 9,
+      "AV400M": 41,
+      "AV5000": 5,
+      "AV500M": 20,
+      "AV606": 38,
+      "AV7000SQ": 70,
+      "AV80": 66,
+      "AV8000SQ": 40,
+      "AV8100": 68,
+      "AV9000SQ": 37,
+      "AV9100": 0,
+      "AV99SQ": 22,
+      "AVAE600": 32,
+      "AVAE700": 25,
+      "AVH700": 67,
+      "AVPTX": 58,
+      "AVQ1": 19,
+      "AVQ11": 1,
+      "AVXT1200": 39,
+      "P-AYPH044-3": 0,
+      "P-AYPJ008-4": 26,
+      "P-AYPJ008-4A": 45,
+      "P-AYPK226-2": 11,
+      "P-AYPM394-4": 31,
+      "P-AYPM444-3": 77,
+      "P-AYPP028-1": 65,
+      "P-AYPP028-5": 15,
+      "P-AYPP032-4": 7,
+      "P-AYPP032-4E": 69,
+      "P-AYPP042-3": 56,
+      "P-AYPP238-1": 31,
+      "P-AYPP322-3": 52,
+      "P-AYPR004-1": 36,
+      "P-AYPR264-1": 21,
+      "P-AYPR285-3": 53,
+      "P-AYPR287-3": 0,
+      "P-AYPR289-3": 75,
+      "P-AYPR291-1": 53,
+      "P-AYPR291-5": 0,
+      "P-AYPS053-1": 37,
+      "P-AYPS053-2": 9,
+      "P-AYPS057-1": 59,
+      "P-AYPS095-1": 5,
+      "P-AYPT059-4": 14,
+      "P-AYPT061-4": 46,
+      "P-AYPT063-4": 29,
+      "P-AYPT065-4": 9,
+      "P-AYPT235-4V": 12,
+      "P-AYPT239-4V": 62,
+      "P-AYPT243-4V": 53,
+      "P-AYPT285-5": 37,
+      "P-AYPT289-4": 9,
+      "P-AYPT289-5": 18,
+      "P-AYPT291-4": 21,
+      "P-AYPT291-5": 33,
+      "P-AYPT293-3": 32,
+      "P-AYPT293-3A": 37,
+      "P-AYPT293-4": 45,
+      "P-AYPT293-4A": 1,
+      "P-AYPT297-5": 3,
+      "P-AYPT299-5": 73,
+      "P-AYPT301-5": 20,
+      "P-AYPT307-4": 51,
+      "P-AYPT307-4E": 77,
+      "P-AYPT311-4": 51,
+      "P-AYPT311-4E": 52,
+      "P-AYPT311-5": 74,
+      "P-AYPT315-2": 61,
+      "P-AYPT317-2": 1,
+      "P-AYPT319-2": 9,
+      "P-AYPT321-2": 21,
+      "P-AYPT341-5": 60,
+      "P-AYPT349-3": 30,
+      "P-AYPT349-4": 1,
+      "P-AYPT353-6": 57,
+      "P-AYPT355-6": 45,
+      "P-AYPT357-3": 7,
+      "P-AYPT357-4": 31,
+      "P-AYPT357-4E": 71,
+      "P-AYPT361-4": 24,
+      "P-AYPT361-5": 53,
+      "P-AYPT365-4": 0,
+      "P-AYPT365-5": 69,
+      "P-AYPT369-4V": 65,
+      "P-AYPT373-3": 4,
+      "P-AYPT377-3": 64,
+      "P-AYPT377-4": 0,
+      "P-AYPT381-4": 49,
+      "P-AYPT385-4E": 71,
+      "P-AYPT391-5": 59,
+      "P-AYPT391-5E": 15,
+      "P-AYPT393-4": 41,
+      "P-AYPT395-4V": 41,
+      "P-AYPT397-3": 62,
+      "P-AYPT399-4": 78,
+      "P-AYPT401-3": 14,
+      "P-AYPT405-4V": 0,
+      "P-AYPT411-3": 28,
+      "P-AYPT413-3": 45,
+      "P-AYPT415-3": 6,
+      "P-AYPT417-5": 17,
+      "P-AYPT417-5A": 0,
+      "P-AYPT419-4": 7,
+      "P-AYPT423-4": 0,
+      "P-AYPT427-6V": 60,
+      "P-AYPT431-6V": 65,
+      "P-AYPT437-6V": 60,
+      "P-AYPT443-6V": 77,
+      "P-AYPT445-6V": 19,
+      "P-AYPT449-5": 76,
+      "P-AYPT455-4": 20,
+      "P-AYPT457-4": 68,
+      "P-AYPT463-3": 73,
+      "P-AYPT465-3": 49,
+      "P-AYPT467-4": 22,
+      "P-AYPT467-4E": 0,
+      "P-AYPT471-4": 80,
+      "P-AYPT471-4E": 2,
+      "P-AYPT475-4": 71,
+      "P-AYPT477-4": 33,
+      "P-AYPT481-4": 48,
+      "P-AYPT563-4": 22,
+      "P-AYPT747-4": 71,
+      "P-AYPT749-4": 1,
+      "P-AYPU009-3": 63,
+      "P-AYPU009-4": 9,
+      "P-AYPU011-3": 0,
+      "P-AYPU011-4V": 35,
+      "P-AYPU015-3": 66,
+      "P-AYPU039-4": 28,
+      "P-AYPU039-4E": 19,
+      "P-AYPU039-5": 46,
+      "P-AYPU041-4": 72,
+      "P-AYPU041-4E": 77,
+      "P-AYPU041-5": 56,
+      "P-AYPU043-4": 0,
+      "P-AYPU049-4": 35,
+      "P-AYPU049-5": 23,
+      "P-AYPU051-4": 35,
+      "P-AYPU051-5": 0,
+      "P-AYPU073-5": 34,
+      "P-AYPU075-5": 18,
+      "P-AYPU077-4": 52,
+      "P-AYPU079-4": 62,
+      "P-AYPU105-4": 3,
+      "P-AYPU105-4E": 3,
+      "P-AYPU105-5": 36,
+      "P-AYPU109-4": 6,
+      "P-AYPU109-4E": 76,
+      "P-AYPU109-5": 42,
+      "P-AYPU115-88C": 2,
+      "P-AYPV001-4V": 56,
+      "P-AYPV007-4V": 76,
+      "P-AYPV039-4V": 10,
+      "P-AYPW003-4V": 43,
+      "P-AYPW005-4V": 71,
+      "P-AYPW007-4": 59,
+      "P-AYPW009-4": 24,
+      "P-AYPW015-4V": 44,
+      "P-AYPW043-40V": 72,
+      "P-AYPW045-40V": 0,
+      "P-CB11AYPT281-4": 59
+    },
+    "updatedAt": "2026-11-21T01:00:00.000Z"
+  }
+}

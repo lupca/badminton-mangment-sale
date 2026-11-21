@@ -5,6 +5,8 @@
 // Hai nơi dùng chung các thao tác trong `buildStore`, chỉ khác phần `StoreBackend`.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import seedData from "../seed/seed.json";
+// Dữ liệu demo đi kèm dữ liệu mẫu: đơn hàng giả của 4 sale và tồn kho giả (các file Excel gốc không có cột tồn kho).
+import demoData from "../seed/demo.json";
 import type {
   DB,
   GiftTier,
@@ -261,7 +263,7 @@ export function normalizeDB(raw: any): DB {
 }
 
 export function seedDB(): DB {
-  return normalizeDB(JSON.parse(JSON.stringify(seedData)));
+  return normalizeDB(JSON.parse(JSON.stringify({ ...seedData, orders: demoData.orders, stock: demoData.stock })));
 }
 
 // ───────────────────────── Đọc / ghi ─────────────────────────

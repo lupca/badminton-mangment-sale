@@ -2,6 +2,7 @@
 // The React provider itself is not rendered here.
 import { describe, expect, it } from "vitest";
 import seed from "../seed/seed.json";
+import demo from "../seed/demo.json";
 import type { BuyXGetYRule, DB, DiscountRule, Program, TierGiftRule } from "../types";
 import { calculateOrder } from "./engine";
 import { normalizeSku } from "./format";
@@ -655,20 +656,44 @@ describe("normalizeDB — stock", () => {
 // ───────────────────────── Seed ─────────────────────────
 
 describe("seedDB", () => {
-  it("has the three programs, no order, and an empty default salesperson", () => {
+  it("has the three programs, the demo orders and an empty default salesperson", () => {
     const db = seedDB();
     expect(db.version).toBe(1);
     expect(db.programs.map((p) => p.id)).toEqual(["seed-km-2026-11", "seed-bang-gia-sau-ck", "seed-km-2026-he"]);
-    expect(db.orders).toEqual([]);
+    expect(db.orders).toHaveLength(17);
     expect(db.settings).toEqual({ role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 });
   });
 
-  it("is exactly the content of seed.json plus an empty stock: normalisation loses nothing", () => {
+  it("is exactly seed.json plus demo.json: normalisation loses nothing", () => {
     expect(seedDB()).toEqual({
       ...seed,
+      orders: demo.orders,
+      stock: demo.stock,
       settings: { role: "manager", salesperson: "", salespersonPhone: "", lowStockThreshold: 5 },
-      stock: { bySku: {}, updatedAt: null },
     });
+  });
+
+  it("demo orders: valid under their program, each with a dealer and a salesperson, unique codes", () => {
+    const db = seedDB();
+    const programs = new Map(db.programs.map((p) => [p.id, p]));
+    for (const order of db.orders) {
+      const calc = calculateOrder(programs.get(order.programId), order);
+      expect(calc.hasError, order.code).toBe(false);
+      expect(calc.totalAmount).toBeGreaterThan(0);
+      expect(order.customerName && order.customerPhone && order.salesperson && order.salespersonPhone).toBeTruthy();
+      expect(order.status === "draft" || order.frozenRules?.length).toBeTruthy();
+    }
+    expect(new Set(db.orders.map((o) => o.code)).size).toBe(db.orders.length);
+    expect(new Set(db.orders.map((o) => o.salesperson)).size).toBe(4);
+  });
+
+  it("demo stock: every SKU of the programs has a number, some out and some low", () => {
+    const db = seedDB();
+    const skus = new Set(db.programs.flatMap((p) => p.groups.flatMap((g) => g.items.map((i) => i.sku.trim().toUpperCase()))));
+    expect(Object.keys(db.stock.bySku).sort()).toEqual([...skus].sort());
+    const values = Object.values(db.stock.bySku);
+    expect(values.filter((v) => v === 0).length).toBeGreaterThan(0);
+    expect(values.filter((v) => v > 0 && v <= 5).length).toBeGreaterThan(0);
   });
 
   it("returns a fresh copy every time", () => {

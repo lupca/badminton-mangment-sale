@@ -32,7 +32,7 @@ Lệnh khác: `npm run build` (bản chạy thật trong `dist/`), `npm test` (k
 | Đơn hàng | Sale thấy đơn của mình, quản lý thấy đơn của mọi sale; mã đơn do máy chủ cấp, không trùng | Mỗi máy một bộ đơn riêng, chuyển cho nhau bằng file `.json` |
 | Cần mạng | Có | Không |
 
-Chế độ không có máy chủ dùng để thử nhanh hoặc chạy một mình: lần chạy đầu nạp dữ liệu mẫu trong `src/seed/seed.json`; sao lưu / chuyển máy ở mục **Dữ liệu** → xuất file `.json`, rồi nhập ở máy kia.
+Chế độ không có máy chủ dùng để thử nhanh hoặc chạy một mình: lần chạy đầu nạp dữ liệu mẫu trong `src/seed/seed.json` (3 chương trình) và `src/seed/demo.json` (đơn hàng giả của 4 sale, tồn kho giả — các file Excel gốc không có cột tồn kho); sao lưu / chuyển máy ở mục **Dữ liệu** → xuất file `.json`, rồi nhập ở máy kia.
 
 ## Bật máy chủ (PostgreSQL của riêng mình)
 
@@ -147,7 +147,8 @@ src/
   lib/programOps.ts   thao tác trên chương trình và quy tắc
   pages/              các màn hình
   components/         hộp thoại nhập Excel, bảng tổng hợp, các phần của màn hình
-  seed/seed.json      dữ liệu mẫu
+  seed/seed.json      dữ liệu mẫu (chương trình)
+  seed/demo.json      đơn hàng và tồn kho giả để demo
 api/index.js          cửa vào của lớp API trên Vercel (một Vercel Function tại /api)
 server/
   app.js              lớp API: giao thức, băm mật khẩu, gọi hàm trong database

@@ -1,4 +1,4 @@
-import { Component, Suspense, lazy, useMemo, type ReactNode } from "react";
+import { Component, Suspense, useMemo, type ReactNode } from "react";
 import { Database, Package, ReceiptText, Tags, UserCircle, Users, type LucideIcon } from "lucide-react";
 import { LockedScreen, PendingScreen } from "./components/account/WaitingScreens";
 import { usePendingAccountCount } from "./lib/cloud/accounts";
@@ -7,19 +7,20 @@ import { CloudStoreProvider } from "./lib/cloud/CloudStore";
 import { cloudEnabled } from "./lib/cloud/config";
 import { ROLE_LABEL, canManage } from "./lib/roles";
 import { hasStockAttention } from "./lib/catalog";
+import { isChunkLoadError, lazyPage } from "./lib/lazyPage";
 import { StoreProvider, useStore } from "./lib/store";
 import { Link, useRoute } from "./lib/router";
 import { Button, CenteredScreen, Notice, Toaster, cx } from "./ui";
 
 // Mỗi màn hình là một phần tải riêng: lỗi ở màn hình này không làm hỏng màn hình khác.
-const ProgramsPage = lazy(() => import("./pages/ProgramsPage"));
-const ProgramEditPage = lazy(() => import("./pages/ProgramEditPage"));
-const OrdersPage = lazy(() => import("./pages/OrdersPage"));
-const OrderEditPage = lazy(() => import("./pages/OrderEditPage"));
-const ProductsPage = lazy(() => import("./pages/ProductsPage"));
-const SettingsPage = lazy(() => import("./pages/SettingsPage"));
-const AccountsPage = lazy(() => import("./pages/AccountsPage"));
-const AuthPage = lazy(() => import("./pages/AuthPage"));
+const ProgramsPage = lazyPage(() => import("./pages/ProgramsPage"));
+const ProgramEditPage = lazyPage(() => import("./pages/ProgramEditPage"));
+const OrdersPage = lazyPage(() => import("./pages/OrdersPage"));
+const OrderEditPage = lazyPage(() => import("./pages/OrderEditPage"));
+const ProductsPage = lazyPage(() => import("./pages/ProductsPage"));
+const SettingsPage = lazyPage(() => import("./pages/SettingsPage"));
+const AccountsPage = lazyPage(() => import("./pages/AccountsPage"));
+const AuthPage = lazyPage(() => import("./pages/AuthPage"));
 
 const NAV: Array<{ to: string; section: string; label: string; icon: LucideIcon }> = [
   { to: "/programs", section: "programs", label: "Chương trình", icon: Tags },
@@ -41,8 +42,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
     if (!this.state.error) return this.props.children;
     return (
       <Notice tone="error">
-        <p className="font-medium">Có lỗi khi hiển thị màn hình này.</p>
-        <p className="mt-1 break-words font-mono text-xs">{this.state.error.message}</p>
+        {isChunkLoadError(this.state.error) ? (
+          <p className="font-medium">Ứng dụng vừa được cập nhật lên bản mới. Hãy tải lại trang để dùng tiếp.</p>
+        ) : (
+          <>
+            <p className="font-medium">Có lỗi khi hiển thị màn hình này.</p>
+            <p className="mt-1 break-words font-mono text-xs">{this.state.error.message}</p>
+          </>
+        )}
         <Button className="mt-3" onClick={() => window.location.reload()}>
           Tải lại trang
         </Button>

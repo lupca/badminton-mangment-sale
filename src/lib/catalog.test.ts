@@ -385,7 +385,7 @@ describe("the seed data", () => {
       ["Vợt cầu lông", 165],
       ["Vợt tennis", 1],
     ]);
-    expect(products.every((product) => product.name && product.retailPrice > 0 && product.level === "unknown")).toBe(true);
+    expect(products.every((product) => product.name && product.retailPrice > 0 && product.level !== "unknown")).toBe(true);
     expect(products.filter((product) => product.retailMin !== product.retailMax)).toHaveLength(10);
   });
 });

@@ -481,8 +481,8 @@ function LocalSettings() {
       {manager ? (
         <Card title="Khôi phục dữ liệu mẫu">
           <p className="text-sm text-gray-700">
-            Xóa toàn bộ chương trình, đơn hàng và số liệu tồn kho hiện có, nạp lại các chương trình mẫu ban đầu. Nên
-            xuất file sao lưu trước khi làm.
+            Xóa toàn bộ chương trình, đơn hàng và số liệu tồn kho hiện có, nạp lại dữ liệu mẫu ban đầu: 3 chương trình,
+            các đơn hàng demo của 4 sale và số tồn kho demo. Nên xuất file sao lưu trước khi làm.
           </p>
           <Button variant="danger" className="mt-3" onClick={restoreSeed}>
             Khôi phục dữ liệu mẫu
