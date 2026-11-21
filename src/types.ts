@@ -253,18 +253,18 @@ export interface CalcResult {
 // ───────────────────────── Kho dữ liệu ─────────────────────────
 
 /**
- * Vai trò của người dùng máy này. Quản lý: tạo / sửa chương trình, cập nhật tồn kho, quản trị dữ liệu, và tạo đơn.
+ * Vai trò của người đang dùng ứng dụng. Quản lý: tạo / sửa chương trình, cập nhật tồn kho, quản trị dữ liệu, và tạo đơn.
  * Sale: xem chương trình và tồn kho, tạo đơn.
  */
 export type Role = "manager" | "sale";
 
 export interface Settings {
-  /** Vai trò đang dùng trên máy này (chưa có đăng nhập nên vai trò là thiết lập của từng máy). */
+  /** Vai trò: của tài khoản đang đăng nhập (khi có máy chủ), hoặc thiết lập của máy này (khi không có máy chủ). */
   role: Role;
-  /** Thông tin sale của máy này: tự ghi vào mỗi đơn mới. */
+  /** Tên và điện thoại sale, tự ghi vào mỗi đơn mới: lấy từ tài khoản (có máy chủ) hoặc thiết lập của máy này. */
   salesperson: string;
   salespersonPhone: string;
-  /** Mã có tồn kho từ 1 đến số này được cảnh báo «sắp hết hàng». 0 = không cảnh báo sắp hết. */
+  /** Mã có tồn kho từ 1 đến số này được cảnh báo «sắp hết hàng». 0 = không cảnh báo sắp hết. Có máy chủ thì dùng chung cả nhóm. */
   lowStockThreshold: number;
 }
 

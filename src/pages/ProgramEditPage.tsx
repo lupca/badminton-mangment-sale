@@ -91,8 +91,8 @@ export default function ProgramEditPage({ programId }: { programId: string }) {
         }
         actions={
           <>
-            <Button variant="primary" onClick={() => actions.createOrderFor(program)}>
-              <Plus className="h-4 w-4" /> Tạo đơn
+            <Button variant="primary" onClick={() => void actions.createOrderFor(program)} disabled={actions.creatingOrder}>
+              <Plus className="h-4 w-4" /> {actions.creatingOrder ? "Đang tạo…" : "Tạo đơn"}
             </Button>
             {manager ? (
               <>

@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig} from 'vitest/config';
 
 export default defineConfig(() => {
   return {
@@ -10,6 +10,11 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
+    },
+    test: {
+      // `npm test` chỉ chạy kiểm thử thuần trong src/. Các kiểm thử trong supabase/tests cần một Supabase đang chạy
+      // (xem README) và được gọi riêng bằng `npm run test:db`.
+      include: ['src/**/*.test.{ts,tsx}'],
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

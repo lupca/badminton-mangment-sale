@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Download } from "lucide-react";
 import { calculateOrder } from "../lib/engine";
 import { formatNumber, formatVND } from "../lib/format";
+import { canManage } from "../lib/roles";
 import { Link } from "../lib/router";
 import { useStore } from "../lib/store";
 import { Button, Card, EmptyState, Notice, cx, numCls, tableCls, tableWrapCls, tdCls, thCls, toast } from "../ui";
@@ -146,9 +147,11 @@ function SalesTable({ rows, totals }: { rows: SalesTotal[]; totals: OrderTotals 
 }
 
 export default function ProgramReport({ programId }: { programId: string }) {
-  const { orders, getProgram } = useStore();
+  const { orders, getProgram, mode, settings } = useStore();
   const program = getProgram(programId);
   const [includeDrafts, setIncludeDrafts] = useState(true);
+  // Có máy chủ thì sale chỉ thấy đơn của mình, nên bảng tổng hợp của sale là số của riêng người đó — nói rõ để không đọc nhầm.
+  const ownOrdersOnly = mode === "cloud" && !canManage(settings.role);
 
   const entries = useMemo(
     () =>
@@ -168,8 +171,12 @@ export default function ProgramReport({ programId }: { programId: string }) {
   if (entries.length === 0) {
     return (
       <EmptyState
-        title="Chương trình này chưa có đơn hàng nào"
-        hint="Khi có đơn, số lượng bán và quà tặng của chương trình sẽ được cộng ở đây."
+        title={ownOrdersOnly ? "Bạn chưa có đơn hàng nào trong chương trình này" : "Chương trình này chưa có đơn hàng nào"}
+        hint={
+          ownOrdersOnly
+            ? "Khi bạn có đơn, số lượng bán và quà tặng trong các đơn của bạn sẽ được cộng ở đây. Người quản lý xem được tổng của cả nhóm."
+            : "Khi có đơn, số lượng bán và quà tặng của chương trình sẽ được cộng ở đây."
+        }
       />
     );
   }
@@ -190,6 +197,11 @@ export default function ProgramReport({ programId }: { programId: string }) {
 
   return (
     <div className="space-y-4">
+      {ownOrdersOnly ? (
+        <Notice tone="info">
+          Số liệu dưới đây chỉ gồm các đơn của bạn. Người quản lý xem được tổng của cả nhóm.
+        </Notice>
+      ) : null}
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
           <div>

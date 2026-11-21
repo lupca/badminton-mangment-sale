@@ -1,5 +1,6 @@
-// Vai trò và quyền. Chưa có đăng nhập nên vai trò là thiết lập của từng máy (settings.role);
-// khi có tài khoản, chỉ cần đổi nguồn của `role` — các màn hình vẫn hỏi quyền qua `canManage`.
+// Vai trò và quyền trên màn hình. Các màn hình hỏi quyền qua `canManage(settings.role)`; `settings.role` đến từ:
+//   • tài khoản đang đăng nhập, khi chạy với máy chủ (máy chủ còn tự kiểm tra lại mọi thao tác ghi);
+//   • thiết lập của từng máy, khi chạy không có máy chủ.
 import type { Role } from "../types";
 
 export const ROLE_LABEL: Record<Role, string> = { manager: "Quản lý", sale: "Sale" };

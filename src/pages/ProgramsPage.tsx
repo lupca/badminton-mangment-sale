@@ -14,6 +14,7 @@ import {
   PageHeader,
   SearchInput,
   Select,
+  buttonCls,
   cx,
   numCls,
   tableCls,
@@ -35,8 +36,8 @@ function RowActions({ program, size }: { program: Program; size: "sm" | "md" }) 
   const actions = useProgramActions();
   return (
     <>
-      <Button size={size} onClick={() => actions.createOrderFor(program)}>
-        Tạo đơn
+      <Button size={size} onClick={() => void actions.createOrderFor(program)} disabled={actions.creatingOrder}>
+        {actions.creatingOrder ? "Đang tạo…" : "Tạo đơn"}
       </Button>
       {canManage(settings.role) ? (
         <>
@@ -144,7 +145,7 @@ function ProgramsTable({ rows }: { rows: Array<{ program: Program; status: Progr
 }
 
 export default function ProgramsPage() {
-  const { programs, settings, createProgram } = useStore();
+  const { programs, settings, mode, createProgram } = useStore();
   const manager = canManage(settings.role);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProgramStatus | "all">("all");
@@ -194,10 +195,22 @@ export default function ProgramsPage() {
           title="Chưa có chương trình nào"
           hint={
             manager
-              ? "Tạo chương trình đầu tiên, nhập danh mục sản phẩm từ Excel rồi khai báo quy tắc khuyến mãi."
+              ? "Tạo chương trình đầu tiên, nhập danh mục sản phẩm từ Excel rồi khai báo quy tắc khuyến mãi." +
+                (mode === "cloud" ? " Hoặc vào mục «Dữ liệu» để nạp chương trình mẫu hay đưa dữ liệu cũ của máy này lên." : "")
               : "Chương trình khuyến mãi do người quản lý tạo. Khi có chương trình, bạn mở ra xem và tạo đơn ở đây."
           }
-          action={createButton}
+          action={
+            manager && mode === "cloud" ? (
+              <>
+                {createButton}
+                <Link to="/settings" className={buttonCls()}>
+                  Đến mục «Dữ liệu»
+                </Link>
+              </>
+            ) : (
+              createButton
+            )
+          }
         />
       ) : (
         <>

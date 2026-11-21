@@ -1,5 +1,8 @@
-// Kho dữ liệu: toàn bộ dữ liệu nằm trong bộ nhớ (React state) và được ghi tự động xuống localStorage.
-// Muốn chuyển sang backend sau này chỉ cần thay 2 hàm readStorage / writeStorage.
+// Kho dữ liệu: toàn bộ dữ liệu đang dùng nằm trong bộ nhớ (React state); mọi màn hình đọc và sửa qua `useStore()`.
+// Dữ liệu được lưu ở một trong hai nơi, tùy ứng dụng có chạy với máy chủ hay không (xem lib/cloud/config.ts):
+//   • không có máy chủ → `StoreProvider` ở file này ghi tự động xuống localStorage của trình duyệt;
+//   • có máy chủ       → `CloudStoreProvider` (lib/cloud/CloudStore.tsx) đồng bộ với Supabase.
+// Hai nơi dùng chung các thao tác trong `buildStore`, chỉ khác phần `StoreBackend`.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import seedData from "../seed/seed.json";
 import type {
@@ -19,6 +22,7 @@ import type {
 import { newId, normalizeSku } from "./format";
 import { canManage } from "./roles";
 import { applyStock, newerStock, stockQty } from "./stock";
+import { SYNC_IDLE, type SyncStatus } from "./syncStatus";
 
 const STORAGE_KEY = "kmdb.v1";
 
@@ -131,7 +135,7 @@ function normalizeRules(raw: unknown): Rule[] {
     .filter((x): x is Rule => x !== null);
 }
 
-function normalizeProgram(raw: any): Program {
+export function normalizeProgram(raw: any): Program {
   const now = new Date().toISOString();
   return {
     id: str(raw?.id) || newId("p"),
@@ -166,7 +170,7 @@ function normalizeGift(raw: any): OrderGift | null {
   return { ...line, ruleId: str(raw.ruleId) };
 }
 
-function normalizeOrder(raw: any): Order {
+export function normalizeOrder(raw: any): Order {
   const now = new Date().toISOString();
   const order: Order = {
     id: str(raw?.id) || newId("o"),
@@ -197,7 +201,7 @@ export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
  * Thiết lập. Dữ liệu lưu trước khi có vai trò thì coi là của người quản lý (họ đang dùng đủ mọi chức năng);
  * ngưỡng sắp hết hàng thiếu thì lấy mặc định, còn số 0 người dùng đã ghi (tắt cảnh báo) thì giữ.
  */
-function normalizeSettings(raw: any): Settings {
+export function normalizeSettings(raw: any): Settings {
   return {
     role: raw?.role === "sale" ? "sale" : "manager",
     salesperson: str(raw?.salesperson),
@@ -229,7 +233,7 @@ export function mergeDeviceSettings(device: Settings, incoming: Settings): Setti
 }
 
 /** Tồn kho: chỉ giữ các cặp (mã hàng, số). Dữ liệu lưu trước khi có tồn kho thì không có mục này → tồn kho rỗng. */
-function normalizeStock(raw: any): Stock {
+export function normalizeStock(raw: any): Stock {
   const bySku: Record<string, number> = {};
   const source = raw?.bySku;
   if (source && typeof source === "object" && !Array.isArray(source)) {
@@ -345,6 +349,13 @@ export interface Store {
   stock: Stock;
   /** false nếu lần ghi gần nhất xuống trình duyệt thất bại (vd hết dung lượng). */
   saveOk: boolean;
+  /**
+   * "local" = không có máy chủ: dữ liệu nằm trong trình duyệt của máy này, vai trò là thiết lập của máy.
+   * "cloud" = có máy chủ: mọi người đăng nhập và dùng chung dữ liệu, vai trò gắn với tài khoản.
+   */
+  mode: "local" | "cloud";
+  /** Tình trạng lưu lên máy chủ (ở chế độ "local" luôn là đã lưu). */
+  sync: SyncStatus;
 
   getProgram(id: ID | null | undefined): Program | undefined;
   getOrder(id: ID | null | undefined): Order | undefined;
@@ -358,13 +369,21 @@ export interface Store {
   deleteProgram(id: ID): boolean;
   duplicateProgram(id: ID): Program | null;
 
-  createOrder(programId: ID, init?: Partial<Order>): Order;
+  /**
+   * Tạo một đơn nháp. Có máy chủ thì đơn được ghi lên máy chủ trước (để nhận mã đơn dùng chung cho mọi sale), nên
+   * hàm trả về Promise và ném Error (thông báo tiếng Việt) khi không tạo được, vd mất mạng.
+   */
+  createOrder(programId: ID, init?: Partial<Order>): Promise<Order>;
   /** Sửa đơn bằng hàm thuần `fn`; `updatedAt` được cập nhật tự động. Lưu tự động. */
   updateOrder(id: ID, fn: (order: Order) => Order): void;
   deleteOrder(id: ID): void;
-  /** Nhân bản đơn thành một đơn nháp mới (mã mới, bỏ trạng thái chốt). */
-  duplicateOrder(id: ID): Order | null;
+  /** Nhân bản đơn thành một đơn nháp mới (mã mới, bỏ trạng thái chốt). Ném Error như `createOrder`. */
+  duplicateOrder(id: ID): Promise<Order | null>;
 
+  /**
+   * Sửa thiết lập. Có máy chủ thì vai trò không đổi được ở đây (do người quản lý đặt cho tài khoản), còn tên và số
+   * điện thoại sale được ghi vào hồ sơ tài khoản.
+   */
   updateSettings(patch: Partial<Settings>): void;
 
   /**
@@ -378,15 +397,176 @@ export interface Store {
   /**
    * Nhập dữ liệu JSON. "replace" = thay toàn bộ (riêng vai trò và thông tin sale của máy này thì giữ);
    * "merge" = thêm vào, bản ghi trùng id thì ghi đè, còn tồn kho thì lấy trọn bộ được cập nhật gần đây hơn.
-   * Ném Error (thông báo tiếng Việt) nếu file không hợp lệ.
+   * Có máy chủ thì chỉ người quản lý nhập được và chỉ có "merge".
+   * Ném Error (thông báo tiếng Việt) nếu file không hợp lệ hoặc không được phép.
    */
   importJSON(text: string, mode: "replace" | "merge"): { programs: number; orders: number };
-  /** Xóa hết và nạp lại dữ liệu mẫu (giữ vai trò và thông tin sale của máy này). */
+  /** Xóa hết và nạp lại dữ liệu mẫu (giữ vai trò và thông tin sale của máy này). Chỉ dùng khi không có máy chủ. */
   resetToSeed(): void;
+  /** Lưu ngay mọi thay đổi đang chờ gửi lên máy chủ. Trả về false nếu vẫn còn thay đổi chưa lưu được (vd mất mạng). */
+  flushNow(): Promise<boolean>;
 }
 
-const StoreContext = createContext<Store | null>(null);
+export const StoreContext = createContext<Store | null>(null);
 
+/** Phần khác nhau giữa hai nơi lưu dữ liệu: trình duyệt của máy này, hoặc máy chủ. */
+export interface StoreBackend {
+  mode: Store["mode"];
+  saveOk: boolean;
+  sync: SyncStatus;
+  /** Mã cho một đơn mới; "" = để máy chủ cấp. */
+  newOrderCode(orders: Order[]): string;
+  /** Đưa một đơn mới vào kho và trả về đơn đã lưu (máy chủ có thể đã điền mã đơn). */
+  addOrder(order: Order): Promise<Order>;
+  updateSettings(patch: Partial<Settings>): void;
+  flushNow(): Promise<boolean>;
+}
+
+/**
+ * Các thao tác của kho dữ liệu, dùng chung cho cả hai nơi lưu.
+ * `dbRef` luôn là dữ liệu mới nhất (các lệnh gọi liên tiếp trong cùng một lượt vẽ thấy ngay kết quả của nhau);
+ * `commit` thay dữ liệu và để nơi lưu tự ghi lại.
+ */
+export function buildStore(db: DB, dbRef: { current: DB }, commit: (next: DB) => void, backend: StoreBackend): Store {
+  const now = () => new Date().toISOString();
+  const cloud = backend.mode === "cloud";
+  return {
+    db,
+    programs: db.programs,
+    orders: db.orders,
+    settings: db.settings,
+    stock: db.stock,
+    saveOk: backend.saveOk,
+    mode: backend.mode,
+    sync: backend.sync,
+
+    getProgram: (id) => (id ? db.programs.find((p) => p.id === id) : undefined),
+    getOrder: (id) => (id ? db.orders.find((o) => o.id === id) : undefined),
+    orderCountOf: (programId) => db.orders.filter((o) => o.programId === programId).length,
+
+    createProgram(init) {
+      const program = normalizeProgram({ name: "Chương trình mới", ...init, id: newId("p"), createdAt: now(), updatedAt: now() });
+      const cur = dbRef.current;
+      commit({ ...cur, programs: [program, ...cur.programs] });
+      return program;
+    },
+    updateProgram(id, fn) {
+      const cur = dbRef.current;
+      commit({
+        ...cur,
+        programs: cur.programs.map((p) => (p.id === id ? { ...fn(p), id: p.id, updatedAt: now() } : p)),
+      });
+    },
+    deleteProgram(id) {
+      const cur = dbRef.current;
+      if (cur.orders.some((o) => o.programId === id)) return false;
+      commit({ ...cur, programs: cur.programs.filter((p) => p.id !== id) });
+      return true;
+    },
+    duplicateProgram(id) {
+      const cur = dbRef.current;
+      const source = cur.programs.find((p) => p.id === id);
+      if (!source) return null;
+      const copy = cloneProgram(source, `${source.name} (bản sao)`);
+      const at = cur.programs.findIndex((p) => p.id === id);
+      const programs = [...cur.programs];
+      programs.splice(at + 1, 0, copy);
+      commit({ ...cur, programs });
+      return copy;
+    },
+
+    createOrder(programId, init) {
+      const cur = dbRef.current;
+      const order = normalizeOrder({
+        salesperson: cur.settings.salesperson,
+        salespersonPhone: cur.settings.salespersonPhone,
+        ...init,
+        id: newId("o"),
+        code: backend.newOrderCode(cur.orders),
+        programId,
+        status: "draft",
+        createdAt: now(),
+        updatedAt: now(),
+      });
+      delete order.frozenRules;
+      return backend.addOrder(order);
+    },
+    updateOrder(id, fn) {
+      const cur = dbRef.current;
+      commit({
+        ...cur,
+        orders: cur.orders.map((o) => (o.id === id ? { ...fn(o), id: o.id, updatedAt: now() } : o)),
+      });
+    },
+    deleteOrder(id) {
+      const cur = dbRef.current;
+      commit({ ...cur, orders: cur.orders.filter((o) => o.id !== id) });
+    },
+    async duplicateOrder(id) {
+      const cur = dbRef.current;
+      const source = cur.orders.find((o) => o.id === id);
+      if (!source) return null;
+      const copy: Order = {
+        ...source,
+        id: newId("o"),
+        code: backend.newOrderCode(cur.orders),
+        status: "draft",
+        lines: source.lines.map((l) => ({ ...l })),
+        gifts: source.gifts.map((g) => ({ ...g })),
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      delete copy.frozenRules;
+      return backend.addOrder(copy);
+    },
+
+    updateSettings: (patch) => backend.updateSettings(patch),
+
+    updateStock(entries, mode) {
+      const cur = dbRef.current;
+      commit({ ...cur, stock: applyStock(mode === "replace" ? null : cur.stock, entries, now()) });
+    },
+
+    exportJSON: () => JSON.stringify(dbRef.current, null, 2),
+    importJSON(text, mode) {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error("File không phải JSON hợp lệ.");
+      }
+      const incoming = normalizeDB(parsed);
+      const cur = dbRef.current;
+      if (cloud && !canManage(cur.settings.role)) {
+        throw new Error("Chỉ người quản lý mới nhập được dữ liệu từ file.");
+      }
+      if (mode === "replace") {
+        // Dữ liệu trên máy chủ là của cả nhóm (đơn của mọi sale): không cho một file thay sạch.
+        if (cloud) throw new Error("Khi dùng máy chủ không thay toàn bộ dữ liệu được; chỉ thêm vào dữ liệu hiện có.");
+        commit({ ...incoming, settings: keepDeviceSettings(cur.settings, incoming.settings) });
+      } else {
+        const programIds = new Set(incoming.programs.map((p) => p.id));
+        const orderIds = new Set(incoming.orders.map((o) => o.id));
+        commit({
+          ...cur,
+          programs: [...incoming.programs, ...cur.programs.filter((p) => !programIds.has(p.id))],
+          orders: [...incoming.orders, ...cur.orders.filter((o) => !orderIds.has(o.id))],
+          stock: newerStock(cur.stock, incoming.stock),
+          settings: mergeDeviceSettings(cur.settings, incoming.settings),
+        });
+      }
+      return { programs: incoming.programs.length, orders: incoming.orders.length };
+    },
+    resetToSeed() {
+      if (cloud) throw new Error("Khi dùng máy chủ không khôi phục dữ liệu mẫu được.");
+      const seed = seedDB();
+      commit({ ...seed, settings: keepDeviceSettings(dbRef.current.settings, seed.settings) });
+    },
+    flushNow: () => backend.flushNow(),
+  };
+}
+
+/** Kho dữ liệu khi không có máy chủ: mọi thứ nằm trong localStorage của trình duyệt này. */
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [db, setDbState] = useState<DB>(readStorage);
   const [saveOk, setSaveOk] = useState(true);
@@ -445,139 +625,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const store = useMemo<Store>(() => {
-    const now = () => new Date().toISOString();
-    return {
-      db,
-      programs: db.programs,
-      orders: db.orders,
-      settings: db.settings,
-      stock: db.stock,
-      saveOk,
-
-      getProgram: (id) => (id ? db.programs.find((p) => p.id === id) : undefined),
-      getOrder: (id) => (id ? db.orders.find((o) => o.id === id) : undefined),
-      orderCountOf: (programId) => db.orders.filter((o) => o.programId === programId).length,
-
-      createProgram(init) {
-        const program = normalizeProgram({ name: "Chương trình mới", ...init, id: newId("p"), createdAt: now(), updatedAt: now() });
-        const cur = dbRef.current;
-        commit({ ...cur, programs: [program, ...cur.programs] });
-        return program;
-      },
-      updateProgram(id, fn) {
-        const cur = dbRef.current;
-        commit({
-          ...cur,
-          programs: cur.programs.map((p) => (p.id === id ? { ...fn(p), id: p.id, updatedAt: now() } : p)),
-        });
-      },
-      deleteProgram(id) {
-        const cur = dbRef.current;
-        if (cur.orders.some((o) => o.programId === id)) return false;
-        commit({ ...cur, programs: cur.programs.filter((p) => p.id !== id) });
-        return true;
-      },
-      duplicateProgram(id) {
-        const cur = dbRef.current;
-        const source = cur.programs.find((p) => p.id === id);
-        if (!source) return null;
-        const copy = cloneProgram(source, `${source.name} (bản sao)`);
-        const at = cur.programs.findIndex((p) => p.id === id);
-        const programs = [...cur.programs];
-        programs.splice(at + 1, 0, copy);
-        commit({ ...cur, programs });
-        return copy;
-      },
-
-      createOrder(programId, init) {
-        const cur = dbRef.current;
-        const order = normalizeOrder({
-          salesperson: cur.settings.salesperson,
-          salespersonPhone: cur.settings.salespersonPhone,
-          ...init,
-          id: newId("o"),
-          code: nextOrderCode(cur.orders),
-          programId,
-          status: "draft",
-          createdAt: now(),
-          updatedAt: now(),
-        });
-        delete order.frozenRules;
-        commit({ ...cur, orders: [order, ...cur.orders] });
-        return order;
-      },
-      updateOrder(id, fn) {
-        const cur = dbRef.current;
-        commit({
-          ...cur,
-          orders: cur.orders.map((o) => (o.id === id ? { ...fn(o), id: o.id, updatedAt: now() } : o)),
-        });
-      },
-      deleteOrder(id) {
-        const cur = dbRef.current;
-        commit({ ...cur, orders: cur.orders.filter((o) => o.id !== id) });
-      },
-      duplicateOrder(id) {
-        const cur = dbRef.current;
-        const source = cur.orders.find((o) => o.id === id);
-        if (!source) return null;
-        const copy: Order = {
-          ...source,
-          id: newId("o"),
-          code: nextOrderCode(cur.orders),
-          status: "draft",
-          lines: source.lines.map((l) => ({ ...l })),
-          gifts: source.gifts.map((g) => ({ ...g })),
-          createdAt: now(),
-          updatedAt: now(),
-        };
-        delete copy.frozenRules;
-        commit({ ...cur, orders: [copy, ...cur.orders] });
-        return copy;
-      },
-
-      updateSettings(patch) {
-        const cur = dbRef.current;
-        commit({ ...cur, settings: { ...cur.settings, ...patch } });
-      },
-
-      updateStock(entries, mode) {
-        const cur = dbRef.current;
-        commit({ ...cur, stock: applyStock(mode === "replace" ? null : cur.stock, entries, now()) });
-      },
-
-      exportJSON: () => JSON.stringify(dbRef.current, null, 2),
-      importJSON(text, mode) {
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(text);
-        } catch {
-          throw new Error("File không phải JSON hợp lệ.");
-        }
-        const incoming = normalizeDB(parsed);
-        const cur = dbRef.current;
-        if (mode === "replace") {
-          commit({ ...incoming, settings: keepDeviceSettings(cur.settings, incoming.settings) });
-        } else {
-          const programIds = new Set(incoming.programs.map((p) => p.id));
-          const orderIds = new Set(incoming.orders.map((o) => o.id));
-          commit({
-            ...cur,
-            programs: [...incoming.programs, ...cur.programs.filter((p) => !programIds.has(p.id))],
-            orders: [...incoming.orders, ...cur.orders.filter((o) => !orderIds.has(o.id))],
-            stock: newerStock(cur.stock, incoming.stock),
-            settings: mergeDeviceSettings(cur.settings, incoming.settings),
-          });
-        }
-        return { programs: incoming.programs.length, orders: incoming.orders.length };
-      },
-      resetToSeed() {
-        const seed = seedDB();
-        commit({ ...seed, settings: keepDeviceSettings(dbRef.current.settings, seed.settings) });
-      },
-    };
-  }, [db, saveOk, commit]);
+  const store = useMemo<Store>(
+    () =>
+      buildStore(db, dbRef, commit, {
+        mode: "local",
+        saveOk,
+        sync: SYNC_IDLE,
+        newOrderCode: nextOrderCode,
+        async addOrder(order) {
+          const cur = dbRef.current;
+          commit({ ...cur, orders: [order, ...cur.orders] });
+          return order;
+        },
+        updateSettings(patch) {
+          const cur = dbRef.current;
+          commit({ ...cur, settings: { ...cur.settings, ...patch } });
+        },
+        async flushNow() {
+          flush();
+          return true;
+        },
+      }),
+    [db, saveOk, commit, flush],
+  );
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
 }
@@ -586,4 +656,17 @@ export function useStore(): Store {
   const store = useContext(StoreContext);
   if (!store) throw new Error("useStore phải được dùng bên trong <StoreProvider>.");
   return store;
+}
+
+/**
+ * Dữ liệu còn nằm trong trình duyệt này từ lúc ứng dụng chưa có máy chủ (null = không có gì, hoặc không đọc được).
+ * Dùng để mời người quản lý đưa dữ liệu cũ lên máy chủ.
+ */
+export function readDeviceData(): DB | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? normalizeDB(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
 }

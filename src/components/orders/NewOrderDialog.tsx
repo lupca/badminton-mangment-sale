@@ -1,9 +1,10 @@
 // Hộp thoại "Tạo đơn": chọn chương trình khuyến mãi rồi mở ngay đơn mới của chương trình đó.
+import { useState } from "react";
 import { formatPeriod, programStatus } from "../../lib/format";
 import { Link, navigate } from "../../lib/router";
 import { useStore } from "../../lib/store";
 import type { Program, ProgramStatus } from "../../types";
-import { Modal, cx } from "../../ui";
+import { Modal, Notice, cx } from "../../ui";
 import ProgramStatusBadge from "../program/ProgramStatusBadge";
 
 // Chương trình đang bán được xếp trước, đã kết thúc xếp cuối.
@@ -25,9 +26,21 @@ export default function NewOrderDialog({ onClose }: { onClose: () => void }) {
     .map((program) => ({ program, status: programStatus(program) }))
     .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
 
-  const choose = (program: Program) => {
-    const order = createOrder(program.id);
-    navigate(`/orders/${encodeURIComponent(order.id)}`);
+  // Có máy chủ thì tạo đơn mất một nhịp (chờ máy chủ cấp mã): khóa danh sách trong lúc chờ, lỗi thì báo ngay tại đây.
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const choose = async (program: Program) => {
+    if (busyId) return;
+    setBusyId(program.id);
+    setError(null);
+    try {
+      const order = await createOrder(program.id);
+      navigate(`/orders/${encodeURIComponent(order.id)}`);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Không tạo được đơn, hãy thử lại.");
+      setBusyId(null);
+    }
   };
 
   return (
@@ -41,14 +54,25 @@ export default function NewOrderDialog({ onClose }: { onClose: () => void }) {
         </p>
       ) : (
         <ul className="space-y-2">
+          {error ? (
+            <li>
+              <Notice tone="error">Không tạo được đơn: {error}</Notice>
+            </li>
+          ) : null}
           {choices.map(({ program, status }) => (
             <li key={program.id}>
-              <button type="button" onClick={() => choose(program)} className={choiceCls}>
+              <button
+                type="button"
+                onClick={() => void choose(program)}
+                disabled={busyId !== null}
+                className={cx(choiceCls, "disabled:cursor-wait disabled:opacity-60")}
+              >
                 <span className="min-w-0">
                   <span
                     className={cx("block text-sm font-medium", status === "ended" ? "text-gray-500" : "text-gray-900")}
                   >
                     {program.name}
+                    {busyId === program.id ? <span className="font-normal text-gray-500"> — đang tạo đơn…</span> : null}
                   </span>
                   <span className="mt-0.5 block text-xs text-gray-500">{describe(program)}</span>
                 </span>

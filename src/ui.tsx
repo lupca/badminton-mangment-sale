@@ -190,6 +190,21 @@ export function PageHeader({
   );
 }
 
+/** Màn hình đứng riêng, không có thanh điều hướng (đăng nhập, chờ duyệt, đang tải…): một khung hẹp nằm giữa trang. */
+export function CenteredScreen({ title, children }: { title?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen items-start justify-center bg-gray-50 px-4 py-10 text-gray-900 sm:items-center">
+      <div className="w-full max-w-sm">
+        <p className="mb-4 text-center text-base font-semibold text-gray-900">Quản lý khuyến mãi</p>
+        <div className="rounded-lg border border-gray-200 bg-white p-5">
+          {title ? <h1 className="mb-3 text-lg font-semibold text-gray-900">{title}</h1> : null}
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Khung nội dung có viền, tiêu đề và nút hành động tùy chọn. */
 export function Card({
   title,

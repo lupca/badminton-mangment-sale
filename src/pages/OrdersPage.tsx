@@ -8,6 +8,7 @@ import { NO_SALES_NAME, ORDER_STATUS_LABEL } from "../components/orders/labels";
 import { salesKey, salesNames, sumOrders } from "../components/orders/totals";
 import { calculateOrder } from "../lib/engine";
 import { matchesSearch } from "../lib/format";
+import { canManage } from "../lib/roles";
 import { navigate, useRoute } from "../lib/router";
 import { useStore } from "../lib/store";
 import type { Order } from "../types";
@@ -34,7 +35,7 @@ const ALL_SALES = "";
 const saleValue = (key: string) => `=${key}`;
 
 export default function OrdersPage() {
-  const { orders, programs, duplicateOrder, deleteOrder } = useStore();
+  const { orders, programs, mode, settings, duplicateOrder, deleteOrder } = useStore();
   const route = useRoute();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -97,8 +98,11 @@ export default function OrdersPage() {
   };
 
   const duplicate = (order: Order) => {
-    const copy = duplicateOrder(order.id);
-    if (copy) toast(`Đã nhân bản đơn ${order.code} thành đơn nháp ${copy.code}`);
+    duplicateOrder(order.id)
+      .then((copy) => {
+        if (copy) toast(`Đã nhân bản đơn ${order.code} thành đơn nháp ${copy.code}`);
+      })
+      .catch((error) => toast(`Không nhân bản được đơn: ${error instanceof Error ? error.message : "hãy thử lại."}`, "error"));
   };
 
   const remove = (order: Order) => {
@@ -116,6 +120,14 @@ export default function OrdersPage() {
     <>
       <PageHeader
         title="Đơn hàng"
+        subtitle={
+          // Có máy chủ: mỗi sale chỉ thấy đơn của mình, quản lý thấy đơn của mọi người.
+          mode !== "cloud"
+            ? undefined
+            : canManage(settings.role)
+              ? "Đơn của mọi sale trong nhóm."
+              : "Các đơn của bạn. Người quản lý xem được đơn của mọi sale."
+        }
         actions={
           <>
             <Button onClick={exportExcel} disabled={visible.length === 0}>

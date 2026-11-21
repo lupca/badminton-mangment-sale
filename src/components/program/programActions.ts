@@ -1,4 +1,5 @@
 // Đường dẫn và các thao tác trên một chương trình, dùng ở cả trang danh sách lẫn trang sửa.
+import { useRef, useState } from "react";
 import type { ID, Program } from "../../types";
 import { navigate } from "../../lib/router";
 import { useStore } from "../../lib/store";
@@ -20,11 +21,27 @@ export function programTitle(program: Program): string {
  */
 export function useProgramActions() {
   const { createOrder, duplicateProgram, deleteProgram, orderCountOf } = useStore();
+  // Có máy chủ thì tạo đơn mất một nhịp (chờ máy chủ cấp mã): chặn bấm hai lần và cho nút biết để hiện «Đang tạo…».
+  const creating = useRef(false);
+  const [creatingOrder, setCreatingOrder] = useState(false);
   return {
+    /** Đang tạo đơn (chờ máy chủ). */
+    creatingOrder,
+
     /** Tạo một đơn nháp thuộc chương trình rồi mở đơn đó. */
-    createOrderFor(program: Program): void {
-      const order = createOrder(program.id);
-      navigate(`/orders/${encodeURIComponent(order.id)}`);
+    async createOrderFor(program: Program): Promise<void> {
+      if (creating.current) return;
+      creating.current = true;
+      setCreatingOrder(true);
+      try {
+        const order = await createOrder(program.id);
+        navigate(`/orders/${encodeURIComponent(order.id)}`);
+      } catch (error) {
+        toast(`Không tạo được đơn: ${error instanceof Error ? error.message : "có lỗi, hãy thử lại."}`, "error");
+      } finally {
+        creating.current = false;
+        setCreatingOrder(false);
+      }
     },
 
     duplicate(program: Program): Program | null {

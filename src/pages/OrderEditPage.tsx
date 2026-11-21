@@ -142,10 +142,13 @@ function OrderEditor({ order }: { order: Order }) {
     }
   };
   const duplicate = () => {
-    const copy = duplicateOrder(order.id);
-    if (!copy) return;
-    navigate(`/orders/${copy.id}`);
-    toast(`Đã nhân bản thành đơn ${copy.code}`);
+    duplicateOrder(order.id)
+      .then((copy) => {
+        if (!copy) return;
+        navigate(`/orders/${copy.id}`);
+        toast(`Đã nhân bản thành đơn ${copy.code}`);
+      })
+      .catch((error) => toast(`Không nhân bản được đơn: ${error instanceof Error ? error.message : "hãy thử lại."}`, "error"));
   };
   const remove = () => {
     if (!window.confirm(`Xóa đơn ${order.code}? Thao tác này không thể hoàn tác.`)) return;

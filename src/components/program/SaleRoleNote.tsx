@@ -5,7 +5,16 @@ import { Link } from "../../lib/router";
 import { useStore } from "../../lib/store";
 
 export default function SaleRoleNote() {
-  const { settings } = useStore();
+  const { settings, mode } = useStore();
+  // Có máy chủ thì vai trò gắn với tài khoản và do người quản lý đặt — không có chỗ nào để tự đổi.
+  if (mode === "cloud") {
+    return (
+      <>
+        Tài khoản của bạn có vai trò {ROLE_LABEL[settings.role]}: xem chương trình và tạo đơn. Tạo, sửa chương trình là
+        việc của người quản lý.
+      </>
+    );
+  }
   return (
     <>
       Máy này đang dùng vai trò {ROLE_LABEL[settings.role]}: xem chương trình và tạo đơn. Tạo, sửa chương trình là việc
