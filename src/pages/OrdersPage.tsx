@@ -14,6 +14,7 @@ import { navigate, useRoute } from "../lib/router";
 import { useStore } from "../lib/store";
 import type { Order } from "../types";
 import { Button, EmptyState, FilterChip, FilterSelect, ListCard, PageHeader, Pagination, SearchInput, toast } from "../ui";
+import HelpLink from "../components/HelpLink";
 
 type StatusFilter = "all" | Order["status"];
 
@@ -143,6 +144,7 @@ export default function OrdersPage() {
         }
         actions={
           <>
+            <HelpLink role={canManage(settings.role) ? "manager" : "sale"} topic={canManage(settings.role) ? "bao-cao" : "tao-don"} />
             <Button onClick={exportExcel} disabled={visible.length === 0}>
               <Download className="h-4 w-4" /> Xuất Excel
             </Button>

@@ -1,11 +1,12 @@
 import { Component, Suspense, useMemo, type ReactNode } from "react";
-import { Database, Package, ReceiptText, Tags, UserCircle, Users, type LucideIcon } from "lucide-react";
+import { CircleHelp, Database, Package, ReceiptText, Tags, UserCircle, Users, type LucideIcon } from "lucide-react";
 import { LockedScreen, PendingScreen } from "./components/account/WaitingScreens";
 import { usePendingAccountCount } from "./lib/cloud/accounts";
 import { AuthProvider, useAuth, useOptionalAuth } from "./lib/cloud/auth";
 import { CloudStoreProvider } from "./lib/cloud/CloudStore";
 import { cloudEnabled } from "./lib/cloud/config";
 import { ROLE_LABEL, canManage } from "./lib/roles";
+import LiNingMark from "./components/brand/LiNingMark";
 import { hasStockAttention } from "./lib/catalog";
 import { isChunkLoadError, lazyPage } from "./lib/lazyPage";
 import { StoreProvider, useStore } from "./lib/store";
@@ -21,6 +22,7 @@ const ProductsPage = lazyPage(() => import("./pages/ProductsPage"));
 const SettingsPage = lazyPage(() => import("./pages/SettingsPage"));
 const AccountsPage = lazyPage(() => import("./pages/AccountsPage"));
 const AuthPage = lazyPage(() => import("./pages/AuthPage"));
+const HelpPage = lazyPage(() => import("./pages/HelpPage"));
 
 const NAV: Array<{ to: string; section: string; label: string; icon: LucideIcon }> = [
   { to: "/programs", section: "programs", label: "Chương trình", icon: Tags },
@@ -90,6 +92,7 @@ function Shell() {
   else if (section === "orders") page = id ? <OrderEditPage key={id} orderId={id} /> : <OrdersPage />;
   else if (section === "products") page = <ProductsPage />;
   else if (section === "settings") page = <SettingsPage />;
+  else if (section === "help") page = <HelpPage />;
   else if (section === "accounts" && accountAdmin) page = <AccountsPage />;
   else page = <ProgramsPage />;
 
@@ -99,12 +102,13 @@ function Shell() {
   return (
     <div className="min-h-screen bg-slate-50 text-gray-900 print:bg-white">
       <header className="border-b border-gray-200 bg-white print:hidden">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 px-4">
-          <Link to="/programs" className="flex items-center gap-2 py-3 text-base font-semibold tracking-tight text-gray-900">
-            <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
-              <Tags className="h-4 w-4" />
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-2 px-4 sm:gap-x-6">
+          <Link to="/programs" className="flex shrink-0 items-center gap-2 py-2.5" aria-label="Li-Ning — Chương trình khuyến mãi">
+            <LiNingMark className="h-8 w-8 shrink-0 text-[#C5242C] sm:h-9 sm:w-9" />
+            <span className="flex flex-col leading-tight">
+              <span className="text-[15px] font-extrabold uppercase italic tracking-wide text-[#C5242C] sm:text-base">Li-Ning</span>
+              <span className="whitespace-nowrap text-xs font-medium text-gray-600 sm:text-[13px]">Chương trình khuyến mãi</span>
             </span>
-            Quản lý khuyến mãi
           </Link>
           {/* Điện thoại: thu hẹp lề từng mục để các mục vừa một hàng; không vừa (quản lý có thêm mục «Tài khoản») thì
               mục cuối xuống hàng — không mục nào bị khuất phải kéo ngang mới thấy.
@@ -132,7 +136,19 @@ function Shell() {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto flex min-w-0 items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
+            <Link
+              to="/help"
+              title="Hướng dẫn sử dụng"
+              aria-label="Hướng dẫn sử dụng"
+              className={cx(
+                "flex shrink-0 items-center gap-1.5 rounded-full p-1 text-xs font-medium hover:bg-gray-100 sm:px-2.5",
+                section === "help" ? "text-blue-700" : "text-gray-600",
+              )}
+            >
+              <CircleHelp aria-hidden className="h-[18px] w-[18px] sm:h-4 sm:w-4" />
+              <span className="max-sm:hidden">Hướng dẫn</span>
+            </Link>
             {cloud && sync.state !== "idle" ? (
               <span
                 role="status"
@@ -161,7 +177,7 @@ function Shell() {
               >
                 <UserCircle aria-hidden className="h-4 w-4 shrink-0 text-gray-500" />
                 {/* Màn hình rất hẹp chỉ hiện tên vai trò để còn nằm cùng hàng với tên ứng dụng. */}
-                <span className="max-[359px]:hidden">Vai trò: </span>
+                <span className="max-[399px]:hidden">Vai trò: </span>
                 <span className="font-semibold text-gray-900">{ROLE_LABEL[settings.role]}</span>
               </Link>
             )}

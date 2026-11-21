@@ -5,6 +5,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDow
 import { formatNumber, parseInteger } from "./lib/format";
 import { PAGE_SIZES, pageButtons, type Page } from "./lib/paging";
 import { Link } from "./lib/router";
+import LiNingMark from "./components/brand/LiNingMark";
 
 export function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
@@ -263,7 +264,12 @@ export function CenteredScreen({ title, children }: { title?: React.ReactNode; c
   return (
     <div className="flex min-h-screen items-start justify-center bg-gray-50 px-4 py-10 text-gray-900 sm:items-center">
       <div className="w-full max-w-sm">
-        <p className="mb-4 text-center text-base font-semibold text-gray-900">Quản lý khuyến mãi</p>
+        <p className="mb-4 flex items-center justify-center gap-2 text-base font-semibold text-gray-900">
+          <LiNingMark className="h-8 w-8 text-[#C5242C]" />
+          <span>
+            <span className="font-extrabold uppercase italic tracking-wide text-[#C5242C]">Li-Ning</span> · Chương trình khuyến mãi
+          </span>
+        </p>
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
           {title ? <h1 className="mb-3 text-lg font-semibold text-gray-900">{title}</h1> : null}
           {children}

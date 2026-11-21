@@ -17,6 +17,7 @@ import RulesTab from "../components/program/RulesTab";
 import { pruneAllowedSkus, type UpdateProgram } from "../components/program/programEdits";
 import ProgramStatusBadge from "../components/program/ProgramStatusBadge";
 import { programPath, programTitle, useProgramActions } from "../components/program/programActions";
+import HelpLink from "../components/HelpLink";
 
 const TAB_KEYS = ["info", "groups", "rules", "report"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
@@ -91,6 +92,7 @@ export default function ProgramEditPage({ programId }: { programId: string }) {
         }
         actions={
           <>
+            <HelpLink role={manager ? "manager" : "sale"} topic={manager ? "quy-tac" : "chon-chuong-trinh"} />
             <Button variant="primary" onClick={() => void actions.createOrderFor(program)} disabled={actions.creatingOrder}>
               <Plus className="h-4 w-4" /> {actions.creatingOrder ? "Đang tạo…" : "Tạo đơn"}
             </Button>

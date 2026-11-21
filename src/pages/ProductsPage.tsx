@@ -64,6 +64,7 @@ import {
   toast,
   useMediaQuery,
 } from "../ui";
+import HelpLink from "../components/HelpLink";
 
 const QUERY_DEFAULTS = {
   q: "",
@@ -474,7 +475,9 @@ export default function ProductsPage() {
         title="Sản phẩm và tồn kho"
         subtitle="Mỗi mã hàng một dòng, kèm hãng, giá bán lẻ và số tồn kho. Bấm vào một mã để xem các chương trình khuyến mại có mã đó."
         actions={
-          names.size > 0 || manager ? (
+          <>
+            <HelpLink role={manager ? "manager" : "sale"} topic={manager ? "ton-kho" : "xem-gia-ton"} />
+            {names.size > 0 || manager ? (
             <>
               {names.size > 0 ? (
                 <Button onClick={exportList} disabled={visible.length === 0}>
@@ -487,7 +490,8 @@ export default function ProductsPage() {
                 </Button>
               ) : null}
             </>
-          ) : null
+            ) : null}
+          </>
         }
       />
 

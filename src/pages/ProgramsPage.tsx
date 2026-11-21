@@ -1,6 +1,8 @@
 // Danh sách chương trình khuyến mãi — màn hình đầu tiên của ứng dụng.
 // Người quản lý tạo, nhân bản, xóa chương trình ở đây; vai trò khác (sale) chỉ mở xem và tạo đơn.
 import { useState } from "react";
+import { X } from "lucide-react";
+import { helpPath } from "../components/HelpLink";
 import { paginate, DEFAULT_PAGE_SIZE } from "../lib/paging";
 import { Plus } from "lucide-react";
 import type { Program, ProgramStatus } from "../types";
@@ -29,6 +31,7 @@ import {
 import ProgramStatusBadge from "../components/program/ProgramStatusBadge";
 import SaleRoleNote from "../components/program/SaleRoleNote";
 import { programPath, programTitle, useProgramActions } from "../components/program/programActions";
+import HelpLink from "../components/HelpLink";
 
 // Thứ tự các dòng trong bảng: đang chạy → sắp diễn ra → không thời hạn → đã kết thúc.
 const ROW_ORDER: ProgramStatus[] = ["running", "upcoming", "open", "ended"];
@@ -148,6 +151,56 @@ function ProgramsTable({ rows }: { rows: Array<{ program: Program; status: Progr
   );
 }
 
+
+const WELCOME_KEY = "km.helpWelcomeClosed";
+
+/** Khung chào lần đầu: dẫn tới hướng dẫn theo vai trò. Đóng một lần là không hiện lại trên máy đó. */
+function WelcomeHelp() {
+  const [open, setOpen] = useState(() => {
+    try {
+      return !localStorage.getItem(WELCOME_KEY);
+    } catch {
+      return true;
+    }
+  });
+  if (!open) return null;
+  const close = () => {
+    setOpen(false);
+    try {
+      localStorage.setItem(WELCOME_KEY, new Date().toISOString());
+    } catch {
+      // không ghi được thì lần sau hiện lại — không sao
+    }
+  };
+  return (
+    <section
+      aria-label="Hướng dẫn cho người mới"
+      className="relative mb-5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border border-blue-200 bg-blue-50 py-3 pl-4 pr-10"
+    >
+      <div className="min-w-0 flex-1 basis-64">
+        <p className="text-sm font-semibold text-blue-950">Mới dùng lần đầu?</p>
+        <p className="text-sm text-blue-900">Xem hướng dẫn 2 phút: tạo đơn, xem giá và tồn kho, quản lý chương trình.</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Link to={helpPath("sale")} className={buttonCls("primary", "sm")} onClick={close}>
+          Hướng dẫn cho Sale
+        </Link>
+        <Link to={helpPath("manager")} className={buttonCls("default", "sm")} onClick={close}>
+          Hướng dẫn cho Quản lý
+        </Link>
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Đóng khung hướng dẫn"
+          className="absolute right-2 top-2 cursor-pointer rounded p-1 text-blue-700 hover:bg-blue-100"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export default function ProgramsPage() {
   const { programs, settings, mode, createProgram } = useStore();
   const manager = canManage(settings.role);
@@ -200,8 +253,15 @@ export default function ProgramsPage() {
             <SaleRoleNote />
           )
         }
-        actions={createButton}
+        actions={
+          <>
+            <HelpLink role={manager ? "manager" : "sale"} topic={manager ? "tao-chuong-trinh" : "chon-chuong-trinh"} />
+            {createButton}
+          </>
+        }
       />
+
+      <WelcomeHelp />
 
       {programs.length === 0 ? (
         <EmptyState
