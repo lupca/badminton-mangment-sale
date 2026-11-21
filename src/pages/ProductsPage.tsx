@@ -130,12 +130,15 @@ function PriceText({ product }: { product: CatalogProduct }) {
 /** Bảng sản phẩm (màn hình rộng). Memo để gõ ô tìm hay mở hộp thoại không vẽ lại khi trang đang xem chưa đổi. */
 const ProductTable = memo(function ProductTable({
   items,
+  start,
   sort,
   dir,
   onSort,
   onOpen,
 }: {
   items: CatalogProduct[];
+  /** Số thứ tự của dòng đầu trang (theo cả danh sách đang lọc, không phải theo trang). */
+  start: number;
   sort: CatalogSortKey;
   dir: SortDir;
   onSort: (key: CatalogSortKey) => void;
@@ -156,6 +159,7 @@ const ProductTable = memo(function ProductTable({
       <table className={tableCls}>
         <thead>
           <tr>
+            <th className={cx(thCls, "w-14 !text-center")}>STT</th>
             {th("sku")}
             {th("name")}
             {th("brand")}
@@ -169,13 +173,14 @@ const ProductTable = memo(function ProductTable({
           </tr>
         </thead>
         <tbody>
-          {items.map((product) => (
+          {items.map((product, index) => (
             <tr
               key={product.sku}
               data-sku={product.sku}
               onClick={() => onOpen(product.sku)}
               className="group cursor-pointer hover:bg-blue-50/40"
             >
+              <td className={cx(tdCls, "w-14 text-center tabular-nums text-gray-500")}>{formatNumber(start + index)}</td>
               <td className={cx(tdCls, "whitespace-nowrap font-medium text-gray-900")}>{product.sku}</td>
               <td className={cx(tdCls, "min-w-56")}>
                 {/* Nút thật để mở bằng bàn phím; cả dòng bấm được bằng chuột. */}
@@ -217,14 +222,16 @@ const ProductTable = memo(function ProductTable({
 /** Danh sách dạng thẻ (điện thoại). */
 const ProductCards = memo(function ProductCards({
   items,
+  start,
   onOpen,
 }: {
   items: CatalogProduct[];
+  start: number;
   onOpen: (sku: string) => void;
 }) {
   return (
     <ul className="divide-y divide-gray-100">
-      {items.map((product) => (
+      {items.map((product, index) => (
         <li key={product.sku} data-sku={product.sku}>
           <button
             type="button"
@@ -234,7 +241,7 @@ const ProductCards = memo(function ProductCards({
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-gray-900">{product.name || "(chưa có tên)"}</span>
               <span className="mt-0.5 block text-xs text-gray-500">
-                {product.sku} · {product.brand || NO_BRAND_LABEL} · {product.category}
+                #{formatNumber(start + index)} · {product.sku} · {product.brand || NO_BRAND_LABEL} · {product.category}
               </span>
               <span className="mt-1.5 flex flex-wrap items-center gap-2">
                 <LevelBadge level={product.level} />
@@ -406,8 +413,9 @@ export default function ProductsPage() {
 
   const exportList = async () => {
     const rows = [
-      ["Mã hàng", "Tên hàng", "Hãng", "Loại hàng", "Đơn vị", "Giá lẻ", "Tồn kho", "Trạng thái", "Số danh mục khuyến mại"],
-      ...visible.map((p) => [
+      ["STT", "Mã hàng", "Tên hàng", "Hãng", "Loại hàng", "Đơn vị", "Giá lẻ", "Tồn kho", "Trạng thái", "Số danh mục khuyến mại"],
+      ...visible.map((p, index) => [
+        index + 1,
         p.sku,
         p.name,
         p.brand,
@@ -421,7 +429,7 @@ export default function ProductsPage() {
     ];
     try {
       await exportTableXlsx(`san-pham-${todayISO()}.xlsx`, [
-        { name: "Sản phẩm", rows, colWidths: [16, 48, 14, 16, 8, 14, 10, 16, 12] },
+        { name: "Sản phẩm", rows, colWidths: [6, 16, 48, 14, 16, 8, 14, 10, 16, 12] },
       ]);
     } catch {
       toast("Không xuất được file Excel. Thử lại sau.", "error");
@@ -652,9 +660,9 @@ export default function ProductsPage() {
                 </div>
               </div>
             ) : wide ? (
-              <ProductTable items={page.items} sort={sort} dir={dir} onSort={onSort} onOpen={setOpenSku} />
+              <ProductTable items={page.items} start={page.from} sort={sort} dir={dir} onSort={onSort} onOpen={setOpenSku} />
             ) : (
-              <ProductCards items={page.items} onOpen={setOpenSku} />
+              <ProductCards items={page.items} start={page.from} onOpen={setOpenSku} />
             )}
           </ListCard>
 
