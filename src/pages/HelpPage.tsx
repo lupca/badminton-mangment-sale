@@ -182,13 +182,12 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
   },
 ];
 
-function TopicCard({ topic, index }: { topic: Topic; index: number }) {
+function TopicCard({ topic }: { topic: Topic }) {
   return (
     <section id={`huong-dan-${topic.id}`} className="scroll-mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
       <div className="grid gap-0 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         <div className="p-4 sm:p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Việc {index + 1}</p>
-          <h2 className="mt-0.5 text-lg font-semibold tracking-tight text-gray-900">{topic.title}</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900">{topic.title}</h2>
           <p className="mt-1 text-sm text-gray-600">{topic.why}</p>
           <ol className="mt-4 space-y-3">
             {topic.steps.map((step, i) => (
@@ -262,7 +261,7 @@ export default function HelpPage() {
       />
 
       <nav aria-label="Các việc trong hướng dẫn" className="mb-5 mt-1 flex flex-wrap gap-2">
-        {topics.map((topic, i) => (
+        {topics.map((topic) => (
           <button
             key={topic.id}
             type="button"
@@ -272,14 +271,14 @@ export default function HelpPage() {
             }}
             className="cursor-pointer rounded-full border border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 shadow-xs hover:border-blue-400 hover:text-blue-700"
           >
-            {i + 1}. {topic.title}
+            {topic.title}
           </button>
         ))}
       </nav>
 
       <div className="space-y-4">
-        {topics.map((topic, i) => (
-          <TopicCard key={topic.id} topic={topic} index={i} />
+        {topics.map((topic) => (
+          <TopicCard key={topic.id} topic={topic} />
         ))}
       </div>
 

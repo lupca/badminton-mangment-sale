@@ -6,7 +6,7 @@ import { AuthProvider, useAuth, useOptionalAuth } from "./lib/cloud/auth";
 import { CloudStoreProvider } from "./lib/cloud/CloudStore";
 import { cloudEnabled } from "./lib/cloud/config";
 import { ROLE_LABEL, canManage } from "./lib/roles";
-import LiNingMark from "./components/brand/LiNingMark";
+import liNingLogo from "./assets/brand/lining-logo.png";
 import { hasStockAttention } from "./lib/catalog";
 import { isChunkLoadError, lazyPage } from "./lib/lazyPage";
 import { StoreProvider, useStore } from "./lib/store";
@@ -104,10 +104,10 @@ function Shell() {
       <header className="border-b border-gray-200 bg-white print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-2 px-4 sm:gap-x-6">
           <Link to="/programs" className="flex shrink-0 items-center gap-2 py-2.5" aria-label="Li-Ning — Chương trình khuyến mãi">
-            <LiNingMark className="h-8 w-8 shrink-0 text-[#C5242C] sm:h-9 sm:w-9" />
-            <span className="flex flex-col leading-tight">
-              <span className="text-[15px] font-extrabold uppercase italic tracking-wide text-[#C5242C] sm:text-base">Li-Ning</span>
-              <span className="whitespace-nowrap text-xs font-medium text-gray-600 sm:text-[13px]">Chương trình khuyến mãi</span>
+            <img src={liNingLogo} alt="Li-Ning" width={148} height={76} className="h-8 w-auto shrink-0 sm:h-10" />
+            <span aria-hidden className="h-7 w-px bg-gray-200 sm:h-8" />
+            <span className="text-[13px] font-semibold leading-tight text-gray-900 max-[399px]:w-[5.5rem] sm:text-base">
+              Chương trình khuyến mãi
             </span>
           </Link>
           {/* Điện thoại: thu hẹp lề từng mục để các mục vừa một hàng; không vừa (quản lý có thêm mục «Tài khoản») thì
