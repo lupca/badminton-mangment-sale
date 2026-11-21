@@ -69,7 +69,8 @@ export function sumOrders(entries: OrderCalc[]): OrderTotals {
 
 /** Tên người (đại lý, sale) đã bỏ khoảng trắng thừa. */
 function cleanName(name: string): string {
-  return name.trim().replace(/\s+/g, " ");
+  // NFC: cùng một tên gõ trên máy khác (macOS, một số file Excel lưu dấu tách rời) vẫn ra cùng một chuỗi.
+  return name.normalize("NFC").trim().replace(/\s+/g, " ");
 }
 
 /**

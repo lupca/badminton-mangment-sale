@@ -19,7 +19,7 @@ import type {
   TierGiftResult,
   TierGiftRule,
 } from "../types";
-import { formatPercent, formatVND, normalizeSku } from "./format";
+import { cleanFloat, formatPercent, formatVND, normalizeSku } from "./format";
 
 export type OrderInput = Pick<Order, "lines" | "gifts"> & { frozenRules?: Rule[] };
 
@@ -39,13 +39,13 @@ export function sortTiers(tiers: GiftTier[]): GiftTier[] {
 function percentOf(n: number, percent: number): number {
   const scaled = percent * 100;
   const hundredths = Math.round(scaled);
-  if (Math.abs(scaled - hundredths) > 1e-7) return (n * percent) / 100;
+  if (Math.abs(scaled - hundredths) > 1e-7) return cleanFloat((n * percent) / 100);
   return (n * hundredths) / 10000;
 }
 
 /** Hạn mức quà (đ) của một mức với doanh số cho trước. Hạn mức không hợp lệ (NaN, âm) coi như 0 — không được tặng gì. */
 export function tierBudget(tier: GiftTier, revenue: number): number {
-  const budget = tier.limitType === "percent" ? Math.floor(percentOf(revenue, tier.limitValue)) : tier.limitValue;
+  const budget = Math.floor(tier.limitType === "percent" ? percentOf(revenue, tier.limitValue) : tier.limitValue);
   return Number.isFinite(budget) && budget > 0 ? budget : 0;
 }
 
@@ -86,6 +86,16 @@ export function calculateOrder(program: Program | null | undefined, order: Order
   const issues: CalcIssue[] = [];
   const addIssue = (level: CalcIssue["level"], ruleId: ID | null, message: string) => {
     issues.push({ level, ruleId, message });
+  };
+  // Quà đã chọn mà mã không còn trong danh mục quà (danh mục vừa bị sửa) thì không còn hợp lệ. Chỉ xét khi đơn tính theo
+  // quy tắc hiện hành; đơn đã chốt giữ nguyên quà lúc chốt.
+  const giftSkusByGroup = order.frozenRules
+    ? null
+    : new Map(groups.map((g) => [g.id, new Set(g.items.map((item) => normalizeSku(item.sku)))]));
+  const notInGiftGroup = (groupId: ID | null, chosen: OrderGift[]): OrderGift[] => {
+    const skus = groupId ? giftSkusByGroup?.get(groupId) : undefined;
+    // Danh mục quà rỗng: không có gì để đối chiếu (thường là chương trình đang soạn dở) — để các kiểm tra khác lo.
+    return skus && skus.size > 0 ? chosen.filter((g) => g.groupId === groupId && !skus.has(normalizeSku(g.sku))) : [];
   };
   const namesOf = (ids: ID[]): string =>
     ids.map((id) => `«${groups.find((g) => g.id === id)?.name ?? "danh mục đã xóa"}»`).join(", ");
@@ -166,9 +176,9 @@ export function calculateOrder(program: Program | null | undefined, order: Order
           : state.reason;
       ruleResults.push({ type: "discount", ruleId: rule.id, ruleName: rule.name, ...state, reason, savedAmount, ok: true });
     } else if (rule.type === "tier_gift") {
-      ruleResults.push(evaluateTierGift(rule, lines, order.gifts, gifts, usedGiftIndexes, namesOf, addIssue));
+      ruleResults.push(evaluateTierGift(rule, lines, order.gifts, gifts, usedGiftIndexes, namesOf, addIssue, notInGiftGroup));
     } else {
-      ruleResults.push(evaluateBuyXGetY(rule, lines, order.gifts, gifts, usedGiftIndexes, qtyIn, addIssue));
+      ruleResults.push(evaluateBuyXGetY(rule, lines, order.gifts, gifts, usedGiftIndexes, qtyIn, addIssue, notInGiftGroup));
     }
   }
 
@@ -289,6 +299,7 @@ function evaluateTierGift(
   usedGiftIndexes: Set<number>,
   namesOf: (ids: ID[]) => string,
   addIssue: AddIssue,
+  notInGiftGroup: (groupId: ID | null, chosen: OrderGift[]) => OrderGift[],
 ): TierGiftResult {
   const tiers = sortTiers(rule.tiers);
   const revenue = lines.reduce((sum, l) => (rule.sourceGroupIds.includes(l.groupId) ? sum + l.amount : sum), 0);
@@ -355,6 +366,10 @@ function evaluateTierGift(
       if (wrongGroup.length > 0) {
         error(`mã ${wrongGroup.map((g) => g.sku).join(", ")} không thuộc danh mục quà ${namesOf([rule.giftGroupId])}.`);
       }
+      const removed = notInGiftGroup(rule.giftGroupId, chosen);
+      if (removed.length > 0) {
+        error(`mã ${removed.map((g) => g.sku).join(", ")} không còn trong danh mục quà ${namesOf([rule.giftGroupId])} — hãy bỏ quà này.`);
+      }
     } else {
       // Quy tắc không (còn) danh mục quà — vd danh mục quà vừa bị xóa — thì quà đã chọn không còn hợp lệ.
       error("quy tắc chưa chọn danh mục quà nên chưa được chọn quà.");
@@ -416,6 +431,7 @@ function evaluateBuyXGetY(
   usedGiftIndexes: Set<number>,
   qtyIn: (ids: ID[]) => number,
   addIssue: AddIssue,
+  notInGiftGroup: (groupId: ID | null, chosen: OrderGift[]) => OrderGift[],
 ): BuyXGetYResult {
   const buyQty = safeQty(rule.buyQty);
   const getQty = safeQty(rule.getQty);
@@ -441,9 +457,20 @@ function evaluateBuyXGetY(
 
   if (rule.giftMode === "same") {
     if (configured) {
+      // Tính theo từng mã: cùng một mã nằm ở nhiều dòng / nhiều danh mục nguồn thì cộng số lượng lại rồi mới chia.
+      const bySku = new Map<string, { line: CalcLine; qty: number }>();
       for (const line of lines) {
-        if (!rule.sourceGroupIds.includes(line.groupId)) continue;
-        const free = Math.floor(line.qty / buyQty) * getQty;
+        if (!rule.sourceGroupIds.includes(line.groupId) || line.qty <= 0) continue;
+        const key = normalizeSku(line.sku);
+        const entry = bySku.get(key);
+        // Cùng mã mà giá sỉ khác nhau giữa các danh mục: quà tính theo giá thấp hơn, để thứ tự dòng không đổi kết quả.
+        if (entry) {
+          entry.qty += line.qty;
+          if (line.wholesalePrice < entry.line.wholesalePrice) entry.line = line;
+        } else bySku.set(key, { line, qty: line.qty });
+      }
+      for (const { line, qty } of bySku.values()) {
+        const free = Math.floor(qty / buyQty) * getQty;
         if (free <= 0) continue;
         result.entitledQty += free;
         gifts.push({
@@ -501,6 +528,14 @@ function evaluateBuyXGetY(
   if (wrongGroup.length > 0) {
     result.ok = false;
     addIssue("error", rule.id, `${rule.name}: mã ${wrongGroup.join(", ")} không thuộc danh mục quà của quy tắc.`);
+  }
+  const removed = notInGiftGroup(
+    rule.giftGroupId,
+    orderGifts.filter((g) => g.ruleId === rule.id && safeQty(g.qty) > 0),
+  );
+  if (removed.length > 0) {
+    result.ok = false;
+    addIssue("error", rule.id, `${rule.name}: mã ${removed.map((g) => g.sku).join(", ")} không còn trong danh mục quà — hãy bỏ quà này.`);
   }
   return result;
 }

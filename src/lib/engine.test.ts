@@ -2064,12 +2064,22 @@ function reference(program: Program, input: OrderInput): Summary {
       let chosenQty = 0;
       let ok = true;
       if (rule.giftMode === "same") {
+        // Theo từng mã: cộng số lượng của mã đó ở mọi dòng thuộc danh mục nguồn; quà tính theo giá sỉ thấp nhất.
+        const perSku = new Map<string, { sku: string; qty: number; price: number }>();
         for (const l of configured ? lines : []) {
-          if (!rule.sourceGroupIds.includes(l.groupId)) continue;
-          const free = Math.floor(l.qty / rule.buyQty) * rule.getQty;
+          if (!rule.sourceGroupIds.includes(l.groupId) || l.qty <= 0) continue;
+          const key = l.sku.trim().toUpperCase();
+          const e = perSku.get(key);
+          if (e) {
+            e.qty += l.qty;
+            e.price = Math.min(e.price, l.wholesalePrice);
+          } else perSku.set(key, { sku: l.sku, qty: l.qty, price: l.wholesalePrice });
+        }
+        for (const e of perSku.values()) {
+          const free = Math.floor(e.qty / rule.buyQty) * rule.getQty;
           if (free === 0) continue;
           entitledQty += free;
-          gifts.push([rule.id, l.sku, free, l.wholesalePrice * free, true]);
+          gifts.push([rule.id, e.sku, free, e.price * free, true]);
         }
       } else {
         entitledQty = configured ? Math.floor(sourceQty / rule.buyQty) * rule.getQty : 0;

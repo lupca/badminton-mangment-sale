@@ -2,7 +2,7 @@
 // rồi chuyển thành danh sách sản phẩm / số lượng tồn. Các hàm đều thuần (không đụng tới giao diện) để kiểm thử được.
 import type { CellObject, WorkSheet } from "xlsx";
 import type { ProductItem } from "../types";
-import { normalizeSku, searchKey } from "./format";
+import { normalizeSku, roundMoney, searchKey } from "./format";
 import { parseTable } from "./paste";
 
 /** Giá trị thô của một ô: chữ, số, hoặc null nếu ô trống. */
@@ -209,7 +209,8 @@ export function parseNumber(value: Cell | undefined, decimal: DecimalSeparator =
   if (typeof value !== "string") return null;
   const text = numberText(value);
   if (decimal && text.includes(decimal) && /^\d+[.,]\d+$/.test(text)) return Number(text.replace(",", "."));
-  if (/^\d{1,3}([.,]\d{3})+$/.test(text)) return Number(text.replace(/[.,]/g, ""));
+  // Dấu ngăn hàng nghìn phải là một loại: "2.022,545" là 2022 phẩy 545 (nghìn đồng), không phải 2.022.545.
+  if (/^\d{1,3}(\.\d{3})+$/.test(text) || /^\d{1,3}(,\d{3})+$/.test(text)) return Number(text.replace(/[.,]/g, ""));
   if (/^\d{1,3}(\.\d{3})+,\d+$/.test(text)) return Number(text.replace(/\./g, "").replace(",", "."));
   if (/^\d{1,3}(,\d{3})+\.\d+$/.test(text)) return Number(text.replace(/,/g, ""));
   if (/^\d+([.,]\d+)?$/.test(text)) return Number(text.replace(",", "."));
@@ -254,6 +255,8 @@ function toQuantity(value: Cell | undefined, decimal: DecimalSeparator = null): 
   let n: number | null;
   if (typeof value === "string") {
     const text = value.trim();
+    // Kiểu số «Accounting» của Excel ghi số 0 thành «-».
+    if (/^[-−–]$/.test(text)) return 0;
     const negative = /^[-−–]/.test(text) || /^\(.+\)$/.test(text);
     n = parseNumber(negative ? text.replace(/^[-−–]\s*|^\(\s*|\s*\)$/g, "") : text, decimal);
     if (n != null && negative) n = -n;
@@ -636,8 +639,8 @@ export function convertRows(rows: Cell[][], options: ConvertOptions): ConvertRes
       const item: ProductItem = {
         sku,
         name: cellText(at(row, mapping.name)),
-        retailPrice: Math.round(retail * multiplier),
-        wholesalePrice: Math.round(wholesale * multiplier),
+        retailPrice: roundMoney(retail * multiplier),
+        wholesalePrice: roundMoney(wholesale * multiplier),
       };
       const unit = cellText(at(row, mapping.unit));
       const note = cellText(at(row, mapping.note));

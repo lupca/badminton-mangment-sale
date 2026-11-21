@@ -7,6 +7,19 @@ export function formatNumber(n: number): string {
   return numberFormat.format(Math.round(Number.isFinite(n) ? n : 0));
 }
 
+/**
+ * Bỏ sai số của phép tính số thực (vd 12.648.703,4999999 thay vì 12.648.703,5) để làm tròn đúng ở ranh giới nửa đồng.
+ * Giữ 15 chữ số có nghĩa — thừa cho mọi số tiền VND.
+ */
+export function cleanFloat(n: number): number {
+  return Number.isFinite(n) ? Number(n.toPrecision(15)) : n;
+}
+
+/** Làm tròn về đồng (nửa đồng làm tròn lên), không bị sai số số thực kéo xuống. */
+export function roundMoney(n: number): number {
+  return Math.round(cleanFloat(n)) || 0;
+}
+
 /** 1415782 → "1.415.782 đ" */
 export function formatVND(n: number): string {
   return `${formatNumber(n)} đ`;
@@ -24,9 +37,12 @@ export function formatPercent(n: number): string {
   return `${String(n).replace(".", ",")}%`;
 }
 
-/** Đọc số nguyên từ chuỗi người dùng gõ: "1.200.000", "1,200,000 đ", "1200000" → 1200000. Rỗng → 0. */
+/** Đọc số nguyên từ chuỗi người dùng gõ: "1.200.000", "1,200,000 đ", "1200000", "1.200.000,00" → 1200000. Rỗng → 0. */
 export function parseInteger(text: string): number {
   const negative = /^\s*-/.test(text);
+  // Số tiền dán từ Excel kèm phần lẻ: "1.200.000,00" / "1,200,000.00" → bỏ phần lẻ (VND không có số lẻ).
+  const money = /^\s*-?\s*(\d{1,3}(?:([.,])\d{3})+)([.,])\d{1,2}\s*(đ|vnđ|vnd|₫)?\s*$/i.exec(text);
+  if (money && money[2] !== money[3]) text = money[1];
   const digits = text.replace(/\D/g, "");
   if (!digits) return 0;
   const n = Number(digits);
