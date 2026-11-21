@@ -1,12 +1,12 @@
 // Hai màn hình cho tài khoản đã đăng nhập nhưng chưa dùng được hệ thống: đang chờ duyệt, và đã bị khóa.
 // Cả hai tự hỏi lại máy chủ định kỳ; khi vai trò đổi, cổng vào ứng dụng (CloudGate) tự chuyển màn hình.
 import { useState } from "react";
+import { errorMessage } from "../../lib/cloud/api";
 import { useAuth, useAutoRefresh } from "../../lib/cloud/auth";
-import { authErrorMessage } from "../../lib/cloud/authErrors";
 import { Button, CenteredScreen, Notice, toast } from "../../ui";
 
-/** Tài khoản chờ duyệt: người dùng đang ngồi chờ nên hỏi lại khá dày. */
-const PENDING_CHECK_MS = 8_000;
+/** Tài khoản chờ duyệt: người dùng đang ngồi chờ nên hỏi lại khá dày (mỗi lần hỏi là một lần chạy tính tiền của lớp API). */
+const PENDING_CHECK_MS = 15_000;
 /** Tài khoản bị khóa: hiếm khi được mở lại ngay nên hỏi thưa hơn. */
 const LOCKED_CHECK_MS = 30_000;
 
@@ -45,7 +45,7 @@ function CheckAndSignOut({ intervalMs, unchangedText }: { intervalMs: number; un
     try {
       await auth.signOut();
     } catch (error) {
-      toast(authErrorMessage(error), "error");
+      toast(errorMessage(error), "error");
       setSigningOut(false);
     }
   };
@@ -82,8 +82,8 @@ export function PendingScreen() {
         quản lý vào mục «Tài khoản» để duyệt.
       </p>
       <p className="mt-2 text-sm text-gray-500">
-        Màn hình này tự kiểm tra lại sau mỗi vài giây và tự vào ứng dụng khi tài khoản được duyệt — bạn không cần tải
-        lại trang.
+        Màn hình này tự kiểm tra lại khoảng 15 giây một lần và tự vào ứng dụng khi tài khoản được duyệt — bạn không
+        cần tải lại trang.
       </p>
       <CheckAndSignOut intervalMs={PENDING_CHECK_MS} unchangedText="Tài khoản vẫn đang chờ duyệt" />
     </CenteredScreen>

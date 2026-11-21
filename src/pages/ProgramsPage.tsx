@@ -1,6 +1,7 @@
 // Danh sách chương trình khuyến mãi — màn hình đầu tiên của ứng dụng.
 // Người quản lý tạo, nhân bản, xóa chương trình ở đây; vai trò khác (sale) chỉ mở xem và tạo đơn.
 import { useState } from "react";
+import { paginate, DEFAULT_PAGE_SIZE } from "../lib/paging";
 import { Plus } from "lucide-react";
 import type { Program, ProgramStatus } from "../types";
 import { PROGRAM_STATUS_LABEL, formatNumber, formatPeriod, matchesSearch, programStatus } from "../lib/format";
@@ -11,14 +12,17 @@ import { useStore } from "../lib/store";
 import {
   Button,
   EmptyState,
+  FilterChip,
+  FilterSelect,
+  ListCard,
   PageHeader,
+  Pagination,
   SearchInput,
-  Select,
   buttonCls,
   cx,
   numCls,
   tableCls,
-  tableWrapCls,
+  tableScrollCls,
   tdCls,
   thCls,
 } from "../ui";
@@ -78,7 +82,7 @@ function ProgramRow({ program, status }: { program: Program; status: ProgramStat
   const itemCount = formatNumber(programItemCount(program));
 
   return (
-    <tr className="hover:bg-gray-50">
+    <tr className="hover:bg-blue-50/40">
       <td className={cx(tdCls, "lg:min-w-56")}>
         <Link to={programPath(program.id)} className="font-medium text-blue-700 hover:underline">
           {programTitle(program)}
@@ -120,7 +124,7 @@ function ProgramRow({ program, status }: { program: Program; status: ProgramStat
 
 function ProgramsTable({ rows }: { rows: Array<{ program: Program; status: ProgramStatus }> }) {
   return (
-    <div className={tableWrapCls}>
+    <div className={tableScrollCls}>
       <table className={tableCls}>
         <thead className={FROM_LG}>
           <tr>
@@ -149,6 +153,8 @@ export default function ProgramsPage() {
   const manager = canManage(settings.role);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProgramStatus | "all">("all");
+  const [pageNo, setPageNo] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const create = () => {
     const program = createProgram({ name: "Chương trình mới", groups: [newGroup("Danh mục áp dụng")] });
@@ -168,6 +174,13 @@ export default function ProgramsPage() {
     ({ program, status }) =>
       (statusFilter === "all" || status === statusFilter) && matchesSearch(`${program.name} ${program.brand}`, query),
   );
+
+  const page = paginate(visible, pageNo, pageSize);
+  const clearFilters = () => {
+    setQuery("");
+    setStatusFilter("all");
+    setPageNo(1);
+  };
 
   // Chỉ người quản lý mới có nút tạo chương trình (ở tiêu đề trang và ở khung «chưa có chương trình»).
   const createButton = manager ? (
@@ -214,47 +227,79 @@ export default function ProgramsPage() {
         />
       ) : (
         <>
-          <div className="mb-3 flex flex-wrap gap-2">
-            <SearchInput
-              value={query}
-              onChange={setQuery}
-              placeholder="Tìm theo tên hoặc hãng…"
-              className="min-w-0 flex-1 basis-56 sm:max-w-sm"
-            />
-            <div className="w-44">
-              <Select
-                aria-label="Lọc theo trạng thái"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as ProgramStatus | "all")}
-              >
-                <option value="all">Tất cả</option>
-                {FILTER_OPTIONS.map((status) => (
-                  <option key={status} value={status}>
-                    {PROGRAM_STATUS_LABEL[status]}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </div>
-
-          {visible.length === 0 ? (
-            <EmptyState
-              title="Không có chương trình nào khớp"
-              hint="Thử từ khóa khác hoặc đổi bộ lọc trạng thái."
-              action={
-                <Button
-                  onClick={() => {
-                    setQuery("");
-                    setStatusFilter("all");
+          <ListCard
+            toolbar={
+              <div className="space-y-3">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <SearchInput
+                    value={query}
+                    onChange={(value) => {
+                      setQuery(value);
+                      setPageNo(1);
+                    }}
+                    placeholder="Tìm theo tên hoặc hãng…"
+                    className="min-w-0 flex-1"
+                  />
+                  <FilterSelect
+                    className="sm:w-52"
+                    label="Trạng thái"
+                    allLabel="Tất cả trạng thái"
+                    value={statusFilter === "all" ? "" : statusFilter}
+                    onChange={(value) => {
+                      setStatusFilter((value || "all") as ProgramStatus | "all");
+                      setPageNo(1);
+                    }}
+                    options={FILTER_OPTIONS.map((status) => ({ value: status, label: PROGRAM_STATUS_LABEL[status] }))}
+                  />
+                </div>
+                {query.trim() || statusFilter !== "all" ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-gray-500">Đang lọc:</span>
+                    {query.trim() ? <FilterChip label={`Tìm: “${query.trim()}”`} onRemove={() => setQuery("")} /> : null}
+                    {statusFilter !== "all" ? (
+                      <FilterChip
+                        label={`Trạng thái: ${PROGRAM_STATUS_LABEL[statusFilter]}`}
+                        onRemove={() => setStatusFilter("all")}
+                      />
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="cursor-pointer text-xs font-medium text-blue-700 hover:underline"
+                    >
+                      Xóa bộ lọc
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            }
+            footer={
+              visible.length > 0 ? (
+                <Pagination
+                  page={page}
+                  unit="chương trình"
+                  onPage={setPageNo}
+                  onSize={(size) => {
+                    setPageSize(size);
+                    setPageNo(1);
                   }}
-                >
-                  Bỏ lọc
-                </Button>
-              }
-            />
-          ) : (
-            <ProgramsTable rows={visible} />
-          )}
+                  note={visible.length < rows.length ? `(lọc từ ${formatNumber(rows.length)})` : undefined}
+                />
+              ) : null
+            }
+          >
+            {visible.length === 0 ? (
+              <div className="px-4 py-14 text-center">
+                <p className="text-sm font-medium text-gray-900">Không có chương trình nào khớp</p>
+                <p className="mt-1 text-sm text-gray-500">Thử từ khóa khác hoặc đổi bộ lọc trạng thái.</p>
+                <div className="mt-4">
+                  <Button onClick={clearFilters}>Bỏ lọc</Button>
+                </div>
+              </div>
+            ) : (
+              <ProgramsTable rows={page.items} />
+            )}
+          </ListCard>
         </>
       )}
     </>

@@ -1,4 +1,5 @@
-// Kho dữ liệu khi có máy chủ: dữ liệu của cả nhóm nằm trên Supabase, trình duyệt giữ một bản đang mở và đồng bộ liên tục.
+// Kho dữ liệu khi có máy chủ: dữ liệu của cả nhóm nằm trong database trên máy chủ, trình duyệt giữ một bản đang mở và
+// đồng bộ liên tục qua lớp API (gửi thay đổi ngay; việc người khác làm thì thấy sau một nhịp hỏi định kỳ, chừng 15 giây).
 // Vai trò và thông tin sale lấy từ tài khoản đang đăng nhập (không còn là thiết lập của từng máy).
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { DB, Role, Settings } from "../../types";
@@ -15,10 +16,10 @@ import {
   type Store,
 } from "../store";
 import { SYNC_IDLE, type SyncStatus } from "../syncStatus";
-import { accountsChangedOnServer } from "./accounts";
+import { observeAccounts } from "./accounts";
 import { useAuth, type Profile } from "./auth";
-import { getSupabase } from "./client";
-import { RemoteError, supabaseRemote } from "./remote";
+import { getApi } from "./client";
+import { RemoteError, httpRemote } from "./remote";
 import { SyncEngine } from "./sync";
 
 /** Vai trò trong ứng dụng của một tài khoản đã được duyệt. */
@@ -79,12 +80,21 @@ export function CloudStoreProvider({ children }: { children: ReactNode }) {
   const commit = useCallback((next: DB) => {
     dbRef.current = next;
     setDbState(next);
+    engineRef.current?.noteActivity();
     engineRef.current?.localChanged();
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const engine = new SyncEngine(supabaseRemote(getSupabase()), {
+    const remote = httpRemote(getApi(), {
+      // Mỗi lần hỏi định kỳ còn mang về hồ sơ của tài khoản này (quản lý vừa đổi vai trò / khóa thì màn hình đổi theo ngay)
+      // và — với quản lý — tình hình danh sách tài khoản (có người mới đăng ký đang chờ duyệt…).
+      onPoll(info) {
+        authRef.current.observeProfile(info.me, info.askedAt);
+        observeAccounts(info.accounts);
+      },
+    });
+    const engine = new SyncEngine(remote, {
       get: () => dbRef.current,
       // Thay đổi đến từ máy chủ: không tính là việc cần gửi lên.
       apply(fn) {
@@ -96,12 +106,6 @@ export function CloudStoreProvider({ children }: { children: ReactNode }) {
       onStatus: setSync,
       notify: (message, tone) => toast(message, tone),
       debug: syncLogger(),
-      onProfileEvent(id) {
-        // Quản lý vừa đổi vai trò / khóa tài khoản này: đọc lại hồ sơ ngay để màn hình đổi theo.
-        if (id === authRef.current.profile?.id) void authRef.current.refreshProfile();
-        // Hồ sơ của người khác đổi (chỉ quản lý nhận được): vd có người mới đăng ký đang chờ duyệt.
-        else accountsChangedOnServer();
-      },
       normalize: {
         program: normalizeProgram,
         order: normalizeOrder,
@@ -128,14 +132,20 @@ export function CloudStoreProvider({ children }: { children: ReactNode }) {
       else engine.wake();
     };
     const onWake = () => engine.wake();
+    // Người dùng đang bấm / gõ: giữ nhịp hỏi máy chủ dày; để yên một lúc thì bộ đồng bộ tự hỏi thưa lại.
+    const onActivity = () => engine.noteActivity();
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("focus", onWake);
     window.addEventListener("online", onWake);
+    window.addEventListener("pointerdown", onActivity, { passive: true });
+    window.addEventListener("keydown", onActivity, { passive: true });
     return () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("focus", onWake);
       window.removeEventListener("online", onWake);
+      window.removeEventListener("pointerdown", onActivity);
+      window.removeEventListener("keydown", onActivity);
       engine.dispose();
       if (engineRef.current === engine) engineRef.current = null;
     };

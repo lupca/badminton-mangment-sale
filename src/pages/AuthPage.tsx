@@ -12,8 +12,8 @@ import {
   newPasswordProblem,
   phoneProblem,
 } from "../components/account/validation";
+import { errorMessage } from "../lib/cloud/api";
 import { useAuth } from "../lib/cloud/auth";
-import { authErrorMessage } from "../lib/cloud/authErrors";
 import { Button, CenteredScreen, Field, Input, Notice, Tabs } from "../ui";
 
 type Mode = "signIn" | "signUp";
@@ -64,7 +64,7 @@ function SignInForm({ email, onEmailChange }: { email: string; onEmailChange: (e
       // Đăng nhập xong thì cổng vào ứng dụng tự thay màn hình này.
       await auth.signIn(email, password);
     } catch (thrown) {
-      setError(authErrorMessage(thrown));
+      setError(errorMessage(thrown));
     } finally {
       setBusy(false);
     }
@@ -112,16 +112,7 @@ function SignInForm({ email, onEmailChange }: { email: string; onEmailChange: (e
 type SignUpField = "fullName" | "phone" | "email" | "password";
 const SIGN_UP_ORDER: SignUpField[] = ["fullName", "phone", "email", "password"];
 
-function SignUpForm({
-  email,
-  onEmailChange,
-  onConfirmEmail,
-}: {
-  email: string;
-  onEmailChange: (email: string) => void;
-  /** Tài khoản đã tạo nhưng project bắt xác nhận email trước khi đăng nhập. */
-  onConfirmEmail: () => void;
-}) {
+function SignUpForm({ email, onEmailChange }: { email: string; onEmailChange: (email: string) => void }) {
   const auth = useAuth();
   const formId = useId();
   const idOf = (field: SignUpField) => `${formId}-${field}`;
@@ -154,10 +145,9 @@ function SignUpForm({
     setBusy(true);
     try {
       // Đăng ký xong (và được đăng nhập luôn) thì cổng vào ứng dụng tự thay màn hình này.
-      const result = await auth.signUp({ email, password, fullName, phone });
-      if (result === "confirmEmail") onConfirmEmail();
+      await auth.signUp({ email, password, fullName, phone });
     } catch (thrown) {
-      setError(authErrorMessage(thrown));
+      setError(errorMessage(thrown));
     } finally {
       setBusy(false);
     }
@@ -235,30 +225,15 @@ export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("signIn");
   // Email dùng chung cho hai tab: gõ ở tab này rồi chuyển sang tab kia không phải gõ lại.
   const [email, setEmail] = useState("");
-  /** Email của tài khoản vừa đăng ký mà còn phải xác nhận qua hộp thư. */
-  const [confirmEmail, setConfirmEmail] = useState<string | null>(null);
 
   return (
     <CenteredScreen>
       <h1 className="sr-only">{mode === "signIn" ? "Đăng nhập" : "Đăng ký tài khoản"}</h1>
       <Tabs<Mode> tabs={MODE_TABS} value={mode} onChange={setMode} className="mb-4" />
-      {mode === "signIn" && confirmEmail ? (
-        <Notice tone="success" className="mb-3">
-          Đã tạo tài khoản. Hãy mở hộp thư <strong className="wrap-anywhere">{confirmEmail}</strong>, bấm vào liên kết xác
-          nhận, rồi quay lại đây đăng nhập.
-        </Notice>
-      ) : null}
       {mode === "signIn" ? (
         <SignInForm email={email} onEmailChange={setEmail} />
       ) : (
-        <SignUpForm
-          email={email}
-          onEmailChange={setEmail}
-          onConfirmEmail={() => {
-            setConfirmEmail(email.trim());
-            setMode("signIn");
-          }}
-        />
+        <SignUpForm email={email} onEmailChange={setEmail} />
       )}
     </CenteredScreen>
   );

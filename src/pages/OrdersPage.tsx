@@ -1,5 +1,5 @@
 // Danh sách đơn hàng: lọc, xem tổng, mở / nhân bản / xóa đơn, xuất Excel.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Plus } from "lucide-react";
 import NewOrderDialog from "../components/orders/NewOrderDialog";
 import OrdersTable, { type OrderRow } from "../components/orders/OrdersTable";
@@ -7,12 +7,13 @@ import { exportOrderList } from "../components/orders/excel";
 import { NO_SALES_NAME, ORDER_STATUS_LABEL } from "../components/orders/labels";
 import { salesKey, salesNames, sumOrders } from "../components/orders/totals";
 import { calculateOrder } from "../lib/engine";
-import { matchesSearch } from "../lib/format";
+import { formatNumber, matchesSearch } from "../lib/format";
+import { DEFAULT_PAGE_SIZE, paginate } from "../lib/paging";
 import { canManage } from "../lib/roles";
 import { navigate, useRoute } from "../lib/router";
 import { useStore } from "../lib/store";
 import type { Order } from "../types";
-import { Button, EmptyState, PageHeader, SearchInput, Select, toast } from "../ui";
+import { Button, EmptyState, FilterChip, FilterSelect, ListCard, PageHeader, Pagination, SearchInput, toast } from "../ui";
 
 type StatusFilter = "all" | Order["status"];
 
@@ -41,6 +42,8 @@ export default function OrdersPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sale, setSale] = useState(ALL_SALES);
   const [creating, setCreating] = useState(false);
+  const [pageNo, setPageNo] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   // Bộ lọc chương trình nằm trên địa chỉ (#/orders?program=ID) để trang chương trình dẫn thẳng tới đây được.
   const programInUrl = route.query.get("program") ?? "";
@@ -83,6 +86,16 @@ export default function OrdersPage() {
     [rows, programId, saleFilter, status, search],
   );
   const totals = useMemo(() => sumOrders(visible), [visible]);
+  // Đổi bộ lọc thì về trang 1.
+  useEffect(() => setPageNo(1), [programId, saleFilter, status, search]);
+  const page = paginate(visible, pageNo, pageSize);
+  const programName = programs.find((p) => p.id === programId)?.name;
+  const chips: Array<{ label: string; clear: () => void }> = [];
+  if (search.trim()) chips.push({ label: `Tìm: “${search.trim()}”`, clear: () => setSearch("") });
+  if (programId) chips.push({ label: `Chương trình: ${programName?.trim() || "(Chưa đặt tên)"}`, clear: () => setProgramId("") });
+  if (saleFilter !== ALL_SALES)
+    chips.push({ label: `Sale: ${saleChoices.find((c) => c.value === saleFilter)?.label ?? ""}`, clear: () => setSale(ALL_SALES) });
+  if (status !== "all") chips.push({ label: `Trạng thái: ${ORDER_STATUS_LABEL[status]}`, clear: () => setStatus("all") });
 
   const clearFilters = () => {
     setSearch("");
@@ -152,69 +165,103 @@ export default function OrdersPage() {
         />
       ) : (
         <>
-          {/* Màn hình vừa không đủ chỗ cho cả bốn ô trên một hàng thì ô cuối xuống hàng dưới. */}
-          <div className="mb-3 flex flex-col gap-2 md:flex-row md:flex-wrap">
-            <SearchInput
-              className="md:min-w-56 md:max-w-sm md:flex-1"
-              value={search}
-              onChange={setSearch}
-              placeholder="Tìm mã đơn, đại lý, số điện thoại, sale…"
-            />
-            <Select
-              className="md:w-72"
-              aria-label="Lọc theo chương trình"
-              value={programId}
-              onChange={(e) => setProgramId(e.target.value)}
-            >
-              <option value="">Tất cả chương trình</option>
-              {programs.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </Select>
-            {showSaleFilter ? (
-              <Select
-                className="md:w-52"
-                aria-label="Lọc theo sale"
-                value={saleFilter}
-                onChange={(e) => setSale(e.target.value)}
-              >
-                <option value={ALL_SALES}>Tất cả sale</option>
-                {saleChoices.map((choice) => (
-                  <option key={choice.value} value={choice.value}>
-                    {choice.label}
-                  </option>
-                ))}
-              </Select>
-            ) : null}
-            <Select
-              className="md:w-52"
-              aria-label="Lọc theo trạng thái"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="draft">{ORDER_STATUS_LABEL.draft}</option>
-              <option value="confirmed">{ORDER_STATUS_LABEL.confirmed}</option>
-            </Select>
-          </div>
-
-          {visible.length === 0 ? (
-            <EmptyState
-              title="Không có đơn nào khớp bộ lọc"
-              hint={`Thử đổi từ khóa tìm, chương trình${showSaleFilter ? ", sale" : ""} hoặc trạng thái.`}
-              action={<Button onClick={clearFilters}>Bỏ lọc</Button>}
-            />
-          ) : (
-            <OrdersTable
-              rows={visible}
-              totals={totals}
-              allCount={orders.length}
-              onDuplicate={duplicate}
-              onDelete={remove}
-            />
-          )}
+          <ListCard
+            toolbar={
+              <div className="space-y-3">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+                  <SearchInput
+                    className="lg:min-w-56 lg:flex-1"
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Tìm mã đơn, đại lý, số điện thoại, sale…"
+                  />
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:flex">
+                    <FilterSelect
+                      className="lg:w-64"
+                      label="Chương trình"
+                      allLabel="Tất cả chương trình"
+                      value={programId}
+                      onChange={setProgramId}
+                      options={programs.map((p) => ({ value: p.id, label: p.name }))}
+                    />
+                    {showSaleFilter ? (
+                      <FilterSelect
+                        className="lg:w-48"
+                        label="Sale"
+                        allLabel="Tất cả sale"
+                        value={saleFilter}
+                        onChange={setSale}
+                        options={saleChoices}
+                      />
+                    ) : null}
+                    <FilterSelect
+                      className="lg:w-44"
+                      label="Trạng thái"
+                      allLabel="Tất cả trạng thái"
+                      value={status === "all" ? "" : status}
+                      onChange={(value) => setStatus((value || "all") as StatusFilter)}
+                      options={[
+                        { value: "draft", label: ORDER_STATUS_LABEL.draft },
+                        { value: "confirmed", label: ORDER_STATUS_LABEL.confirmed },
+                      ]}
+                    />
+                  </div>
+                </div>
+                {chips.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-gray-500">Đang lọc:</span>
+                    {chips.map((chip) => (
+                      <FilterChip key={chip.label} label={chip.label} onRemove={chip.clear} />
+                    ))}
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="cursor-pointer text-xs font-medium text-blue-700 hover:underline"
+                    >
+                      Xóa bộ lọc
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            }
+            footer={
+              visible.length > 0 ? (
+                <Pagination
+                  page={page}
+                  unit="đơn"
+                  onPage={(n) => {
+                    setPageNo(n);
+                    window.scrollTo({ top: 0 });
+                  }}
+                  onSize={(size) => {
+                    setPageSize(size);
+                    setPageNo(1);
+                  }}
+                  note={visible.length < orders.length ? `(lọc từ ${formatNumber(orders.length)})` : undefined}
+                />
+              ) : null
+            }
+          >
+            {visible.length === 0 ? (
+              <div className="px-4 py-14 text-center">
+                <p className="text-sm font-medium text-gray-900">Không có đơn nào khớp bộ lọc</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Thử đổi từ khóa tìm, chương trình{showSaleFilter ? ", sale" : ""} hoặc trạng thái.
+                </p>
+                <div className="mt-4">
+                  <Button onClick={clearFilters}>Bỏ lọc</Button>
+                </div>
+              </div>
+            ) : (
+              <OrdersTable
+                rows={page.items}
+                totals={totals}
+                allCount={orders.length}
+                onDuplicate={duplicate}
+                onDelete={remove}
+              />
+            )}
+          </ListCard>
         </>
       )}
 

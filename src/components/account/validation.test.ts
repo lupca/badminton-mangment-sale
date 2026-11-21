@@ -14,7 +14,7 @@ describe("emailProblem", () => {
     expect(emailProblem("   ")).toBe("Hãy nhập email.");
   });
 
-  it("rejects malformed addresses (the auth server would accept some of them, e.g. «a@b»)", () => {
+  it("rejects malformed addresses", () => {
     for (const email of ["lan", "lan@", "@example.com", "lan@example", "a@b", "lan lan@example.com", "lan@exa mple.com", "lan@@example.com"]) {
       expect(emailProblem(email)).toBe("Email không hợp lệ (ví dụ: ten@gmail.com).");
     }
@@ -56,16 +56,16 @@ describe("phoneProblem", () => {
 });
 
 describe("newPasswordProblem", () => {
-  it("accepts 6 to 72 characters", () => {
+  it("accepts 6 to 200 characters (the server's limits)", () => {
     expect(newPasswordProblem("123456")).toBeNull();
     expect(newPasswordProblem("mật khẩu có dấu cách ở giữa")).toBeNull();
-    expect(newPasswordProblem("x".repeat(72))).toBeNull();
+    expect(newPasswordProblem("x".repeat(200))).toBeNull();
   });
 
   it("empty, too short, too long", () => {
     expect(newPasswordProblem("")).toBe("Hãy nhập mật khẩu.");
     expect(newPasswordProblem("12345")).toBe("Mật khẩu phải có ít nhất 6 ký tự.");
-    expect(newPasswordProblem("x".repeat(73))).toBe("Mật khẩu dài tối đa 72 ký tự.");
+    expect(newPasswordProblem("x".repeat(201))).toBe("Mật khẩu dài tối đa 200 ký tự.");
   });
 
   it("refuses invisible spaces at either end", () => {

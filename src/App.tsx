@@ -1,11 +1,12 @@
 import { Component, Suspense, lazy, useMemo, type ReactNode } from "react";
+import { Database, Package, ReceiptText, Tags, UserCircle, Users, type LucideIcon } from "lucide-react";
 import { LockedScreen, PendingScreen } from "./components/account/WaitingScreens";
 import { usePendingAccountCount } from "./lib/cloud/accounts";
 import { AuthProvider, useAuth, useOptionalAuth } from "./lib/cloud/auth";
 import { CloudStoreProvider } from "./lib/cloud/CloudStore";
 import { cloudEnabled } from "./lib/cloud/config";
 import { ROLE_LABEL, canManage } from "./lib/roles";
-import { stockAlerts } from "./lib/stock";
+import { hasStockAttention } from "./lib/catalog";
 import { StoreProvider, useStore } from "./lib/store";
 import { Link, useRoute } from "./lib/router";
 import { Button, CenteredScreen, Notice, Toaster, cx } from "./ui";
@@ -20,14 +21,14 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const AccountsPage = lazy(() => import("./pages/AccountsPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 
-const NAV = [
-  { to: "/programs", section: "programs", label: "Chương trình" },
-  { to: "/orders", section: "orders", label: "Đơn hàng" },
-  { to: "/products", section: "products", label: "Sản phẩm" },
-  { to: "/settings", section: "settings", label: "Dữ liệu" },
+const NAV: Array<{ to: string; section: string; label: string; icon: LucideIcon }> = [
+  { to: "/programs", section: "programs", label: "Chương trình", icon: Tags },
+  { to: "/orders", section: "orders", label: "Đơn hàng", icon: ReceiptText },
+  { to: "/products", section: "products", label: "Sản phẩm", icon: Package },
+  { to: "/settings", section: "settings", label: "Dữ liệu", icon: Database },
 ];
 // Chỉ có khi chạy với máy chủ, và chỉ người quản lý thấy.
-const ACCOUNTS_NAV = { to: "/accounts", section: "accounts", label: "Tài khoản" };
+const ACCOUNTS_NAV = { to: "/accounts", section: "accounts", label: "Tài khoản", icon: Users };
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state: { error: Error | null } = { error: null };
@@ -72,7 +73,7 @@ function Shell() {
   const accountAdmin = cloud && manager;
   // Có mã hết hàng / sắp hết trong các chương trình chưa kết thúc thì mục «Sản phẩm» có chấm đỏ để sale chú ý.
   const hasStockAlert = useMemo(
-    () => stockAlerts(programs, stock, settings.lowStockThreshold).length > 0,
+    () => hasStockAttention(programs, stock, settings.lowStockThreshold),
     [programs, stock, settings.lowStockThreshold],
   );
   const pendingAccounts = usePendingAccountCount(accountAdmin);
@@ -89,10 +90,13 @@ function Shell() {
   const accountName = auth?.profile ? auth.profile.fullName.trim() || auth.profile.email : "";
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 print:bg-white">
+    <div className="min-h-screen bg-slate-50 text-gray-900 print:bg-white">
       <header className="border-b border-gray-200 bg-white print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 px-4">
-          <Link to="/programs" className="py-3 text-base font-semibold text-gray-900">
+          <Link to="/programs" className="flex items-center gap-2 py-3 text-base font-semibold tracking-tight text-gray-900">
+            <span aria-hidden className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white">
+              <Tags className="h-4 w-4" />
+            </span>
             Quản lý khuyến mãi
           </Link>
           {/* Điện thoại: thu hẹp lề từng mục để các mục vừa một hàng; không vừa (quản lý có thêm mục «Tài khoản») thì
@@ -104,12 +108,13 @@ function Shell() {
                 key={item.to}
                 to={item.to}
                 className={cx(
-                  "relative shrink-0 whitespace-nowrap border-b-2 px-1.5 py-3 text-sm font-medium sm:px-3",
+                  "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-1.5 py-3 text-sm font-medium sm:px-3 sm:py-3.5",
                   section === item.section
                     ? "border-blue-600 text-blue-700"
                     : "border-transparent text-gray-600 hover:text-gray-900",
                 )}
               >
+                <item.icon aria-hidden className="h-4 w-4 max-sm:hidden" />
                 {item.label}
                 {item.section === "products" && hasStockAlert ? (
                   <NavDot label="có cảnh báo tồn kho" title="Có mã hết hàng hoặc sắp hết" />
@@ -133,8 +138,9 @@ function Shell() {
               <Link
                 to="/settings"
                 title="Tài khoản đang đăng nhập — bấm để xem, đổi mật khẩu hoặc đăng xuất"
-                className="flex min-w-0 items-center gap-1 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                className="flex min-w-0 items-center gap-1.5 rounded-full border border-gray-300 py-1 pl-1.5 pr-2.5 text-xs text-gray-600 shadow-xs hover:bg-gray-50"
               >
+                <UserCircle aria-hidden className="h-4 w-4 shrink-0 text-gray-500" />
                 {/* Màn hình hẹp chỉ hiện vai trò để còn nằm cùng hàng với tên ứng dụng. */}
                 <span className="max-w-40 truncate max-sm:hidden">{accountName}</span>
                 <span className="max-sm:hidden">·</span>
@@ -144,8 +150,9 @@ function Shell() {
               <Link
                 to="/settings"
                 title="Vai trò trên máy này — bấm để đổi"
-                className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                className="flex items-center gap-1.5 rounded-full border border-gray-300 py-1 pl-1.5 pr-2.5 text-xs text-gray-600 shadow-xs hover:bg-gray-50"
               >
+                <UserCircle aria-hidden className="h-4 w-4 shrink-0 text-gray-500" />
                 {/* Màn hình rất hẹp chỉ hiện tên vai trò để còn nằm cùng hàng với tên ứng dụng. */}
                 <span className="max-[359px]:hidden">Vai trò: </span>
                 <span className="font-semibold text-gray-900">{ROLE_LABEL[settings.role]}</span>
@@ -154,7 +161,7 @@ function Shell() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-5 print:max-w-none print:p-0">
+      <main className="mx-auto max-w-7xl px-4 py-6 print:max-w-none print:p-0">
         {!saveOk ? (
           <Notice tone="error" className="mb-4 print:hidden">
             Không lưu được dữ liệu xuống trình duyệt (có thể đã hết dung lượng). Hãy vào mục «Dữ liệu» để xuất file sao

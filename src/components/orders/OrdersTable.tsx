@@ -1,8 +1,8 @@
-// Bảng danh sách đơn hàng, dòng cuối là tổng của các đơn đang hiện.
+// Bảng danh sách đơn hàng (một trang), dòng cuối là tổng của mọi đơn khớp bộ lọc — không chỉ trang đang xem.
 import { formatDate, formatDateTime, formatNumber, formatVND } from "../../lib/format";
 import { Link } from "../../lib/router";
 import type { Order, Program } from "../../types";
-import { Badge, Button, buttonCls, cx, numCls, tableCls, tableWrapCls, tdCls, thCls } from "../../ui";
+import { Badge, Button, buttonCls, cx, numCls, tableCls, tableScrollCls, tdCls, thCls } from "../../ui";
 import { NO_DEALER_NAME, NO_PROGRAM_NAME, ORDER_STATUS_LABEL } from "./labels";
 import type { OrderCalc, OrderTotals } from "./totals";
 
@@ -51,7 +51,7 @@ function OrderTableRow({
 }) {
   const path = `/orders/${encodeURIComponent(order.id)}`;
   return (
-    <tr className="hover:bg-gray-50">
+    <tr className="hover:bg-blue-50/40">
       <td className={cx(tdCls, "whitespace-nowrap")}>
         <Link to={path} className="font-medium text-blue-700 hover:underline">
           {order.code || "(chưa có mã)"}
@@ -76,7 +76,9 @@ function OrderTableRow({
       </td>
       <td className={tdCls}>
         <span className="flex flex-wrap gap-1">
-          <Badge tone={order.status === "confirmed" ? "green" : "gray"}>{ORDER_STATUS_LABEL[order.status]}</Badge>
+          <Badge tone={order.status === "confirmed" ? "green" : "gray"} dot>
+            {ORDER_STATUS_LABEL[order.status]}
+          </Badge>
           {calc.hasError ? <Badge tone="red">Có lỗi</Badge> : null}
         </span>
       </td>
@@ -104,8 +106,9 @@ export default function OrdersTable({
   onDuplicate,
   onDelete,
 }: {
+  /** Các đơn của trang đang xem. */
   rows: OrderRow[];
-  /** Tổng của `rows`. */
+  /** Tổng của mọi đơn khớp bộ lọc (mọi trang). */
   totals: OrderTotals;
   /** Số đơn khi chưa lọc — để dòng tổng nói rõ đang lọc. */
   allCount: number;
@@ -113,7 +116,7 @@ export default function OrdersTable({
   onDelete: (order: Order) => void;
 }) {
   return (
-    <div className={tableWrapCls}>
+    <div className={tableScrollCls}>
       <table className={ordersTableCls}>
         <thead>
           <tr>
@@ -134,7 +137,7 @@ export default function OrdersTable({
           ))}
         </tbody>
         <tfoot>
-          <tr className="bg-gray-50 font-semibold">
+          <tr className="bg-gray-50 font-semibold [&_td]:border-b-0">
             <td className={tdCls} colSpan={4}>
               Tổng: {formatNumber(totals.orderCount)} đơn
               {totals.orderCount < allCount ? (

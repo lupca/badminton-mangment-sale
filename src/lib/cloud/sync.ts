@@ -30,8 +30,6 @@ export interface SyncHost {
   onStatus(status: SyncStatus): void;
   /** Báo cho người dùng một việc họ cần biết: thay đổi bị từ chối, bản ghi vừa được người khác sửa… */
   notify(message: string, tone: "error" | "info"): void;
-  /** Hồ sơ của một tài khoản vừa đổi trên máy chủ (vd quản lý vừa đổi vai trò). */
-  onProfileEvent?(id: string): void;
   /** Nhật ký từng bước của bộ đồng bộ, để tìm lỗi (không có thì không ghi). */
   debug?(message: string): void;
   /** Biến tài liệu JSON nhận từ máy chủ thành bản ghi hợp lệ. */
@@ -49,18 +47,25 @@ export const SYNC_TIMING = {
   /** Gửi thất bại vì mạng: thử lại sau các khoảng này (khoảng cuối lặp lại mãi). */
   retryMs: [2000, 5000, 10000, 30000],
   /**
-   * Hỏi lại máy chủ định kỳ «có gì mới không» (một lệnh gọi nhỏ so dấu vân tay): thưa khi kênh Realtime đang thông, dày
-   * khi kênh đứt. Realtime chỉ là đường nhanh — nó có thể rớt tín hiệu; lần hỏi định kỳ này mới là thứ bảo đảm bắt kịp.
+   * Hỏi lại máy chủ định kỳ «có gì mới không» (một lệnh gọi nhỏ so dấu vân tay). Đường nối tới máy chủ không có kênh báo
+   * thay đổi tức thời (`pollOfflineMs`) thì đây là cách duy nhất để thấy việc người khác vừa làm; có kênh đó
+   * (`pollLiveMs`) thì lần hỏi này chỉ để phòng tín hiệu bị rớt.
    */
   pollLiveMs: 30_000,
   pollOfflineMs: 15_000,
+  /**
+   * Người dùng không đụng tới ứng dụng quá `idleAfterMs` thì hỏi thưa lại còn `pollIdleMs` một lần — mỗi lần hỏi là một
+   * lượt chạy của máy chủ, không nên tốn cho một tab đang để yên. Đụng vào lại thì hỏi ngay và trở về nhịp dày.
+   */
+  pollIdleMs: 60_000,
+  idleAfterMs: 120_000,
   /** Quay lại tab: hỏi lại máy chủ nếu lần hỏi gần nhất đã cách bấy lâu. */
   focusGapMs: 5_000,
-  /** Gom các tín hiệu Realtime đến dồn dập. */
+  /** Gom các tín hiệu tức thời đến dồn dập. */
   eventDelayMs: 300,
   /**
-   * Kênh Realtime vừa thông: những gì xảy ra giữa lần tải gần nhất và lúc máy chủ bắt đầu phát thay đổi thì không được
-   * phát, nên hỏi lại ngay sau khi thông (khoảng đầu) để lấy phần đó. Hai lần sau chỉ là phòng xa.
+   * Kênh báo thay đổi tức thời vừa thông: những gì xảy ra giữa lần tải gần nhất và lúc máy chủ bắt đầu phát thay đổi thì
+   * không được phát, nên hỏi lại ngay sau khi thông (khoảng đầu) để lấy phần đó. Hai lần sau chỉ là phòng xa.
    */
   liveCatchUpMs: [500, 4000, 12000],
   /** Một lệnh gọi máy chủ không xong sau bấy lâu thì coi là mất mạng. */
@@ -167,6 +172,7 @@ export class SyncEngine {
   private retryIndex = 0;
   private live = false;
   private lastPullAt = 0;
+  private lastActivityAt = Date.now();
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
   private eventTimer: ReturnType<typeof setTimeout> | null = null;
@@ -232,8 +238,25 @@ export class SyncEngine {
   /** Có mạng trở lại / người dùng quay lại tab: gửi cái đang chờ, và hỏi lại máy chủ nếu đã lâu chưa hỏi. */
   wake(): void {
     if (this.disposed || !this.started) return;
+    this.lastActivityAt = Date.now();
     if (this.status.state !== "idle") void this.flushNow();
     if (Date.now() - this.lastPullAt >= SYNC_TIMING.focusGapMs) this.requestPull();
+    this.schedulePoll();
+  }
+
+  /** Người dùng vừa đụng tới ứng dụng (bấm, gõ, sửa dữ liệu). Gọi dày cũng không sao. */
+  noteActivity(): void {
+    if (this.disposed || !this.started) return;
+    const wasIdle = this.isIdle();
+    this.lastActivityAt = Date.now();
+    if (!wasIdle) return;
+    // Vừa quay lại làm việc sau một lúc để yên: xem ngay có gì mới, rồi trở về nhịp hỏi dày.
+    if (Date.now() - this.lastPullAt >= SYNC_TIMING.focusGapMs) this.requestPull();
+    this.schedulePoll();
+  }
+
+  private isIdle(): boolean {
+    return Date.now() - this.lastActivityAt >= SYNC_TIMING.idleAfterMs;
   }
 
   /** Tải lại từ máy chủ những gì đã đổi (vd sau khi vai trò của tài khoản đổi nên phạm vi được thấy cũng đổi). */
@@ -250,11 +273,22 @@ export class SyncEngine {
    */
   createOrder(order: Order): Promise<Order> {
     return this.enqueue(async () => {
+      // Chương trình của đơn vừa tạo trên máy này mà chưa kịp lên máy chủ (vd đang mất mạng rồi có lại): gửi nó trước,
+      // vì máy chủ không nhận đơn của chương trình nó chưa có.
+      const programOp = this.computeOps(this.host.get()).find(
+        (op) => op.table === "programs" && op.kind === "insert" && op.id === order.programId,
+      );
+      if (programOp) await this.runOp(programOp);
       const head = await withTimeout(this.remote.insert("orders", order.id, order), SYNC_TIMING.writeTimeoutMs);
       const saved: Order = head.code != null && head.code !== order.code ? { ...order, code: head.code } : order;
       if (this.disposed) return saved;
       this.shadow.set(keyOf("orders", saved.id), { rev: head.rev, doc: saved });
       this.host.apply((db) => ({ ...db, orders: [saved, ...db.orders] }));
+      // Vừa gửi được cả chương trình đang chờ: không còn gì chưa lưu thì bỏ dòng «Chưa lưu được».
+      if (programOp && this.status.state !== "idle" && this.computeOps(this.host.get()).length === 0) {
+        this.retryIndex = 0;
+        this.setStatus(SYNC_IDLE);
+      }
       return saved;
     });
   }
@@ -300,13 +334,13 @@ export class SyncEngine {
         if (typeof document === "undefined" || document.visibilityState !== "hidden") this.requestPull();
         this.schedulePoll();
       },
-      this.live ? SYNC_TIMING.pollLiveMs : SYNC_TIMING.pollOfflineMs,
+      this.live ? SYNC_TIMING.pollLiveMs : this.isIdle() ? SYNC_TIMING.pollIdleMs : SYNC_TIMING.pollOfflineMs,
     );
   }
 
   private onLive(live: boolean): void {
     if (this.disposed) return;
-    if (live !== this.live) this.log(`realtime ${live ? "connected" : "disconnected"}`);
+    if (live !== this.live) this.log(`live channel ${live ? "connected" : "disconnected"}`);
     this.live = live;
     this.schedulePoll();
     for (const timer of this.catchUpTimers) clearTimeout(timer);
@@ -605,10 +639,6 @@ export class SyncEngine {
 
   private onRemoteEvent(event: RemoteEvent): void {
     if (this.disposed) return;
-    if (event.table === "profiles") {
-      this.host.onProfileEvent?.(event.id);
-      return;
-    }
     this.log(`event ${event.table}/${event.id} ${event.rev === null ? "deleted" : `rev ${event.rev}`}`);
     this.pendingEvents.set(keyOf(event.table, event.id), event);
     if (this.eventTimer) return;
@@ -620,14 +650,14 @@ export class SyncEngine {
     }, SYNC_TIMING.eventDelayMs);
   }
 
-  /** Tải về đúng các dòng mà tín hiệu Realtime báo là đã đổi (bỏ qua tín hiệu dội lại từ chính các lần gửi của máy này). */
+  /** Tải về đúng các dòng mà tín hiệu tức thời báo là đã đổi (bỏ qua tín hiệu dội lại từ chính các lần gửi của máy này). */
   private async drainEvents(): Promise<void> {
     if (this.disposed || !this.started) return;
     const events = [...this.pendingEvents.values()];
     this.pendingEvents.clear();
     const wanted = new Map<DocTable, string[]>();
     for (const event of events) {
-      const table = event.table as DocTable;
+      const table = event.table;
       const known = this.shadow.get(keyOf(table, event.id));
       const news = event.rev === null ? known !== undefined : !known || known.rev < event.rev;
       if (news) wanted.set(table, [...(wanted.get(table) ?? []), event.id]);

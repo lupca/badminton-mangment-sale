@@ -1,7 +1,7 @@
 // Khung «Tài khoản» trên trang «Dữ liệu»: ai đang đăng nhập, sửa họ tên / điện thoại, đổi mật khẩu, đăng xuất.
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { errorMessage } from "../../lib/cloud/api";
 import { useOptionalAuth, type AuthState, type Profile } from "../../lib/cloud/auth";
-import { authErrorMessage } from "../../lib/cloud/authErrors";
 import { Button, Card, Field, Input, Notice, toast } from "../../ui";
 import PasswordField from "./PasswordField";
 import { ACCOUNT_ROLE_HINT, ACCOUNT_ROLE_LABEL } from "./roleLabels";
@@ -47,7 +47,7 @@ function ContactForm({ auth, profile }: { auth: AuthState; profile: Profile }) {
       setPhone(saved.phone);
       toast("Đã lưu họ tên và số điện thoại");
     } catch (error) {
-      toast(authErrorMessage(error), "error");
+      toast(errorMessage(error), "error");
     } finally {
       setSaving(false);
     }
@@ -122,7 +122,7 @@ function PasswordForm({ auth, email }: { auth: AuthState; email: string }) {
       setShow(false);
       toast("Đã đổi mật khẩu");
     } catch (thrown) {
-      setError(authErrorMessage(thrown));
+      setError(errorMessage(thrown));
     } finally {
       setSaving(false);
     }
@@ -193,7 +193,7 @@ export default function AccountCard({
       // Đăng xuất xong thì cả ứng dụng nhường chỗ cho màn hình đăng nhập.
       await auth.signOut();
     } catch (error) {
-      toast(authErrorMessage(error), "error");
+      toast(errorMessage(error), "error");
       setSigningOut(false);
     }
   };

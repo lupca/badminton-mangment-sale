@@ -185,7 +185,6 @@ function client(server: FakeServer) {
   };
   const notes: string[] = [];
   const statuses: SyncStatus[] = [];
-  const profileEvents: string[] = [];
   const engine = new SyncEngine(server, {
     get: () => db,
     apply(fn) {
@@ -193,7 +192,6 @@ function client(server: FakeServer) {
     },
     onStatus: (status) => statuses.push(status),
     notify: (message) => notes.push(message),
-    onProfileEvent: (id) => profileEvents.push(id),
     normalize: {
       program: normalizeProgram,
       order: normalizeOrder,
@@ -205,7 +203,6 @@ function client(server: FakeServer) {
     engine,
     notes,
     statuses,
-    profileEvents,
     get db() {
       return db;
     },
@@ -400,6 +397,22 @@ describe("creating an order", () => {
     c.editOrder("o9", { customerName: "A" });
     await settle();
     expect(server.tables.orders.get("o9")).toMatchObject({ rev: 2, data: { code: "DH-001", customerName: "A" } });
+  });
+
+  it("sends a program that has not reached the server yet before the order that uses it", async () => {
+    const server = seeded();
+    const c = await started(server);
+    server.offline = true;
+    c.edit((db) => ({ ...db, programs: [...db.programs, program("pNew")] }));
+    await settle();
+    server.offline = false;
+    const saved = await c.engine.createOrder(order("o9", "pNew", { code: "" }));
+    expect(saved.code).toBe("DH-001");
+    // Lần gửi chương trình lúc mất mạng (thất bại), rồi chương trình, rồi đơn.
+    expect(server.writes()).toEqual(["insert programs/pNew", "insert programs/pNew", "insert orders/o9"]);
+    await settle();
+    expect(server.writes()).toHaveLength(3);
+    expect(c.status().state).toBe("idle");
   });
 
   it("rejects without touching local data when the server is unreachable", async () => {
@@ -681,7 +694,7 @@ describe("changes made elsewhere arrive", () => {
     expect(c.status().state).toBe("idle");
   });
 
-  it("a realtime signal loads just that row; our own echo loads nothing", async () => {
+  it("a live signal loads just that row; our own echo loads nothing", async () => {
     const server = seeded();
     const c = await started(server);
     c.editOrder("o1", { note: "của mình" });
@@ -707,16 +720,7 @@ describe("changes made elsewhere arrive", () => {
     expect(c.notes).toEqual([]);
   });
 
-  it("passes profile signals to the host", async () => {
-    const server = seeded();
-    const c = await started(server);
-    server.emit({ table: "profiles", id: "user-1", rev: 0 });
-    expect(c.profileEvents).toEqual(["user-1"]);
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(server.calls).toEqual([]);
-  });
-
-  it("polls often while the realtime channel is down and rarely while it is up", async () => {
+  it("polls often while the live channel is down and rarely while it is up", async () => {
     const server = seeded();
     const c = await started(server);
     await vi.advanceTimersByTimeAsync(SYNC_TIMING.pollOfflineMs + 100);
@@ -756,6 +760,53 @@ describe("changes made elsewhere arrive", () => {
     expect(server.calls).toEqual([]);
     await vi.advanceTimersByTimeAsync(SYNC_TIMING.pollOfflineMs - second + 100);
     expect(pulls()).toBe(1);
+    c.engine.dispose();
+  });
+});
+
+describe("polling pace", () => {
+  it("asks less often once the user leaves the app alone, and catches up as soon as they touch it again", async () => {
+    const server = seeded();
+    const c = await started(server);
+    const pulls = () => server.calls.filter((call) => call === "heads orders").length;
+    // Vừa mở / đang làm việc: nhịp dày.
+    await vi.advanceTimersByTimeAsync(SYNC_TIMING.idleAfterMs);
+    expect(pulls()).toBe(SYNC_TIMING.idleAfterMs / SYNC_TIMING.pollOfflineMs);
+    // Để yên quá `idleAfterMs`: nhịp thưa.
+    server.calls.length = 0;
+    await vi.advanceTimersByTimeAsync(SYNC_TIMING.pollIdleMs * 3);
+    expect(pulls()).toBe(3);
+    // Đụng vào lại: hỏi ngay (lần hỏi gần nhất đã cách đủ lâu), rồi trở về nhịp dày.
+    server.calls.length = 0;
+    await vi.advanceTimersByTimeAsync(SYNC_TIMING.focusGapMs + 1000);
+    c.engine.noteActivity();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(pulls()).toBe(1);
+    await vi.advanceTimersByTimeAsync(SYNC_TIMING.pollOfflineMs);
+    expect(pulls()).toBe(2);
+    // Đang làm việc thì các lần đụng tiếp theo không gây thêm lần hỏi nào.
+    c.engine.noteActivity();
+    c.engine.noteActivity();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(pulls()).toBe(2);
+    c.engine.dispose();
+  });
+
+  it("does not ask at all while the tab is hidden", async () => {
+    const server = seeded();
+    const c = await started(server);
+    // Kiểm thử chạy ngoài trình duyệt: dựng một `document` giả chỉ có thứ bộ đồng bộ nhìn tới.
+    vi.stubGlobal("document", { visibilityState: "hidden" });
+    try {
+      await vi.advanceTimersByTimeAsync(SYNC_TIMING.pollIdleMs * 5);
+      expect(server.calls).toEqual([]);
+      // Tab hiện lại: nhịp hỏi tiếp tục.
+      vi.stubGlobal("document", { visibilityState: "visible" });
+      await vi.advanceTimersByTimeAsync(SYNC_TIMING.pollIdleMs);
+      expect(server.calls.filter((call) => call === "heads orders")).toHaveLength(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
     c.engine.dispose();
   });
 });

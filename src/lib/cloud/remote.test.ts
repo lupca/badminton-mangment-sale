@@ -1,37 +1,162 @@
 import { describe, expect, it } from "vitest";
-import { compareAsUtf8, fingerprintOf, toRemoteError } from "./remote";
+import { ApiError, type ApiClient } from "./api";
+import { RemoteError, compareAsUtf8, fingerprintOf, httpRemote, toRemoteError, type PollInfo } from "./remote";
 
 describe("toRemoteError", () => {
   it("no answer, server trouble, overload and an expired session are worth retrying", () => {
-    expect(toRemoteError({ message: "TypeError: Failed to fetch" }, 0).kind).toBe("network");
-    expect(toRemoteError({ code: "PGRST002", message: "Could not query the database for the schema cache" }, 503).kind).toBe("network");
-    expect(toRemoteError({ code: "57014", message: "canceling statement due to statement timeout" }, 500).kind).toBe("network");
-    expect(toRemoteError({ code: "PGRST301", message: "JWT expired" }, 401).kind).toBe("network");
-    expect(toRemoteError({ message: "Too Many Requests" }, 429).kind).toBe("network");
-    expect(toRemoteError(null, 502).kind).toBe("network");
-    // Không còn phiên đăng nhập: PostgREST trả 401 kèm 42501. Việc của phần đăng nhập — không coi là «không có quyền».
-    expect(toRemoteError({ code: "42501", message: "permission denied for table orders" }, 401).kind).toBe("network");
+    expect(toRemoteError(new ApiError("network", "Không kết nối được máy chủ.", 0)).kind).toBe("network");
+    expect(toRemoteError(new ApiError("unavailable", "Máy chủ dữ liệu đang bận.", 503)).kind).toBe("network");
+    expect(toRemoteError(new ApiError("server", "Có lỗi trên máy chủ.", 500)).kind).toBe("network");
+    expect(toRemoteError(new ApiError("rate_limited", "Thử quá nhiều lần.", 429)).kind).toBe("network");
+    expect(toRemoteError(new ApiError("not_installed", "Database chưa được cài đặt.", 503)).kind).toBe("network");
+    // Phiên đăng nhập hết hạn là việc của phần đăng nhập — không coi là «không có quyền», không bỏ thay đổi trên máy.
+    expect(toRemoteError(new ApiError("unauthorized", "Phiên đăng nhập đã hết hạn.", 401)).kind).toBe("network");
+    // Lỗi chưa lường trong chính trình duyệt cũng không được làm mất thay đổi.
+    expect(toRemoteError(new TypeError("boom")).kind).toBe("network");
   });
 
-  it("a missing permission is a denial, whichever status carries it", () => {
-    expect(toRemoteError({ code: "42501", message: "new row violates row-level security policy" }, 403).kind).toBe("denied");
-    expect(toRemoteError({ code: "42501", message: "Chỉ người quản lý mới đổi được vai trò." }, 500).kind).toBe("denied");
-    expect(toRemoteError({ message: "Forbidden" }, 403).kind).toBe("denied");
+  it("a missing permission is a denial and keeps the server's explanation", () => {
+    const denied = toRemoteError(new ApiError("forbidden", "Chỉ người quản lý mới sửa được chương trình.", 403));
+    expect(denied.kind).toBe("denied");
+    expect(denied.message).toBe("Chỉ người quản lý mới sửa được chương trình.");
   });
 
   it("a duplicate id is a conflict", () => {
-    expect(toRemoteError({ code: "23505", message: 'duplicate key value violates unique constraint "orders_pkey"' }, 409).kind).toBe("conflict");
+    expect(toRemoteError(new ApiError("conflict", "Bản ghi này đã có trên máy chủ.", 409)).kind).toBe("conflict");
   });
 
-  it("a deliberate refusal keeps the database's own explanation, even when it comes with a 5xx status", () => {
-    const guard = toRemoteError({ code: "23503", message: "Không xóa được: còn 3 đơn hàng thuộc chương trình này." }, 409);
+  it("a deliberate refusal keeps the server's own explanation", () => {
+    const guard = toRemoteError(new ApiError("rejected", "Không xóa được: còn 3 đơn hàng thuộc chương trình này.", 422));
     expect(guard.kind).toBe("rejected");
     expect(guard.message).toBe("Không xóa được: còn 3 đơn hàng thuộc chương trình này.");
-    const raised = toRemoteError({ code: "P0002", message: "Không tìm thấy tài khoản." }, 500);
-    expect(raised.kind).toBe("rejected");
-    expect(raised.message).toBe("Không tìm thấy tài khoản.");
-    expect(toRemoteError({ code: "23514", message: "violates check constraint" }, 400).kind).toBe("rejected");
-    expect(toRemoteError({}, 400).message).toBe("Máy chủ từ chối yêu cầu (mã 400).");
+    expect(toRemoteError(new ApiError("bad_request", "Mã bản ghi không hợp lệ.", 400)).kind).toBe("rejected");
+    expect(toRemoteError(new ApiError("too_large", "Dữ liệu gửi lên quá lớn.", 413)).kind).toBe("rejected");
+    expect(toRemoteError(new ApiError("not_found", "Không tìm thấy.", 404)).kind).toBe("rejected");
+    expect(toRemoteError(new ApiError("rejected", "", 422)).message).toBe("Máy chủ từ chối yêu cầu (mã 422).");
+  });
+
+  it("passes an error that is already classified straight through", () => {
+    const original = new RemoteError("conflict", "x");
+    expect(toRemoteError(original)).toBe(original);
+  });
+});
+
+/** Một lớp API giả: trả lời từng lệnh bằng hàm cho sẵn và ghi lại các lệnh đã nhận. */
+function fakeApi(answer: (op: string, args: Record<string, unknown>) => unknown) {
+  const calls: Array<{ op: string; args: Record<string, unknown> }> = [];
+  const api: ApiClient = {
+    async call<T>(op: string, args: Record<string, unknown> = {}) {
+      calls.push({ op, args });
+      return answer(op, args) as T;
+    },
+    getToken: () => "token",
+    setToken() {},
+    onTokenChange: () => () => {},
+    onUnauthorized: () => () => {},
+  };
+  return { api, calls };
+}
+
+describe("httpRemote", () => {
+  it("reads every page of a table, following the server's cursor", async () => {
+    const pages: Record<string, unknown> = {
+      "": { rows: [{ id: "a", rev: 1, data: { n: 1 } }, { id: "b", rev: 2, data: { n: 2 } }], next: "b" },
+      b: { rows: [{ id: "c", rev: 3, data: { n: 3 } }], next: "c" },
+      c: { rows: [], next: null },
+    };
+    const { api, calls } = fakeApi((_op, args) => pages[(args.after as string | undefined) ?? ""]);
+    const rows = await httpRemote(api).load("orders", null);
+    expect(rows).toEqual([
+      { id: "a", rev: 1, data: { n: 1 } },
+      { id: "b", rev: 2, data: { n: 2 } },
+      { id: "c", rev: 3, data: { n: 3 } },
+    ]);
+    expect(calls.map((call) => call.args)).toEqual([{ table: "orders" }, { table: "orders", after: "b" }, { table: "orders", after: "c" }]);
+  });
+
+  it("asks for documents by id in chunks, and pages inside a chunk when the server cuts it short", async () => {
+    const ids = Array.from({ length: 450 }, (_, i) => `o-${String(i).padStart(3, "0")}`);
+    const { api, calls } = fakeApi((_op, args) => {
+      const wanted = (args.ids as string[]).filter((id) => args.after === undefined || id > (args.after as string));
+      const batch = wanted.slice(0, 150);
+      return { rows: batch.map((id) => ({ id, rev: 1, data: {} })), next: wanted.length > batch.length ? batch[batch.length - 1] : null };
+    });
+    const rows = await httpRemote(api).load("orders", ids);
+    expect(rows.map((row) => row.id)).toEqual(ids);
+    // 450 id → 3 nhóm (200, 200, 50); hai nhóm đầu mỗi nhóm cần 2 trang.
+    expect(calls.map((call) => (call.args.ids as string[]).length)).toEqual([200, 200, 200, 200, 50]);
+  });
+
+  it("stops instead of looping when the server's cursor does not move", async () => {
+    const { api, calls } = fakeApi(() => ({ rows: [{ id: "a", rev: 1, data: {} }], next: "a" }));
+    const rows = await httpRemote(api).load("programs", null);
+    expect(calls).toHaveLength(2);
+    expect(rows).toHaveLength(2);
+  });
+
+  it("skips rows that are not rows", async () => {
+    const { api } = fakeApi(() => ({ rows: [null, { id: "", rev: 1 }, { id: "x", rev: "nope" }, { id: "ok", rev: "4", data: 1 }], next: null }));
+    expect(await httpRemote(api).load("orders", null)).toEqual([{ id: "ok", rev: 4, data: 1 }]);
+  });
+
+  it("the poll returns the fingerprints and hands the rest (profile, accounts) to the hook", async () => {
+    const seen: PollInfo[] = [];
+    const prints = { programs: "p", orders: "o", app_state: "s" };
+    const { api } = fakeApi(() => ({ me: { id: "u1", role: "manager" }, fingerprints: prints, accounts: { pending: 2, stamp: "abc" } }));
+    const before = Date.now();
+    expect(await httpRemote(api, { onPoll: (info) => seen.push(info) }).fingerprints()).toEqual(prints);
+    expect(seen).toHaveLength(1);
+    expect(seen[0].me).toEqual({ id: "u1", role: "manager" });
+    expect(seen[0].accounts).toEqual({ pending: 2, stamp: "abc" });
+    expect(seen[0].askedAt).toBeGreaterThanOrEqual(before);
+    expect(seen[0].askedAt).toBeLessThanOrEqual(Date.now());
+  });
+
+  it("an account that is no longer approved gets a denial — after the hook has seen the new profile", async () => {
+    const seen: PollInfo[] = [];
+    const { api } = fakeApi(() => ({ me: { id: "u1", role: "locked" }, fingerprints: null, accounts: null }));
+    await expect(httpRemote(api, { onPoll: (info) => seen.push(info) }).fingerprints()).rejects.toMatchObject({ kind: "denied" });
+    expect(seen.map((info) => info.me)).toEqual([{ id: "u1", role: "locked" }]);
+    expect(seen[0].accounts).toBeNull();
+  });
+
+  it("maps writes: insert returns the server's code, a stale update is null, remove is a boolean", async () => {
+    const { api, calls } = fakeApi((op) => {
+      if (op === "sync.insert") return { id: "o1", rev: 1, code: "DH261121-001" };
+      if (op === "sync.update") return null;
+      return true;
+    });
+    const remote = httpRemote(api);
+    expect(await remote.insert("orders", "o1", { id: "o1" })).toEqual({ id: "o1", rev: 1, code: "DH261121-001" });
+    expect(await remote.update("orders", "o1", 3, { id: "o1" })).toBeNull();
+    expect(await remote.remove("orders", "o1")).toBe(true);
+    expect(calls).toEqual([
+      { op: "sync.insert", args: { table: "orders", id: "o1", data: { id: "o1" } } },
+      { op: "sync.update", args: { table: "orders", id: "o1", rev: 3, data: { id: "o1" } } },
+      { op: "sync.remove", args: { table: "orders", id: "o1" } },
+    ]);
+  });
+
+  it("turns API failures into the sync engine's own error kinds", async () => {
+    const { api } = fakeApi(() => {
+      throw new ApiError("forbidden", "Chỉ người quản lý mới tạo được chương trình.", 403);
+    });
+    await expect(httpRemote(api).insert("programs", "p1", {})).rejects.toMatchObject({
+      name: "RemoteError",
+      kind: "denied",
+      message: "Chỉ người quản lý mới tạo được chương trình.",
+    });
+  });
+
+  it("has no live channel: reports «not live» once so the engine polls", () => {
+    const { api } = fakeApi(() => null);
+    const live: boolean[] = [];
+    const stop = httpRemote(api).subscribe(
+      () => {},
+      (value) => live.push(value),
+    );
+    expect(live).toEqual([false]);
+    stop();
   });
 });
 

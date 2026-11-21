@@ -1,7 +1,9 @@
-// Bộ thành phần giao diện dùng chung. Giữ đơn giản: nền trắng, viền xám, một màu nhấn (xanh dương).
+// Bộ thành phần giao diện dùng chung. Một kiểu cho cả ứng dụng: nền trắng, viền xám, một màu nhấn (xanh dương),
+// khung bo góc có bóng mờ; danh sách nào cũng gồm thanh tìm / lọc ở trên, bảng ở giữa, phân trang ở dưới.
 import React, { useEffect, useRef, useSyncExternalStore } from "react";
-import { ArrowLeft, Search, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, Search, X } from "lucide-react";
 import { formatNumber, parseInteger } from "./lib/format";
+import { PAGE_SIZES, pageButtons, type Page } from "./lib/paging";
 import { Link } from "./lib/router";
 
 export function cx(...parts: Array<string | false | null | undefined>): string {
@@ -14,9 +16,9 @@ type ButtonVariant = "primary" | "default" | "danger" | "ghost";
 type ButtonSize = "sm" | "md";
 
 const BUTTON_VARIANT: Record<ButtonVariant, string> = {
-  primary: "border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-700",
-  default: "border-gray-300 bg-white text-gray-800 hover:bg-gray-50",
-  danger: "border-red-200 bg-white text-red-700 hover:bg-red-50",
+  primary: "border-blue-600 bg-blue-600 text-white shadow-xs hover:bg-blue-700 hover:border-blue-700",
+  default: "border-gray-300 bg-white text-gray-800 shadow-xs hover:bg-gray-50",
+  danger: "border-red-200 bg-white text-red-700 shadow-xs hover:bg-red-50",
   ghost: "border-transparent bg-transparent text-gray-700 hover:bg-gray-100",
 };
 const BUTTON_SIZE: Record<ButtonSize, string> = {
@@ -47,8 +49,8 @@ export function Button({
 // ───────────────────────── Ô nhập ─────────────────────────
 
 export const inputCls =
-  "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 " +
-  "focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500";
+  "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs placeholder:text-gray-400 " +
+  "focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25 disabled:bg-gray-100 disabled:text-gray-500 disabled:shadow-none";
 
 export function Input({ className, ...rest }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cx(inputCls, className)} {...rest} />;
@@ -119,23 +121,89 @@ export function SearchInput({
   onChange,
   placeholder = "Tìm…",
   className,
+  "aria-label": ariaLabel,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  "aria-label"?: string;
 }) {
   return (
     <div className={cx("relative", className)}>
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
       <input
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={cx(inputCls, "pl-8")}
+        aria-label={ariaLabel ?? placeholder}
+        className={cx(inputCls, "pl-9")}
       />
     </div>
+  );
+}
+
+export interface FilterOption {
+  value: string;
+  label: string;
+  /** Số dòng thuộc lựa chọn này (hiện trong ngoặc sau nhãn). */
+  count?: number;
+}
+
+/**
+ * Ô lọc của một danh sách: lựa chọn đầu là «tất cả» (giá trị ""). Đang lọc thì ô đổi màu để người dùng thấy ngay
+ * danh sách đang bị thu hẹp ở đâu.
+ */
+export function FilterSelect({
+  label,
+  allLabel,
+  value,
+  onChange,
+  options,
+  className,
+}: {
+  /** Tên bộ lọc, vd "Hãng" — đọc cho trình đọc màn hình. */
+  label: string;
+  /** Nhãn của lựa chọn «tất cả», vd "Tất cả hãng". */
+  allLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: FilterOption[];
+  className?: string;
+}) {
+  return (
+    <select
+      aria-label={`Lọc theo ${label.toLowerCase()}`}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={cx(inputCls, "cursor-pointer pr-8", value !== "" && "border-blue-500 bg-blue-50 font-medium text-blue-900", className)}
+    >
+      <option value="">{allLabel}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+          {option.count != null ? ` (${formatNumber(option.count)})` : ""}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** Nhãn của một bộ lọc đang bật, kèm nút bỏ riêng bộ lọc đó. */
+export function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 py-0.5 pl-2.5 pr-1 text-xs font-medium text-blue-800">
+      {label}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Bỏ lọc ${label}`}
+        className="cursor-pointer rounded-full p-0.5 text-blue-600 hover:bg-blue-100 hover:text-blue-900"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </span>
   );
 }
 
@@ -175,15 +243,15 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3 print:hidden">
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-3 print:hidden">
       <div className="min-w-0">
         {backTo ? (
           <Link to={backTo} className="mb-1 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900">
             <ArrowLeft className="h-4 w-4" /> Quay lại
           </Link>
         ) : null}
-        <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-        {subtitle ? <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p> : null}
+        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">{title}</h1>
+        {subtitle ? <p className="mt-1 text-sm text-gray-500">{subtitle}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
@@ -196,7 +264,7 @@ export function CenteredScreen({ title, children }: { title?: React.ReactNode; c
     <div className="flex min-h-screen items-start justify-center bg-gray-50 px-4 py-10 text-gray-900 sm:items-center">
       <div className="w-full max-w-sm">
         <p className="mb-4 text-center text-base font-semibold text-gray-900">Quản lý khuyến mãi</p>
-        <div className="rounded-lg border border-gray-200 bg-white p-5">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs">
           {title ? <h1 className="mb-3 text-lg font-semibold text-gray-900">{title}</h1> : null}
           {children}
         </div>
@@ -220,7 +288,7 @@ export function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className={cx("rounded-lg border border-gray-200 bg-white", className)}>
+    <section className={cx("rounded-xl border border-gray-200 bg-white shadow-xs", className)}>
       {title || actions ? (
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-2.5">
           <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
@@ -241,9 +309,24 @@ const BADGE_TONE: Record<Tone, string> = {
   amber: "bg-amber-100 text-amber-800",
 };
 
-export function Badge({ tone = "gray", children }: { tone?: Tone; children: React.ReactNode }) {
+const BADGE_DOT: Record<Tone, string> = {
+  gray: "bg-gray-400",
+  green: "bg-green-500",
+  blue: "bg-blue-500",
+  red: "bg-red-500",
+  amber: "bg-amber-500",
+};
+
+/** Nhãn trạng thái dạng viên. `dot` = thêm chấm màu ở đầu (cho các trạng thái cần nhìn lướt là thấy). */
+export function Badge({ tone = "gray", dot, children }: { tone?: Tone; dot?: boolean; children: React.ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap", BADGE_TONE[tone])}>
+    <span
+      className={cx(
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
+        BADGE_TONE[tone],
+      )}
+    >
+      {dot ? <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", BADGE_DOT[tone])} /> : null}
       {children}
     </span>
   );
@@ -271,7 +354,7 @@ export function Notice({
 
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed border-gray-300 bg-white px-4 py-10 text-center">
+    <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-12 text-center">
       <p className="text-sm font-medium text-gray-900">{title}</p>
       {hint ? <p className="mx-auto mt-1 max-w-md text-sm text-gray-500">{hint}</p> : null}
       {action ? <div className="mt-4 flex justify-center gap-2">{action}</div> : null}
@@ -333,13 +416,267 @@ export function Tabs<K extends string>({
 
 // Lớp CSS cho bảng — dùng trực tiếp trên <table>/<th>/<td>. Bọc bảng trong <div className={tableWrapCls}> để cuộn ngang trên điện thoại.
 // `relative` giữ các phần tử định vị tuyệt đối bên trong (vd `sr-only`) nằm trong khung cuộn, không làm cả trang cuộn ngang.
-export const tableWrapCls = "relative overflow-x-auto rounded-lg border border-gray-200 bg-white";
+export const tableWrapCls = "relative overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-xs";
+/** Khung cuộn ngang cho bảng nằm trong `ListCard` (khung đó đã có viền). */
+export const tableScrollCls = "relative overflow-x-auto";
 export const tableCls = "w-full border-collapse text-sm";
 export const thCls =
-  "border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 whitespace-nowrap";
-export const tdCls = "border-b border-gray-100 px-3 py-2 align-middle";
+  "border-b border-gray-200 bg-gray-50 px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 whitespace-nowrap";
+export const tdCls = "border-b border-gray-100 px-3 py-2.5 align-middle";
 /** Thêm vào th/td của cột số. */
 export const numCls = "text-right tabular-nums whitespace-nowrap";
+
+// ───────────────────────── Danh sách: khung, tiêu đề cột sắp xếp, phân trang, ô số liệu ─────────────────────────
+
+/** Khung của một danh sách: thanh tìm / lọc ở trên, bảng ở giữa, phân trang ở dưới — chung một khung viền. */
+export function ListCard({
+  toolbar,
+  footer,
+  className,
+  children,
+}: {
+  toolbar?: React.ReactNode;
+  footer?: React.ReactNode;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={cx("overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs", className)}>
+      {toolbar ? <div className="border-b border-gray-200 px-3 py-3 sm:px-4">{toolbar}</div> : null}
+      {children}
+      {footer ? <div className="border-t border-gray-200 bg-gray-50/60 px-3 py-2.5 sm:px-4">{footer}</div> : null}
+    </section>
+  );
+}
+
+/** Tiêu đề cột bấm được để sắp xếp: bấm lần đầu xếp tăng dần, bấm lần nữa đổi chiều. */
+export function SortTh({
+  label,
+  active,
+  dir,
+  onSort,
+  numeric,
+  className,
+}: {
+  label: string;
+  /** Bảng đang xếp theo cột này. */
+  active: boolean;
+  dir: "asc" | "desc";
+  onSort: () => void;
+  /** Cột số: canh phải. */
+  numeric?: boolean;
+  className?: string;
+}) {
+  const Icon = !active ? ChevronsUpDown : dir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th className={cx(thCls, "align-middle", numeric && "text-right", className)} aria-sort={!active ? "none" : dir === "asc" ? "ascending" : "descending"}>
+      <button
+        type="button"
+        onClick={onSort}
+        title={`Sắp xếp theo ${label.toLowerCase()}`}
+        className={cx(
+          "group inline-flex cursor-pointer items-center gap-1 rounded align-middle uppercase tracking-wide hover:text-gray-900",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+          numeric && "flex-row-reverse",
+          active && "text-gray-900",
+        )}
+      >
+        {label}
+        <Icon aria-hidden className={cx("h-3.5 w-3.5", active ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600")} />
+      </button>
+    </th>
+  );
+}
+
+const pageBtnCls =
+  "inline-flex h-8 min-w-8 cursor-pointer items-center justify-center rounded-md border px-2 text-sm font-medium tabular-nums " +
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40";
+
+/**
+ * Thanh phân trang: «Hiển thị 1–25 trong 166 sản phẩm», chọn số dòng mỗi trang, các nút chuyển trang.
+ * `page` là kết quả của `paginate()`.
+ */
+export function Pagination({
+  page,
+  unit,
+  onPage,
+  onSize,
+  note,
+}: {
+  page: Omit<Page<unknown>, "items">;
+  /** Tên của một dòng, vd "sản phẩm", "đơn". */
+  unit: string;
+  onPage: (page: number) => void;
+  /** Có thì hiện ô chọn số dòng mỗi trang. */
+  onSize?: (size: number) => void;
+  /** Ghi thêm sau dòng «Hiển thị…», vd "(đang lọc trong 166)". */
+  note?: React.ReactNode;
+}) {
+  const { page: current, pages, total, from, to, size } = page;
+  const go = (n: number) => {
+    if (n >= 1 && n <= pages && n !== current) onPage(n);
+  };
+  return (
+    <nav aria-label="Phân trang" className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-gray-600 print:hidden">
+      <p role="status">
+        {total === 0 ? (
+          <>Không có {unit} nào</>
+        ) : (
+          <>
+            Hiển thị{" "}
+            <strong className="font-semibold text-gray-900">
+              {formatNumber(from)}–{formatNumber(to)}
+            </strong>{" "}
+            trong <strong className="font-semibold text-gray-900">{formatNumber(total)}</strong> {unit}
+          </>
+        )}
+        {note ? <span className="text-gray-500"> {note}</span> : null}
+      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {onSize ? (
+          <label className="flex items-center gap-2 whitespace-nowrap">
+            <span className="max-sm:sr-only">Mỗi trang</span>
+            <select
+              aria-label="Số dòng mỗi trang"
+              value={size}
+              onChange={(e) => onSize(Number(e.target.value))}
+              className="h-8 cursor-pointer rounded-md border border-gray-300 bg-white pl-2 pr-7 text-sm text-gray-900 shadow-xs focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+            >
+              {PAGE_SIZES.map((n) => (
+                <option key={n} value={n}>
+                  {n} dòng
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => go(current - 1)}
+            disabled={current <= 1}
+            aria-label="Trang trước"
+            className={cx(pageBtnCls, "border-gray-300 bg-white text-gray-700 shadow-xs hover:bg-gray-50")}
+          >
+            <ChevronLeft aria-hidden className="h-4 w-4" />
+          </button>
+          {/* Điện thoại: chỉ ghi «Trang 2 / 7»; màn hình rộng hơn: các nút số trang. */}
+          <span className="px-2 tabular-nums sm:hidden">
+            Trang {formatNumber(current)} / {formatNumber(pages)}
+          </span>
+          {pageButtons(current, pages).map((item, index) =>
+            item === "gap" ? (
+              <span key={`gap-${index}`} aria-hidden className="px-1 text-gray-400 max-sm:hidden">
+                …
+              </span>
+            ) : (
+              <button
+                key={item}
+                type="button"
+                onClick={() => go(item)}
+                aria-label={`Trang ${item}`}
+                aria-current={item === current ? "page" : undefined}
+                className={cx(
+                  pageBtnCls,
+                  "max-sm:hidden",
+                  item === current
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "border-transparent text-gray-700 hover:bg-gray-100",
+                )}
+              >
+                {formatNumber(item)}
+              </button>
+            ),
+          )}
+          <button
+            type="button"
+            onClick={() => go(current + 1)}
+            disabled={current >= pages}
+            aria-label="Trang sau"
+            className={cx(pageBtnCls, "border-gray-300 bg-white text-gray-700 shadow-xs hover:bg-gray-50")}
+          >
+            <ChevronRight aria-hidden className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+const STAT_TONE: Record<Tone, { icon: string; value: string }> = {
+  gray: { icon: "bg-gray-100 text-gray-600", value: "text-gray-900" },
+  blue: { icon: "bg-blue-50 text-blue-600", value: "text-gray-900" },
+  green: { icon: "bg-green-50 text-green-600", value: "text-gray-900" },
+  amber: { icon: "bg-amber-50 text-amber-600", value: "text-amber-700" },
+  red: { icon: "bg-red-50 text-red-600", value: "text-red-700" },
+};
+
+/**
+ * Ô số liệu tóm tắt đặt phía trên một danh sách. Có `onClick` thì ô là nút bấm để lọc danh sách theo số liệu đó
+ * (`active` = danh sách đang được lọc theo ô này).
+ */
+export function StatTile({
+  label,
+  value,
+  hint,
+  tone = "gray",
+  icon,
+  active,
+  onClick,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: React.ReactNode;
+  tone?: Tone;
+  icon?: React.ReactNode;
+  active?: boolean;
+  onClick?: () => void;
+  className?: string;
+}) {
+  const body = (
+    <>
+      {icon ? (
+        <span aria-hidden className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg max-sm:hidden", STAT_TONE[tone].icon)}>
+          {icon}
+        </span>
+      ) : null}
+      <span className="min-w-0">
+        <span className="block truncate text-xs font-medium text-gray-500">{label}</span>
+        <span className={cx("block text-xl font-semibold leading-tight tabular-nums", STAT_TONE[tone].value)}>{value}</span>
+        {hint ? <span className="block truncate text-xs text-gray-500 max-sm:hidden">{hint}</span> : null}
+      </span>
+    </>
+  );
+  const cls = cx(
+    "flex min-w-0 items-center gap-3 rounded-xl border bg-white px-3 py-2 text-left shadow-xs sm:px-3.5 sm:py-3",
+    active ? "border-blue-500 ring-2 ring-blue-500/20" : "border-gray-200",
+    className,
+  );
+  if (!onClick) return <div className={cls}>{body}</div>;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={!!active}
+      className={cx(cls, "cursor-pointer transition-colors hover:border-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500")}
+    >
+      {body}
+    </button>
+  );
+}
+
+/** Màn hình có khớp một điều kiện CSS không, vd useMediaQuery("(min-width: 768px)"); tự cập nhật khi đổi cỡ cửa sổ. */
+export function useMediaQuery(query: string): boolean {
+  return useSyncExternalStore(
+    (callback) => {
+      const media = window.matchMedia(query);
+      media.addEventListener("change", callback);
+      return () => media.removeEventListener("change", callback);
+    },
+    () => window.matchMedia(query).matches,
+  );
+}
 
 // ───────────────────────── Hộp thoại ─────────────────────────
 
@@ -381,7 +718,7 @@ export function Modal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div role="dialog" aria-modal="true" className={cx("my-auto flex max-h-full w-full flex-col rounded-lg bg-white shadow-xl", width)}>
+      <div role="dialog" aria-modal="true" className={cx("my-auto flex max-h-full w-full flex-col rounded-xl bg-white shadow-xl", width)}>
         <header className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
           <h2 className="text-base font-semibold text-gray-900">{title}</h2>
           <button
@@ -395,6 +732,77 @@ export function Modal({
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
         {footer ? <footer className="flex flex-wrap justify-end gap-2 border-t border-gray-200 px-4 py-3">{footer}</footer> : null}
+      </div>
+    </div>
+  );
+}
+
+/** Khung chi tiết trượt ra ở mép phải màn hình (điện thoại: phủ cả màn hình). Đóng bằng nút ×, phím Esc hoặc bấm ra ngoài. */
+export function Drawer({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  const panel = useRef<HTMLDivElement>(null);
+  // Mở ra thì đưa bàn phím vào khung (Tab đi tiếp vào nội dung), không làm nút × sáng viền.
+  useEffect(() => {
+    if (open) panel.current?.focus({ preventScroll: true });
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-40 flex justify-end bg-black/40 print:hidden"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+        ref={panel}
+        className="flex h-full w-full max-w-lg flex-col bg-white shadow-xl focus:outline-none"
+      >
+        <header className="flex items-start justify-between gap-3 border-b border-gray-200 px-4 py-3.5 sm:px-5">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+            {subtitle ? <div className="mt-0.5 text-sm text-gray-500">{subtitle}</div> : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            className="cursor-pointer rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">{children}</div>
+        {footer ? <footer className="flex flex-wrap justify-end gap-2 border-t border-gray-200 px-4 py-3 sm:px-5">{footer}</footer> : null}
       </div>
     </div>
   );

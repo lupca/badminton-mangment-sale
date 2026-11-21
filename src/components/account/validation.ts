@@ -1,9 +1,9 @@
 // Kiểm tra những gì người dùng gõ vào các ô của phần tài khoản, trước khi gửi lên máy chủ.
 // Mỗi hàm trả về câu báo lỗi tiếng Việt, hoặc null nếu giá trị dùng được.
 
+/** Hai giới hạn của máy chủ (server/app.js). */
 export const PASSWORD_MIN = 6;
-/** Giới hạn của máy chủ. */
-export const PASSWORD_MAX = 72;
+export const PASSWORD_MAX = 200;
 /** Hai giới hạn dưới đây khớp với độ dài máy chủ giữ lại khi lưu hồ sơ. */
 export const FULL_NAME_MAX = 120;
 export const PHONE_MAX = 40;

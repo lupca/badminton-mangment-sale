@@ -2,8 +2,8 @@
 // Hệ thống không gửi email khôi phục mật khẩu, nên ai quên mật khẩu thì nhờ quản lý đặt lại ở đây rồi báo lại cho họ.
 import { useId, useState, type FormEvent } from "react";
 import { setAccountPassword } from "../../lib/cloud/accounts";
+import { errorMessage } from "../../lib/cloud/api";
 import type { Profile } from "../../lib/cloud/auth";
-import { authErrorMessage } from "../../lib/cloud/authErrors";
 import { copyText } from "../../lib/format";
 import { Button, Field, Input, Modal, Notice, toast } from "../../ui";
 import { PASSWORD_MAX, PASSWORD_MIN, newPasswordProblem } from "./validation";
@@ -33,7 +33,7 @@ export default function ResetPasswordDialog({ account, onClose }: { account: Pro
       await setAccountPassword(account.id, password);
       setDone(password);
     } catch (thrown) {
-      setError(authErrorMessage(thrown));
+      setError(errorMessage(thrown));
     } finally {
       setSaving(false);
     }

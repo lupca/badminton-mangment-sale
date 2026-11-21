@@ -1,19 +1,11 @@
-// Kết nối tới Supabase — tạo một lần, dùng chung cho đăng nhập và dữ liệu.
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { SUPABASE_KEY, SUPABASE_URL, cloudEnabled } from "./config";
+// Kết nối tới lớp API — tạo một lần, dùng chung cho đăng nhập và dữ liệu.
+import { createApiClient, type ApiClient } from "./api";
+import { API_URL, cloudEnabled } from "./config";
 
-let client: SupabaseClient | null = null;
+let client: ApiClient | null = null;
 
-export function getSupabase(): SupabaseClient {
-  if (!cloudEnabled) throw new Error("Chưa cấu hình máy chủ (VITE_SUPABASE_URL / VITE_SUPABASE_KEY).");
-  client ??= createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      // Ứng dụng điều hướng bằng hash (#/orders/…) và không dùng liên kết đăng nhập qua email,
-      // nên không để thư viện đọc phần # của địa chỉ.
-      detectSessionInUrl: false,
-    },
-  });
+export function getApi(): ApiClient {
+  if (!cloudEnabled) throw new Error("Ứng dụng đang chạy không có máy chủ.");
+  client ??= createApiClient({ url: API_URL });
   return client;
 }

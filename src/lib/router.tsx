@@ -52,3 +52,58 @@ export function Link({
     </a>
   );
 }
+
+/**
+ * Trạng thái của một danh sách (ô tìm, bộ lọc, sắp xếp, trang) giữ trong phần ?query của địa chỉ trang,
+ * để tải lại hoặc gửi đường dẫn vẫn giữ nguyên chỗ đang xem.
+ * Trạng thái nằm trong React trước rồi mới ghi lên địa chỉ (history.replaceState, không thêm lịch sử),
+ * nên gõ phím không bị chậm. Địa chỉ đổi từ bên ngoài (bấm liên kết, nút Lùi) thì nhận giá trị mới.
+ * Giá trị bằng mặc định thì không ghi lên địa chỉ cho gọn.
+ */
+export function useQueryState<T extends Record<string, string>>(
+  defaults: T,
+): [T, (patch: Partial<T>) => void] {
+  const route = useRoute();
+  const queryText = route.query.toString();
+  const fromUrl = (): T => {
+    const out = { ...defaults };
+    for (const key of Object.keys(defaults) as Array<keyof T & string>) {
+      const value = route.query.get(key);
+      if (value !== null) out[key] = value as T[typeof key];
+    }
+    return out;
+  };
+  const [state, setState] = React.useState<T>(fromUrl);
+  // Chuỗi query do chính hook này ghi gần nhất; hashchange không xảy ra với replaceState,
+  // nhưng nếu trang khác cùng đường dẫn đổi địa chỉ thì nhận lại từ địa chỉ.
+  const written = React.useRef(queryText);
+  React.useEffect(() => {
+    if (queryText !== written.current) {
+      written.current = queryText;
+      setState(fromUrl());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryText]);
+
+  const update = React.useCallback(
+    (patch: Partial<T>) => {
+      setState((prev) => {
+        const next = { ...prev, ...patch };
+        const params = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
+        for (const key of Object.keys(defaults)) {
+          const value = next[key];
+          if (value === undefined || value === defaults[key]) params.delete(key);
+          else params.set(key, value);
+        }
+        const text = params.toString();
+        written.current = text;
+        const path = currentHash().split("?")[0];
+        window.history.replaceState(window.history.state, "", `#${path}${text ? `?${text}` : ""}`);
+        return next;
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+  return [state, update];
+}

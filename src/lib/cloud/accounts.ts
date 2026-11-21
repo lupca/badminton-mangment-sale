@@ -1,115 +1,123 @@
 // Quản trị tài khoản (chỉ người quản lý gọi được — máy chủ kiểm tra lại quyền).
 import { useEffect, useState } from "react";
-import { PROFILE_COLUMNS, profileFromRow, timeoutSignal, watchForeground, type Profile } from "./auth";
-import { unwrap } from "./authErrors";
-import { getSupabase } from "./client";
+import type { ApiClient } from "./api";
+import { parseProfile, type Profile } from "./auth";
+import { getApi } from "./client";
 
-/** Mọi tài khoản của hệ thống. */
-export async function listProfiles(): Promise<Profile[]> {
-  const { data } = await unwrap(
-    getSupabase()
-      .from("profiles")
-      .select(PROFILE_COLUMNS)
-      .order("created_at", { ascending: true })
-      // Không để thư viện âm thầm thử lại nhiều giây khi mất mạng: báo lỗi ngay, màn hình tự có nút «Thử lại».
-      .retry(false)
-      .abortSignal(timeoutSignal()),
-  );
-  return (data ?? []).map(profileFromRow).filter((profile): profile is Profile => profile !== null);
+/** Thời gian chờ tối đa cho một lần hỏi máy chủ; quá thì báo lỗi ngay, màn hình tự có nút «Thử lại». */
+const REQUEST_TIMEOUT_MS = 15_000;
+
+/** Mọi tài khoản của hệ thống, theo thứ tự đăng ký. Ném Error (tiếng Việt) khi thất bại. */
+export async function listProfiles(api: ApiClient = getApi()): Promise<Profile[]> {
+  const rows = await api.call("accounts.list", {}, { timeoutMs: REQUEST_TIMEOUT_MS });
+  return (Array.isArray(rows) ? rows : []).map(parseProfile).filter((profile): profile is Profile => profile !== null);
 }
 
 /** Duyệt / đổi vai trò / khóa một tài khoản khác. Ném Error (tiếng Việt) khi thất bại. */
-export async function setAccountRole(id: string, role: "sale" | "manager" | "locked"): Promise<Profile> {
-  const { data } = await unwrap(getSupabase().rpc("admin_set_role", { target: id, new_role: role }));
-  const profile = profileFromRow(data);
+export async function setAccountRole(id: string, role: "sale" | "manager" | "locked", api: ApiClient = getApi()): Promise<Profile> {
+  const profile = parseProfile(await api.call("accounts.setRole", { id, role }, { timeoutMs: REQUEST_TIMEOUT_MS }));
   if (!profile) throw new Error("Không tìm thấy tài khoản.");
-  notifyAccountsChanged();
   return profile;
 }
 
-/** Đặt mật khẩu mới cho một tài khoản. Ném Error (tiếng Việt) khi thất bại. */
-export async function setAccountPassword(id: string, password: string): Promise<void> {
-  await unwrap(getSupabase().rpc("admin_set_password", { target: id, new_password: password }));
+/** Đặt mật khẩu mới cho một tài khoản khác (người đó bị đăng xuất ở mọi nơi). Ném Error (tiếng Việt) khi thất bại. */
+export async function setAccountPassword(id: string, password: string, api: ApiClient = getApi()): Promise<void> {
+  await api.call("accounts.setPassword", { id, newPassword: password }, { timeoutMs: REQUEST_TIMEOUT_MS });
+}
+
+// ───────────────────────── Tín hiệu «danh sách tài khoản vừa đổi» ─────────────────────────
+
+/** Phần `accounts` trong kết quả của lệnh `sync.poll` (chỉ quản lý mới có). */
+export interface AccountsInfo {
+  /** Số tài khoản đang chờ duyệt. */
+  pending: number;
+  /** Một «dấu» đổi mỗi khi danh sách tài khoản có gì thay đổi (có người đăng ký, đổi vai trò, sửa hồ sơ…). */
+  stamp: string;
+}
+
+type CountListener = (pendingCount: number) => void;
+const countListeners = new Set<CountListener>();
+const changeListeners = new Set<() => void>();
+/** Dấu của lần quan sát gần nhất; null = chưa quan sát lần nào. */
+let lastStamp: string | null = null;
+
+/** Báo cho chấm nhắc trên thanh điều hướng số tài khoản đang chờ duyệt mà nơi gọi vừa biết. */
+export function notifyAccountsChanged(pendingCount: number): void {
+  if (!Number.isFinite(pendingCount)) return;
+  const count = Math.max(0, Math.trunc(pendingCount));
+  [...countListeners].forEach((listener) => listener(count));
+}
+
+/** Đăng ký nghe con số đó (xem `notifyAccountsChanged`, `observeAccounts`). Trả về hàm hủy đăng ký. */
+export function onPendingAccountCount(listener: (pendingCount: number) => void): () => void {
+  countListeners.add(listener);
+  return () => {
+    countListeners.delete(listener);
+  };
+}
+
+/**
+ * Bộ đồng bộ gọi sau mỗi lần hỏi định kỳ (`sync.poll`), với phần `accounts` của kết quả. Chấm nhắc lấy luôn con số trong đó;
+ * dấu khác với lần quan sát trước nghĩa là danh sách tài khoản vừa đổi (có người mới đăng ký, một quản lý khác vừa duyệt /
+ * khóa ai đó…) → báo cho màn hình «Tài khoản» đang mở tải lại. `null` (tài khoản không phải quản lý) thì bỏ qua.
+ */
+export function observeAccounts(info: AccountsInfo | null | undefined): void {
+  if (!info || typeof info !== "object" || typeof info.stamp !== "string" || typeof info.pending !== "number") return;
+  notifyAccountsChanged(info.pending);
+  const changed = lastStamp !== null && lastStamp !== info.stamp;
+  lastStamp = info.stamp;
+  if (changed) [...changeListeners].forEach((listener) => listener());
+}
+
+/** Đăng ký nghe «danh sách tài khoản vừa đổi trên máy chủ» (xem `observeAccounts`). Trả về hàm hủy đăng ký. */
+export function onAccountsChangedOnServer(listener: () => void): () => void {
+  changeListeners.add(listener);
+  return () => {
+    changeListeners.delete(listener);
+  };
+}
+
+/** Quên dấu đã quan sát (khi tài khoản quản lý rời ứng dụng): lần quan sát kế tiếp là lần đầu, không báo «vừa đổi». */
+export function forgetAccountsStamp(): void {
+  lastStamp = null;
 }
 
 // ───────────────────────── Chấm nhắc «có tài khoản chờ duyệt» ─────────────────────────
 
-/** Chấm nhắc tự hỏi lại máy chủ sau mỗi khoảng này (và mỗi khi tab được mở lại). */
-const PENDING_REFRESH_MS = 30_000;
-
-type AccountsListener = (pendingCount: number | null) => void;
-const accountsListeners = new Set<AccountsListener>();
-
 /**
- * Báo cho chấm nhắc trên thanh điều hướng rằng danh sách tài khoản vừa đổi.
- * Nơi gọi đã biết số tài khoản đang chờ duyệt thì truyền vào, chấm nhắc khỏi phải hỏi lại máy chủ.
+ * Số tài khoản đang chờ duyệt, để hiện chấm nhắc trên mục «Tài khoản». `enabled` = false thì luôn là 0 và không hỏi máy chủ.
+ * Chỉ tự hỏi máy chủ MỘT lần lúc bật; sau đó con số đi theo các lần hỏi định kỳ của bộ đồng bộ (`observeAccounts`) và theo
+ * danh sách đang hiện ở màn hình «Tài khoản» (`notifyAccountsChanged`).
  */
-export function notifyAccountsChanged(pendingCount?: number): void {
-  [...accountsListeners].forEach((listener) => listener(pendingCount ?? null));
-}
-
-// Máy chủ báo (qua Realtime) rằng hồ sơ của một tài khoản khác vừa đổi — vd có người mới đăng ký, hoặc một quản lý
-// khác vừa duyệt ai đó. Chỉ quản lý nhận được tín hiệu này (sale chỉ được thấy hồ sơ của chính mình).
-const remoteListeners = new Set<() => void>();
-
-/** Bộ đồng bộ gọi khi nhận tín hiệu đó: chấm nhắc và màn hình «Tài khoản» đang mở đọc lại ngay, không chờ nhịp định kỳ. */
-export function accountsChangedOnServer(): void {
-  [...remoteListeners].forEach((listener) => listener());
-  notifyAccountsChanged();
-}
-
-/** Đăng ký nghe tín hiệu đó. Trả về hàm hủy đăng ký. */
-export function onAccountsChangedOnServer(listener: () => void): () => void {
-  remoteListeners.add(listener);
-  return () => {
-    remoteListeners.delete(listener);
-  };
-}
-
-async function countPendingProfiles(): Promise<number> {
-  const { data } = await unwrap(
-    getSupabase().from("profiles").select("id").eq("role", "pending").retry(false).abortSignal(timeoutSignal()),
-  );
-  return data?.length ?? 0;
-}
-
-/** Số tài khoản đang chờ duyệt, để hiện chấm nhắc trên mục «Tài khoản». `enabled` = false thì luôn là 0 và không hỏi máy chủ. */
 export function usePendingAccountCount(enabled: boolean): number {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    // Chỉ nhận kết quả của lần hỏi mới nhất: câu trả lời đến muộn của lần hỏi cũ không được ghi đè số mới hơn.
-    let latest = 0;
-    const refresh = () => {
-      latest += 1;
-      const mine = latest;
-      countPendingProfiles().then(
-        (pending) => {
-          if (alive && mine === latest) setCount(pending);
+    /** Đã có con số từ nơi khác rồi thì câu trả lời (cũ hơn) của lần hỏi lúc bật không được ghi đè lên. */
+    let told = false;
+    const stopListening = onPendingAccountCount((pendingCount) => {
+      told = true;
+      setCount(pendingCount);
+    });
+    getApi()
+      .call("sync.poll", {}, { timeoutMs: REQUEST_TIMEOUT_MS })
+      .then(
+        (result) => {
+          if (!alive || told) return;
+          const info = result && typeof result === "object" ? (result as { accounts?: AccountsInfo | null }).accounts : null;
+          observeAccounts(info);
         },
         () => {
-          // Chấm nhắc chỉ là gợi ý: không đọc được thì giữ số đang có, lần sau đọc lại.
+          // Chấm nhắc chỉ là gợi ý: không hỏi được thì chờ lần hỏi định kỳ của bộ đồng bộ.
         },
       );
-    };
-    const onAccountsChanged: AccountsListener = (pendingCount) => {
-      if (pendingCount === null) {
-        refresh();
-      } else {
-        latest += 1;
-        setCount(pendingCount);
-      }
-    };
-
-    refresh();
-    accountsListeners.add(onAccountsChanged);
-    const stopWatching = watchForeground(refresh, PENDING_REFRESH_MS);
     return () => {
       alive = false;
-      accountsListeners.delete(onAccountsChanged);
-      stopWatching();
+      stopListening();
+      forgetAccountsStamp();
+      setCount(0);
     };
   }, [enabled]);
 

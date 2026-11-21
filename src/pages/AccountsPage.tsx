@@ -3,14 +3,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ResetPasswordDialog from "../components/account/ResetPasswordDialog";
 import { ACCOUNT_ROLE_LABEL, ACCOUNT_ROLE_TONE } from "../components/account/roleLabels";
 import { listProfiles, notifyAccountsChanged, onAccountsChangedOnServer, setAccountRole } from "../lib/cloud/accounts";
+import { errorMessage } from "../lib/cloud/api";
 import { useAutoRefresh, useOptionalAuth, type AccountRole, type Profile } from "../lib/cloud/auth";
-import { authErrorMessage } from "../lib/cloud/authErrors";
 import { formatDate, formatDateTime } from "../lib/format";
 import { Link } from "../lib/router";
 import { Badge, Button, EmptyState, Notice, PageHeader, cx, tableCls, tableWrapCls, tdCls, thCls, toast } from "../ui";
 
-/** Danh sách tự tải lại sau mỗi khoảng này (và mỗi khi tab được mở lại, hoặc máy chủ báo có thay đổi), để tài khoản mới đăng ký tự hiện ra. */
-const RELOAD_MS = 30_000;
+/**
+ * Danh sách tự tải lại mỗi khi máy chủ báo có thay đổi (tài khoản mới đăng ký tự hiện ra sau một nhịp hỏi của bộ đồng bộ)
+ * và mỗi khi tab được mở lại. Ngoài ra chỉ còn một lần tải lại thưa, phòng khi tín hiệu đó không tới.
+ */
+const RELOAD_MS = 5 * 60_000;
 
 // ───────────────────────── Thao tác trên một tài khoản ─────────────────────────
 
@@ -252,7 +255,7 @@ function AccountsManager({ me, refreshMe }: { me: Profile; refreshMe: () => void
       setError(null);
     } catch (thrown) {
       if (mine !== latestLoad.current) return;
-      setError(authErrorMessage(thrown));
+      setError(errorMessage(thrown));
     } finally {
       if (mine === latestLoad.current) setReloading(false);
     }
@@ -287,7 +290,7 @@ function AccountsManager({ me, refreshMe }: { me: Profile; refreshMe: () => void
       setAccounts((list) => (list ? list.map((item) => (item.id === updated.id ? updated : item)) : list));
       toast(action.done(updated));
     } catch (thrown) {
-      toast(authErrorMessage(thrown), "error");
+      toast(errorMessage(thrown), "error");
       // Màn hình có thể đang hiện dữ liệu cũ (tài khoản vừa bị xóa, hoặc chính mình vừa bị đổi vai trò): đọc lại cả hai.
       void load();
       refreshMe();

@@ -11,5 +11,9 @@ const STATUS_TONE = {
 
 /** Nhãn trạng thái: đang chạy (xanh lá), sắp diễn ra (xanh dương), đã kết thúc / không thời hạn (xám). */
 export default function ProgramStatusBadge({ status }: { status: ProgramStatus }) {
-  return <Badge tone={STATUS_TONE[status]}>{PROGRAM_STATUS_LABEL[status]}</Badge>;
+  return (
+    <Badge tone={STATUS_TONE[status]} dot>
+      {PROGRAM_STATUS_LABEL[status]}
+    </Badge>
+  );
 }

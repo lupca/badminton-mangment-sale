@@ -1,7 +1,7 @@
 // Kho dữ liệu: toàn bộ dữ liệu đang dùng nằm trong bộ nhớ (React state); mọi màn hình đọc và sửa qua `useStore()`.
 // Dữ liệu được lưu ở một trong hai nơi, tùy ứng dụng có chạy với máy chủ hay không (xem lib/cloud/config.ts):
 //   • không có máy chủ → `StoreProvider` ở file này ghi tự động xuống localStorage của trình duyệt;
-//   • có máy chủ       → `CloudStoreProvider` (lib/cloud/CloudStore.tsx) đồng bộ với Supabase.
+//   • có máy chủ       → `CloudStoreProvider` (lib/cloud/CloudStore.tsx) đồng bộ với database trên máy chủ qua lớp API.
 // Hai nơi dùng chung các thao tác trong `buildStore`, chỉ khác phần `StoreBackend`.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import seedData from "../seed/seed.json";
