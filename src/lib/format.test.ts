@@ -19,6 +19,7 @@ import {
   programStatus,
   searchKey,
   todayISO,
+  parseDateVN,
 } from "./format";
 
 const db = seed as unknown as DB;
@@ -371,5 +372,19 @@ describe("newId", () => {
     expect(newId()).toMatch(/^[0-9a-z]+$/);
     const ids = new Set(Array.from({ length: 100 }, () => newId("o")));
     expect(ids.size).toBe(100);
+  });
+});
+
+describe("parseDateVN", () => {
+  it("đọc ngày/tháng/năm kiểu Việt Nam và dạng 2026-11-05", () => {
+    expect(parseDateVN("05/11/2026")).toBe("2026-11-05");
+    expect(parseDateVN("5/11/2026")).toBe("2026-11-05");
+    expect(parseDateVN(" 5-11-26 ")).toBe("2026-11-05");
+    expect(parseDateVN("5.11.2026")).toBe("2026-11-05");
+    expect(parseDateVN("2026-11-05")).toBe("2026-11-05");
+    expect(parseDateVN("29/02/2028")).toBe("2028-02-29");
+  });
+  it("từ chối ngày không có thật hoặc chưa gõ xong", () => {
+    for (const t of ["31/02/2026", "29/02/2026", "00/11/2026", "05/13/2026", "05/11", "05/11/202", "abc", ""]) expect(parseDateVN(t)).toBeNull();
   });
 });

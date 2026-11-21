@@ -2,7 +2,7 @@
 import type { Program } from "../../types";
 import { formatPeriod } from "../../lib/format";
 import { useStore } from "../../lib/store";
-import { Card, Field, Input, Notice, Textarea } from "../../ui";
+import { Card, DateInput, Field, Input, Notice, Textarea } from "../../ui";
 import { hintCls } from "./fields";
 import type { UpdateProgram } from "./programEdits";
 
@@ -40,27 +40,15 @@ export default function ProgramInfoTab({ program, update }: { program: Program; 
         <div className="col-span-2">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Từ ngày">
-              <Input
-                type="date"
-                max="9999-12-31"
-                value={program.startDate ?? ""}
-                onChange={(e) => patch({ startDate: e.target.value || null })}
-              />
+              <DateInput value={program.startDate} onChange={(value) => patch({ startDate: value })} />
             </Field>
             <Field label="Đến ngày">
-              <Input
-                type="date"
-                max="9999-12-31"
-                value={program.endDate ?? ""}
-                onChange={(e) => patch({ endDate: e.target.value || null })}
-              />
+              <DateInput value={program.endDate} onChange={(value) => patch({ endDate: value })} />
             </Field>
           </div>
-          {/* Ô ngày hiện theo ngôn ngữ của trình duyệt (có máy hiện tháng trước ngày), nên ghi lại ở đây theo kiểu
-              ngày/tháng/năm cho khỏi nhầm. */}
           <p className={hintCls}>
-            Thời gian áp dụng: {formatPeriod(program.startDate, program.endDate)}. Để trống ngày nào thì không giới hạn
-            phía đó.
+            Thời gian áp dụng: {formatPeriod(program.startDate, program.endDate)}. Gõ theo ngày/tháng/năm hoặc bấm
+            biểu tượng lịch; để trống ngày nào thì không giới hạn phía đó.
           </p>
         </div>
 

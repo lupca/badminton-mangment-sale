@@ -86,6 +86,24 @@ export function formatDateTime(value: string | null | undefined): string {
 }
 
 /** "05/11/2026 – 30/11/2026", "Từ 05/11/2026", "Đến 30/11/2026" hoặc "Không thời hạn". */
+/**
+ * Đọc ngày người dùng gõ theo kiểu Việt Nam: ngày/tháng/năm (vd «5/11/2026», «05-11-26», «5.11.2026»), hoặc dạng
+ * 2026-11-05. Trả về "YYYY-MM-DD"; null nếu không phải ngày có thật (vd 31/02/2026).
+ */
+export function parseDateVN(text: string): string | null {
+  const t = text.trim();
+  let d: number, m: number, y: number;
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
+  const vn = /^(\d{1,2})\s*[/.\-\s]\s*(\d{1,2})\s*[/.\-\s]\s*(\d{2}|\d{4})$/.exec(t);
+  if (iso) [y, m, d] = [Number(iso[1]), Number(iso[2]), Number(iso[3])];
+  else if (vn) [d, m, y] = [Number(vn[1]), Number(vn[2]), vn[3].length === 2 ? 2000 + Number(vn[3]) : Number(vn[3])];
+  else return null;
+  if (y < 1900 || y > 9999 || m < 1 || m > 12 || d < 1) return null;
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  if (d > days) return null;
+  return `${y}-${pad2(m)}-${pad2(d)}`;
+}
+
 export function formatPeriod(start: string | null, end: string | null): string {
   if (start && end) return `${formatDate(start)} – ${formatDate(end)}`;
   if (start) return `Từ ${formatDate(start)}`;

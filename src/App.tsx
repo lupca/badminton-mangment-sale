@@ -96,7 +96,8 @@ function Shell() {
   else if (section === "accounts" && accountAdmin) page = <AccountsPage />;
   else page = <ProgramsPage />;
 
-  const nav = accountAdmin ? [...NAV, ACCOUNTS_NAV] : NAV;
+  // «Cài đặt» luôn đứng cuối.
+  const nav = accountAdmin ? [...NAV.slice(0, -1), ACCOUNTS_NAV, ...NAV.slice(-1)] : NAV;
   const accountName = auth?.profile ? auth.profile.fullName.trim() || auth.profile.email : "";
 
   return (
@@ -113,13 +114,13 @@ function Shell() {
           {/* Điện thoại: thu hẹp lề từng mục để các mục vừa một hàng; không vừa (quản lý có thêm mục «Tài khoản») thì
               mục cuối xuống hàng — không mục nào bị khuất phải kéo ngang mới thấy.
               Màn hình hẹp: thanh mục xuống hàng dưới, vai trò nằm cùng hàng với tên ứng dụng. */}
-          <nav className="flex max-w-full flex-wrap max-md:order-last sm:gap-1">
+          <nav className="flex max-w-full flex-nowrap overflow-x-auto [scrollbar-width:none] max-md:order-last max-sm:w-full max-sm:justify-between sm:gap-1">
             {nav.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cx(
-                  "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-1.5 py-3 text-sm font-medium sm:px-3 sm:py-3.5",
+                  "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-0 py-3 text-[12.5px] font-medium min-[400px]:px-1.5 min-[400px]:text-sm sm:px-3 sm:py-3.5",
                   section === item.section
                     ? "border-blue-600 text-blue-700"
                     : "border-transparent text-gray-600 hover:text-gray-900",

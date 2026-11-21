@@ -1,8 +1,8 @@
 // Bộ thành phần giao diện dùng chung. Một kiểu cho cả ứng dụng: nền trắng, viền xám, một màu nhấn (xanh dương),
 // khung bo góc có bóng mờ; danh sách nào cũng gồm thanh tìm / lọc ở trên, bảng ở giữa, phân trang ở dưới.
-import React, { useEffect, useRef, useSyncExternalStore } from "react";
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, Search, X } from "lucide-react";
-import { formatNumber, parseInteger } from "./lib/format";
+import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, ChevronLeft, ChevronRight, ChevronsUpDown, Search, X } from "lucide-react";
+import { formatDate, formatNumber, parseDateVN, parseInteger } from "./lib/format";
 import { PAGE_SIZES, pageButtons, type Page } from "./lib/paging";
 import { Link } from "./lib/router";
 import liNingLogo from "./assets/brand/lining-logo.png";
@@ -63,6 +63,108 @@ export function Textarea({ className, ...rest }: React.TextareaHTMLAttributes<HT
 
 export function Select({ className, ...rest }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return <select className={cx(inputCls, "pr-8", className)} {...rest} />;
+}
+
+/**
+ * Ô ngày luôn theo kiểu Việt Nam ngày/tháng/năm, bất kể trình duyệt cài tiếng gì (ô ngày có sẵn của trình duyệt có
+ * máy hiện tháng trước ngày). Gõ tay được, hoặc bấm biểu tượng lịch để chọn. `value` / `onChange` dùng "YYYY-MM-DD",
+ * null = để trống.
+ */
+export function DateInput({
+  value,
+  onChange,
+  className,
+  ...rest
+}: {
+  value: string | null;
+  onChange: (value: string | null) => void;
+  className?: string;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type">) {
+  const [text, setText] = useState(formatDate(value));
+  const [invalid, setInvalid] = useState(false);
+  const pickerRef = useRef<HTMLInputElement>(null);
+  // Ngày đổi từ nơi khác (chọn trên lịch, hoàn tác…): hiện lại theo ngày/tháng/năm.
+  useEffect(() => {
+    if (parseDateVN(text) !== value) setText(formatDate(value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const commit = (raw: string, final: boolean) => {
+    if (!raw.trim()) {
+      setInvalid(false);
+      if (value !== null) onChange(null);
+      return;
+    }
+    const parsed = parseDateVN(raw);
+    if (parsed) {
+      setInvalid(false);
+      if (parsed !== value) onChange(parsed);
+      if (final) setText(formatDate(parsed));
+    } else if (final) setInvalid(true);
+  };
+
+  return (
+    <span className="block">
+      <span className="relative block">
+        <input
+          {...rest}
+          type="text"
+          inputMode="numeric"
+          placeholder="ngày/tháng/năm"
+          autoComplete="off"
+          aria-invalid={invalid || undefined}
+          className={cx(inputCls, "pr-10", invalid && "border-red-400 focus:border-red-500 focus:ring-red-500/25", className)}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            commit(e.target.value, false);
+          }}
+          onBlur={(e) => commit(e.target.value, true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit(e.currentTarget.value, true);
+          }}
+        />
+        <button
+          type="button"
+          aria-label="Chọn trên lịch"
+          title="Chọn trên lịch"
+          disabled={rest.disabled}
+          className="absolute inset-y-0 right-0 flex w-10 cursor-pointer items-center justify-center rounded-r-md text-gray-500 hover:text-blue-600 disabled:cursor-default disabled:text-gray-300"
+          onClick={(e) => {
+            e.preventDefault();
+            const picker = pickerRef.current;
+            if (!picker) return;
+            try {
+              picker.showPicker();
+            } catch {
+              picker.focus();
+              picker.click();
+            }
+          }}
+        >
+          <CalendarDays aria-hidden className="h-4 w-4" />
+        </button>
+        {/* Lịch có sẵn của trình duyệt, chỉ dùng để chọn; ô hiển thị là ô chữ ở trên. */}
+        <input
+          ref={pickerRef}
+          type="date"
+          tabIndex={-1}
+          aria-hidden
+          max="9999-12-31"
+          className="pointer-events-none absolute bottom-0 right-0 h-0 w-0 opacity-0"
+          value={value ?? ""}
+          onChange={(e) => {
+            setInvalid(false);
+            onChange(e.target.value || null);
+            setText(formatDate(e.target.value));
+          }}
+        />
+      </span>
+      {invalid ? (
+        <span className="mt-1 block text-xs text-red-600">Ngày chưa đúng. Gõ theo ngày/tháng/năm, vd 05/11/2026.</span>
+      ) : null}
+    </span>
+  );
 }
 
 /** Ô nhập số tiền (đồng): hiện dấu chấm phân cách hàng nghìn, trả về số nguyên. */
