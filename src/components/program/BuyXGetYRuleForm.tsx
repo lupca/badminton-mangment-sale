@@ -1,7 +1,14 @@
 // Form của quy tắc «Mua X tặng Y».
 import type { BuyXGetYRule, ProductGroup } from "../../types";
-import { Input, QtyInput } from "../../ui";
-import { Choice, GroupChecklist, GroupSelect, Sentence, Slot, legendCls } from "./fields";
+import { Input, MoneyInput, QtyInput } from "../../ui";
+import {
+  Choice,
+  GroupChecklist,
+  GroupSelect,
+  Sentence,
+  Slot,
+  legendCls,
+} from "./fields";
 
 export default function BuyXGetYRuleForm({
   rule,
@@ -15,7 +22,11 @@ export default function BuyXGetYRuleForm({
   const modeName = `${rule.id}-gift-mode`;
   // Rời kiểu «chọn trong danh mục quà» thì bỏ luôn danh mục quà, để quy tắc không còn tham chiếu thừa tới danh mục đó.
   const setMode = (giftMode: BuyXGetYRule["giftMode"]) =>
-    onChange({ ...rule, giftMode, giftGroupId: giftMode === "group" ? rule.giftGroupId : null });
+    onChange({
+      ...rule,
+      giftMode,
+      giftGroupId: giftMode === "group" ? rule.giftGroupId : null,
+    });
 
   return (
     <div className="space-y-4">
@@ -54,11 +65,19 @@ export default function BuyXGetYRuleForm({
 
       <fieldset>
         <legend className={legendCls}>Quà tặng là</legend>
-        <Choice name={modeName} checked={rule.giftMode === "same"} onSelect={() => setMode("same")}>
+        <Choice
+          name={modeName}
+          checked={rule.giftMode === "same"}
+          onSelect={() => setMode("same")}
+        >
           Chính sản phẩm đó (vd mua 1 tặng 1)
         </Choice>
 
-        <Choice name={modeName} checked={rule.giftMode === "group"} onSelect={() => setMode("group")}>
+        <Choice
+          name={modeName}
+          checked={rule.giftMode === "group"}
+          onSelect={() => setMode("group")}
+        >
           Chọn trong danh mục quà
         </Choice>
         {rule.giftMode === "group" ? (
@@ -72,17 +91,45 @@ export default function BuyXGetYRuleForm({
           </div>
         ) : null}
 
-        <Choice name={modeName} checked={rule.giftMode === "text"} onSelect={() => setMode("text")}>
+        <Choice
+          name={modeName}
+          checked={rule.giftMode === "text"}
+          onSelect={() => setMode("text")}
+        >
           Món quà khác, ghi bằng chữ
         </Choice>
         {rule.giftMode === "text" ? (
-          <div className="ml-6 max-w-sm">
-            <Input
-              aria-label="Tên món quà"
-              value={rule.giftText}
-              onChange={(e) => onChange({ ...rule, giftText: e.target.value })}
-              placeholder="vd Cước N65"
-            />
+          <div className="ml-6 grid max-w-lg gap-2 sm:grid-cols-[minmax(0,1fr)_11rem]">
+            <label className="block">
+              <span className="mb-1 block text-xs text-gray-500">
+                Tên món quà
+              </span>
+              <Input
+                aria-label="Tên món quà"
+                value={rule.giftText}
+                onChange={(e) =>
+                  onChange({ ...rule, giftText: e.target.value })
+                }
+                placeholder="vd Cước N65"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs text-gray-500">
+                Giá trị 1 món (đ) — không bắt buộc
+              </span>
+              <MoneyInput
+                aria-label="Giá trị 1 món quà (đ)"
+                title="Để tính vào tổng giá trị quà; để trống nếu không cần"
+                placeholder="Giá trị (đ), không bắt buộc"
+                value={rule.giftTextValue ?? 0}
+                onChange={(value) => {
+                  const { giftTextValue: _old, ...rest } = rule;
+                  onChange(
+                    value > 0 ? { ...rest, giftTextValue: value } : rest,
+                  );
+                }}
+              />
+            </label>
           </div>
         ) : null}
       </fieldset>

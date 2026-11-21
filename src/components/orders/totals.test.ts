@@ -129,7 +129,7 @@ describe("summarizeOrders", () => {
       lines: [line(he, "g-he-dm01", "P-AYPT417-5", 3), line(he, "g-he-dm03", "P-AYPM444-3", 1)],
     };
     const result = summarizeOrders([entry(he, order), entry(he, { lines: [line(he, "g-he-dm01", "P-AYPU109-4", 1)] })]);
-    expect(result.gifts).toEqual([{ sku: "", name: "Cước cầu lông LiNing N65", qty: 4, value: 0 }]);
+    expect(result.gifts).toEqual([{ sku: "", name: "Cước cầu lông LiNing N65", qty: 4, value: 600_000 }]); // 4 × 150.000 (giá trị ghi trên quy tắc B1)
     // 2.356.364 × 55% = 1.296.000 (làm tròn) — hàng bán cộng theo tiền sau giảm.
     expect(result.items.find((i) => i.sku === "P-AYPT417-5")).toMatchObject({ qty: 3, value: 3 * 1_296_000 });
   });

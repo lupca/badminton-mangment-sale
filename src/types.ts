@@ -88,6 +88,8 @@ export interface BuyXGetYRule {
   giftMode: "same" | "group" | "text";
   giftGroupId: ID | null;
   giftText: string;
+  /** Giá trị 1 món quà ghi bằng chữ (đ), để tính vào tổng giá trị quà; không có = 0. Chỉ dùng khi giftMode = "text". */
+  giftTextValue?: number;
 }
 
 export type Rule = TierGiftRule | DiscountRule | BuyXGetYRule;

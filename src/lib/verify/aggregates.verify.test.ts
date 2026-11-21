@@ -553,10 +553,10 @@ const DEMO_ORDERS: Record<string, [qty: number, amount: number, giftQty: number,
   "demo-o02": [7, 9113236, 0, 0],
   "demo-o01": [9, 12742039, 1, 1200000],
   "demo-o09": [9, 12183454, 2, 1840000],
-  "demo-o17": [10, 8680256, 4, 0],
-  "demo-o16": [10, 9361637, 2, 0],
-  "demo-o15": [7, 8844219, 2, 0],
-  "demo-o14": [7, 7132909, 3, 0],
+  "demo-o17": [10, 8680256, 4, 600000], // 4 DM01 → 4 N65 strings × 150.000
+  "demo-o16": [10, 9361637, 2, 300000], // 2 strings × 150.000
+  "demo-o15": [7, 8844219, 2, 300000], // 2 strings × 150.000
+  "demo-o14": [7, 7132909, 3, 450000], // 3 strings × 150.000
 };
 
 const demoEntries = (pid?: string, confirmedOnly = false): OrderCalc[] =>
@@ -583,7 +583,7 @@ describe("demo data (17 orders, 4 salespeople) — exact numbers", () => {
 
   it("order-list totals: all 17 orders", () => {
     const t = sumOrders(demoEntries());
-    expect(t).toEqual({ orderCount: 17, errorCount: 0, totalQty: 153, totalAmount: 181724380, giftQty: 26, giftValue: 16780000 });
+    expect(t).toEqual({ orderCount: 17, errorCount: 0, totalQty: 153, totalAmount: 181724380, giftQty: 26, giftValue: 18430000 }); // 16.780.000 + 11 strings × 150.000
     expectSummaryMatches(summarizeOrders(demoEntries()), reference(demoEntries()), demo.orders);
   });
 
@@ -644,23 +644,23 @@ describe("demo data (17 orders, 4 salespeople) — exact numbers", () => {
     ]);
   });
 
-  it("report «Khuyến mại Hè 2026»: text gift (Cước N65) aggregated by name with value 0", () => {
+  it("report «Khuyến mại Hè 2026»: text gift (Cước N65) aggregated by name at 150.000 đ each", () => {
     const all = summarizeOrders(demoEntries(HE), salesNames(demo.orders));
-    expect(pick(all)).toEqual([4, 34, 34019021, 11, 0, 0]);
-    expect(all.gifts).toEqual([{ sku: "", name: "Cước cầu lông LiNing N65", qty: 11, value: 0 }]);
+    expect(pick(all)).toEqual([4, 34, 34019021, 11, 1650000, 0]); // 11 strings × 150.000
+    expect(all.gifts).toEqual([{ sku: "", name: "Cước cầu lông LiNing N65", qty: 11, value: 1650000 }]);
     expect(all.items).toHaveLength(19);
     expect(salesRows(all)).toEqual([
-      ["Trần Thị Bình", 2, 17, 17524475, 0],
-      ["Nguyễn Văn An", 1, 10, 9361637, 0],
-      ["Lê Hoàng Cường", 1, 7, 7132909, 0],
+      ["Trần Thị Bình", 2, 17, 17524475, 900000],
+      ["Nguyễn Văn An", 1, 10, 9361637, 300000],
+      ["Lê Hoàng Cường", 1, 7, 7132909, 450000],
     ]);
   });
 
   it("per-salesperson across all programs", () => {
     expect(salesRows(summarizeOrders(demoEntries()))).toEqual([
-      ["Lê Hoàng Cường", 6, 49, 63094697, 5160000],
-      ["Trần Thị Bình", 5, 46, 54657534, 4100000],
-      ["Nguyễn Văn An", 4, 40, 46608076, 3100000],
+      ["Lê Hoàng Cường", 6, 49, 63094697, 5610000], // + 3 strings
+      ["Trần Thị Bình", 5, 46, 54657534, 5000000], // + 6 strings
+      ["Nguyễn Văn An", 4, 40, 46608076, 3400000], // + 2 strings
       ["Phạm Thu Dung", 2, 18, 17364073, 4420000],
     ]);
   });
@@ -686,7 +686,7 @@ describe("demo data (17 orders, 4 salespeople) — exact numbers", () => {
     let foot = rows.at(-1)!;
     expect(foot[0]).toBe("Tổng: 17 đơn");
     expect(foot.slice(1, 3).map(num)).toEqual([153, 181724380]);
-    expect(foot[3]).toBe(`${formatVND(16780000)}SL: 26`);
+    expect(foot[3]).toBe(`${formatVND(18430000)}SL: 26`);
 
     h.route = { path: "/orders", parts: ["orders"], query: new URLSearchParams(`program=${KM11}`) };
     html = renderToStaticMarkup(createElement(OrdersPage));
@@ -1022,7 +1022,7 @@ describe("edge cases", () => {
     expect(s.items).toEqual([{ sku: "P-AYPT417-5", name: it417.name, qty: 9, value: 9 * it417.wholesalePrice }]);
   });
 
-  it("auto (same-mode) gifts and chosen gifts of one SKU merge; text gifts keep value 0", () => {
+  it("auto (same-mode) gifts and chosen gifts of one SKU merge; text gifts are valued at the rule's giftTextValue", () => {
     const o = mk({
       programId: HE,
       lines: [
@@ -1031,8 +1031,8 @@ describe("edge cases", () => {
       ],
     });
     const s = summarizeOrders([calcOf(o), calcOf({ ...o, id: "b" })]);
-    expect(s.gifts).toEqual([{ sku: "", name: "Cước cầu lông LiNing N65", qty: 6, value: 0 }]);
-    expect(s.giftValue).toBe(0);
+    expect(s.gifts).toEqual([{ sku: "", name: "Cước cầu lông LiNing N65", qty: 6, value: 900_000 }]); // 2 × 3 strings × 150.000
+    expect(s.giftValue).toBe(900_000);
     void he;
   });
 

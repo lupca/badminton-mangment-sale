@@ -195,8 +195,8 @@ function oracleBx(rule: BuyXGetYRule, lines: OrderLine[], orderGifts: OrderGift[
         sku: "",
         name: rule.giftText.trim() || "Quà tặng",
         qty: entitled,
-        unitValue: 0,
-        value: 0,
+        unitValue: rule.giftTextValue ?? 0, // the value written on the rule (0 when not set)
+        value: (rule.giftTextValue ?? 0) * entitled,
         auto: true,
       });
     }
@@ -391,13 +391,13 @@ describe("text mode — món quà ghi bằng chữ", () => {
     const r = calc(program, lines);
     expect(bxOf(r, "r-he-b1")).toMatchObject({ giftMode: "text", sourceQty: 3, entitledQty: 3, ok: true });
     expect(giftsOf(r, "r-he-b1")).toEqual([
-      { ruleId: "r-he-b1", sku: "", name: "Cước cầu lông LiNing N65", qty: 3, unitValue: 0, value: 0, auto: true },
+      { ruleId: "r-he-b1", sku: "", name: "Cước cầu lông LiNing N65", qty: 3, unitValue: 150_000, value: 450_000, auto: true },
     ]);
     // DM01 lines discounted 45% on retail: 2.356.364×0,55 = 1.296.000,2 → 1.296.000 ; 932.727×0,55 = 513.000 (rounded)
     expect(r.lines[0].unitPrice).toBe(Math.round(2_356_364 * 0.55));
     expect(r.lines[1].unitPrice).toBe(Math.round(932_727 * 0.55));
     expect(r.giftQty).toBe(3);
-    expect(r.giftValue).toBe(0);
+    expect(r.giftValue).toBe(450_000); // 3 × 150.000 (giftTextValue of r-he-b1)
   });
 
   it("empty text → «Quà tặng»; unconfigured → warning and nothing", () => {
@@ -408,12 +408,15 @@ describe("text mode — món quà ghi bằng chữ", () => {
     expect(levelsOf(r2, "r-bx")).toEqual(["warning"]);
   });
 
-  it("text gifts are valued 0 đ (they are not in any catalog), whereas giftUnitValue would say wholesale", () => {
-    // AMBIGUITY note: the original app valued the N65 string at 150.000 đ; the new app shows 0 đ in giftValue.
+  it("[decided] text gifts are worth giftTextValue each (0 when not set), and giftUnitValue agrees", () => {
     const rule = bx({ giftMode: "text", giftText: "Cước" });
-    expect(giftUnitValue(rule, { retailPrice: 200, wholesalePrice: 100 })).toBe(100); // helper ignores mode
-    const r = calc(mkProgram(G, [rule]), [ln("g1", "A", 1)]);
-    expect(r.gifts[0].unitValue).toBe(0);
+    expect(giftUnitValue(rule, { retailPrice: 200, wholesalePrice: 100 })).toBe(0);
+    expect(calc(mkProgram(G, [rule]), [ln("g1", "A", 1)]).gifts[0].unitValue).toBe(0);
+    const valued = bx({ giftMode: "text", giftText: "Cước N65", giftTextValue: 150_000 });
+    expect(giftUnitValue(valued, { retailPrice: 200, wholesalePrice: 100 })).toBe(150_000);
+    const r = calc(mkProgram(G, [valued]), [ln("g1", "A", 3)]);
+    expect(r.gifts[0]).toMatchObject({ qty: 3, unitValue: 150_000, value: 450_000 });
+    expect(r.giftValue).toBe(450_000);
   });
 });
 

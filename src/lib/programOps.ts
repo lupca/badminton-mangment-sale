@@ -185,7 +185,8 @@ export function describeRule(rule: Rule, groups: ProductGroup[]): string[] {
     return [`Mua ${rule.buyQty} tặng ${rule.getQty} cùng loại (tính theo từng mã), áp dụng cho ${source}.`];
   }
   if (rule.giftMode === "text") {
-    return [`Cứ mua ${rule.buyQty} sản phẩm ${source} được tặng ${rule.getQty} «${rule.giftText || "quà tặng"}».`];
+    const value = rule.giftTextValue ? ` (trị giá ${formatVND(rule.giftTextValue)} mỗi món)` : "";
+    return [`Cứ mua ${rule.buyQty} sản phẩm ${source} được tặng ${rule.getQty} «${rule.giftText || "quà tặng"}»${value}.`];
   }
   return [
     `Cứ mua ${rule.buyQty} sản phẩm ${source} được chọn ${rule.getQty} quà trong ${groupNames(

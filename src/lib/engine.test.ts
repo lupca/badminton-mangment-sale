@@ -169,6 +169,18 @@ function deepFreeze<T>(value: T): T {
 
 // ───────────────────────── Seed: KM tháng 11/2026 ─────────────────────────
 
+/** Hàng mua kèm là sản phẩm thêm: ở danh mục vừa được giảm vừa là hàng mua kèm, chỉ phần dư ngoài mức tối thiểu được giảm mới tính. */
+function companionQty(
+  rule: { targetGroupIds: string[]; requireGroupIds: string[]; minQty: number | null },
+  qtyOf: (ids: string[]) => number,
+): number {
+  const both = rule.requireGroupIds.filter((id) => rule.targetGroupIds.includes(id));
+  if (both.length === 0) return qtyOf(rule.requireGroupIds);
+  const targetOnly = qtyOf(rule.targetGroupIds.filter((id) => !both.includes(id)));
+  const reserved = Math.max(0, Math.max(rule.minQty ?? 1, 1) - targetOnly);
+  return qtyOf(rule.requireGroupIds.filter((id) => !both.includes(id))) + Math.max(0, qtyOf(both) - reserved);
+}
+
 describe("seed program KM 11/2026 — gift tiers by revenue, gifts valued at RETAIL price", () => {
   const P = "seed-km-2026-11";
   const APPLY = "g-km11-apply";
@@ -449,9 +461,9 @@ describe("seed program Khuyến mại Hè 2026 — discount A, string gift B1, p
     expect(a.reason).not.toBe("");
 
     expect(bxgyOf(result, B1)).toMatchObject({ giftMode: "text", sourceQty: 3, entitledQty: 3, ok: true });
-    expect(result.gifts).toEqual([{ ruleId: B1, sku: "", name: STRING, qty: 3, unitValue: 0, value: 0, auto: true }]);
+    expect(result.gifts).toEqual([{ ruleId: B1, sku: "", name: STRING, qty: 3, unitValue: 150_000, value: 450_000, auto: true }]);
     expect(result.giftQty).toBe(3);
-    expect(result.giftValue).toBe(0);
+    expect(result.giftValue).toBe(450_000); // 3 strings × 150.000
 
     expect(tierOf(result, B2)).toMatchObject({ revenue: 0, tierIndex: -1, budget: 0 });
     expect(result.hasError).toBe(false);
@@ -473,7 +485,7 @@ describe("seed program Khuyến mại Hè 2026 — discount A, string gift B1, p
     expect(result.hasError).toBe(false);
     expect(result.issues).toHaveLength(1);
     expect(result.issues[0]).toMatchObject({ level: "info", ruleId: A });
-    expect(result.gifts).toEqual([{ ruleId: B1, sku: "", name: STRING, qty: 5, unitValue: 0, value: 0, auto: true }]);
+    expect(result.gifts).toEqual([{ ruleId: B1, sku: "", name: STRING, qty: 5, unitValue: 150_000, value: 750_000, auto: true }]);
   });
 
   it("3 dm01 units without any dm03 item → no discount, an info explains why", () => {
@@ -579,7 +591,7 @@ describe("seed program Khuyến mại Hè 2026 — discount A, string gift B1, p
       ]),
     );
     expect(bxgyOf(result, B1)).toMatchObject({ sourceQty: 7, entitledQty: 7 });
-    expect(result.gifts).toEqual([{ ruleId: B1, sku: "", name: STRING, qty: 7, unitValue: 0, value: 0, auto: true }]);
+    expect(result.gifts).toEqual([{ ruleId: B1, sku: "", name: STRING, qty: 7, unitValue: 150_000, value: 1_050_000, auto: true }]);
   });
 
   it("B2: 5 × P-AYPT417-5 bought as dm02 = 8.247.275 → 15% = 1.237.091; gifts from dm01 are valued at WHOLESALE", () => {
@@ -648,7 +660,7 @@ describe("seed program Khuyến mại Hè 2026 — discount A, string gift B1, p
       [B2, 1, false],
     ]);
     expect(result.giftQty).toBe(4);
-    expect(result.giftValue).toBe(1_134_000);
+    expect(result.giftValue).toBe(1_584_000); // 3 strings × 150.000 + wholesale 1.134.000
   });
 });
 
@@ -1419,6 +1431,31 @@ describe("buy_x_get_y rule", () => {
       const padded = makeProgram(groups, [bxgyRule({ giftMode: "text", giftText: "  Cước N65 " })]);
       expect(calculateOrder(padded, order([line("g-a", "A", 1, 100_000)])).gifts[0].name).toBe("Cước N65");
     });
+
+    it("without giftTextValue a text gift is worth 0 đ", () => {
+      const rule = bxgyRule({ giftMode: "text", giftText: "Cước N65", buyQty: 1, getQty: 1 });
+      expect("giftTextValue" in rule).toBe(false);
+      const result = calculateOrder(makeProgram(groups, [rule]), order([line("g-a", "A", 2, 100_000)]));
+      expect(result.gifts).toEqual([{ ruleId: "r-bxgy", sku: "", name: "Cước N65", qty: 2, unitValue: 0, value: 0, auto: true }]);
+      expect(result.giftValue).toBe(0);
+    });
+
+    it("giftTextValue 150.000 with 3 entitled → unit 150.000, value 450.000, giftValue 450.000; amount to pay unchanged", () => {
+      const plain = bxgyRule({ giftMode: "text", giftText: "Cước N65", buyQty: 1, getQty: 1 });
+      const valued = bxgyRule({ giftMode: "text", giftText: "Cước N65", buyQty: 1, getQty: 1, giftTextValue: 150_000 });
+      const lines = [line("g-a", "A", 3, 100_000)];
+      const without = calculateOrder(makeProgram(groups, [plain]), order(lines));
+      const result = calculateOrder(makeProgram(groups, [valued]), order(lines));
+      expect(bxgyOf(result, "r-bxgy").entitledQty).toBe(3);
+      expect(result.gifts).toEqual([
+        { ruleId: "r-bxgy", sku: "", name: "Cước N65", qty: 3, unitValue: 150_000, value: 450_000, auto: true },
+      ]);
+      expect(result.giftQty).toBe(3);
+      expect(result.giftValue).toBe(450_000);
+      expect(result.totalAmount).toBe(300_000);
+      expect(result.totalAmount).toBe(without.totalAmount);
+      expect(result.discountAmount).toBe(without.discountAmount);
+    });
   });
 
   describe("giftMode group", () => {
@@ -2006,7 +2043,7 @@ function reference(program: Program, input: OrderInput): Summary {
       eligible =
         (rule.minQty == null || targetQty >= rule.minQty) &&
         (rule.maxQty == null || targetQty <= rule.maxQty) &&
-        (!needsCompanion || qtyOf(rule.requireGroupIds) >= rule.requireMinQty);
+        (!needsCompanion || companionQty(rule, qtyOf) >= rule.requireMinQty);
       if (!eligible) issue("info", rule.id);
     }
     discounts.set(rule.id, { eligible, targetQty });
@@ -2084,7 +2121,7 @@ function reference(program: Program, input: OrderInput): Summary {
       } else {
         entitledQty = configured ? Math.floor(sourceQty / rule.buyQty) * rule.getQty : 0;
         if (rule.giftMode === "text") {
-          if (entitledQty > 0) gifts.push([rule.id, "", entitledQty, 0, true]);
+          if (entitledQty > 0) gifts.push([rule.id, "", entitledQty, (rule.giftTextValue ?? 0) * entitledQty, true]);
         } else {
           const chosen = input.gifts.filter((g) => g.ruleId === rule.id && g.qty > 0);
           chosenQty = chosen.reduce((sum, g) => sum + g.qty, 0);
@@ -2206,6 +2243,7 @@ function randomCase(seed: number): { program: Program; input: OrderInput } {
       giftMode,
       giftGroupId: giftMode === "group" && chance(0.85) ? oneOf(groupIds) : null,
       giftText: chance(0.8) ? "Cước N65" : "",
+      ...(giftMode === "text" && chance(0.5) ? { giftTextValue: int(1, 30) * 10_000 } : {}),
     };
   });
 

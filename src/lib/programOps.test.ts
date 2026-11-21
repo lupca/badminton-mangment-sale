@@ -382,7 +382,7 @@ describe("describeRule — the three seed programs", () => {
       "Giảm 45% trên giá lẻ cho «Danh mục 01 (vợt trung cấp)» khi mua từ 2 đến 4 sản phẩm «Danh mục 01 (vợt trung cấp)» và mua kèm ít nhất 1 sản phẩm «Danh mục 03 (vợt mua kèm)».",
     ]);
     expect(describeRule(b1, program.groups)).toEqual([
-      "Cứ mua 1 sản phẩm «Danh mục 01 (vợt trung cấp)» được tặng 1 «Cước cầu lông LiNing N65».",
+      "Cứ mua 1 sản phẩm «Danh mục 01 (vợt trung cấp)» được tặng 1 «Cước cầu lông LiNing N65» (trị giá 150.000 đ mỗi món).",
     ]);
     expect(describeRule(b2, program.groups)).toEqual([
       "Doanh số tính từ «Danh mục 02 (vợt cao cấp)». Quà chọn trong «Danh mục 01 (vợt trung cấp)», giá trị quà tính theo giá sỉ.",

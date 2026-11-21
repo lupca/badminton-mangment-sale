@@ -134,7 +134,14 @@ function oracle(program: Program | null, input: OrderInput): Oracle {
     const p = Number(rule.discountPercent);
     const targetQty = sumQty(rule.targetGroupIds);
     const needReq = rule.requireGroupIds.length > 0 && rule.requireMinQty > 0;
-    const requireQty = needReq ? sumQty(rule.requireGroupIds) : 0;
+    // Hàng mua kèm là sản phẩm thêm (chủ dự án chọn 2026-11-21): ở danh mục chung, chỉ phần dư ngoài mức tối thiểu được giảm.
+    const both = rule.requireGroupIds.filter((id) => rule.targetGroupIds.includes(id));
+    const reserved = Math.max(0, Math.max(rule.minQty ?? 1, 1) - sumQty(rule.targetGroupIds.filter((id) => !both.includes(id))));
+    const requireQty = !needReq
+      ? 0
+      : both.length === 0
+        ? sumQty(rule.requireGroupIds)
+        : sumQty(rule.requireGroupIds.filter((id) => !both.includes(id))) + Math.max(0, sumQty(both) - reserved);
     const configured = rule.targetGroupIds.length > 0 && p > 0 && p <= 100;
     const eligible =
       configured &&
@@ -492,11 +499,17 @@ describe("discount basics (hand-computed)", () => {
   // AMBIGUITY: a group that is both a target and a require group lets the same units satisfy "mua kèm".
   // "Phải mua kèm" (buy along with) reads as *additional* products; the engine double-counts. Business intent unclear.
   // With targets [A,B], require [B] ≥1, minQty 2: buying 2 units of B alone is eligible and B (the "kèm" item) is discounted.
-  it("documented: overlapping target and require groups double-count the same units (engine behaviour)", () => {
+  it("[decided] overlapping target and require groups: the companion item must be an extra unit", () => {
     const P = prog([disc({ targetGroupIds: ["A", "B"], minQty: 2, requireGroupIds: ["B"], requireMinQty: 1 })]);
-    const r = calculateOrder(P, ord([ln("B", "b", 2, 100_000)]));
-    expect(dres(r)).toMatchObject({ eligible: true, targetQty: 2, requireQty: 2 });
-    expect(r.totalAmount).toBe(180_000);
+    const two = calculateOrder(P, ord([ln("B", "b", 2, 100_000)]));
+    expect(dres(two)).toMatchObject({ eligible: false, targetQty: 2, requireQty: 0 });
+    expect(two.totalAmount).toBe(200_000);
+    const three = calculateOrder(P, ord([ln("B", "b", 3, 100_000)]));
+    expect(dres(three)).toMatchObject({ eligible: true, targetQty: 3, requireQty: 1 });
+    expect(three.totalAmount).toBe(270_000);
+    // A unit from the target-only group fills the minimum, so one B is already extra.
+    const mixed = calculateOrder(P, ord([ln("A", "a", 1, 100_000), ln("B", "b", 2, 100_000)]));
+    expect(dres(mixed)).toMatchObject({ eligible: true, requireQty: 1 });
   });
 
   // The engine marks qty-0 target lines as discounted (discountRuleId / discountPercent set). Harmless in the UI because

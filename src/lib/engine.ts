@@ -63,7 +63,9 @@ export function ruleAcceptsChosenGifts(rule: Rule): boolean {
 
 /** Giá trị 1 đơn vị quà theo cách tính của quy tắc. */
 export function giftUnitValue(rule: Rule, gift: { retailPrice: number; wholesalePrice: number }): number {
-  return rule.type === "tier_gift" ? priceOf(gift, rule.giftPriceBasis) : gift.wholesalePrice;
+  if (rule.type === "tier_gift") return priceOf(gift, rule.giftPriceBasis);
+  if (rule.type === "buy_x_get_y" && rule.giftMode === "text") return safeMoney(rule.giftTextValue ?? 0);
+  return gift.wholesalePrice;
 }
 
 function safeQty(qty: unknown): number {
@@ -234,7 +236,20 @@ function evaluateDiscount(
 ): { eligible: boolean; reason: string; targetQty: number; requireQty: number } {
   const targetQty = qtyIn(rule.targetGroupIds);
   const needRequire = rule.requireGroupIds.length > 0 && rule.requireMinQty > 0;
-  const requireQty = needRequire ? qtyIn(rule.requireGroupIds) : 0;
+  // Hàng «phải mua kèm» là sản phẩm thêm, ngoài số hàng được giảm. Danh mục vừa được giảm vừa là hàng mua kèm thì số
+  // lượng ở đó trước hết dùng cho đủ mức tối thiểu được giảm (ít nhất 1); chỉ phần dư mới tính là hàng mua kèm.
+  const overlap = rule.requireGroupIds.filter((id) => rule.targetGroupIds.includes(id));
+  let requireQty = 0;
+  if (needRequire) {
+    if (overlap.length === 0) {
+      requireQty = qtyIn(rule.requireGroupIds);
+    } else {
+      const targetOnly = qtyIn(rule.targetGroupIds.filter((id) => !overlap.includes(id)));
+      const reserved = Math.max(0, Math.max(rule.minQty ?? 1, 1) - targetOnly);
+      requireQty =
+        qtyIn(rule.requireGroupIds.filter((id) => !overlap.includes(id))) + Math.max(0, qtyIn(overlap) - reserved);
+    }
+  }
   const percent = Number(rule.discountPercent);
 
   if (rule.targetGroupIds.length === 0 || !(percent > 0) || percent > 100) {
@@ -255,7 +270,9 @@ function evaluateDiscount(
   }
   if (needRequire && requireQty < rule.requireMinQty) {
     missing.push(
-      `cần mua kèm ít nhất ${rule.requireMinQty} sản phẩm ${namesOf(rule.requireGroupIds)} (đang có ${requireQty})`,
+      `cần mua kèm ít nhất ${rule.requireMinQty} sản phẩm ${namesOf(rule.requireGroupIds)} (đang có ${requireQty}${
+        overlap.length > 0 ? ", tính ngoài số sản phẩm được giảm" : ""
+      })`,
     );
   }
   if (missing.length > 0) {
@@ -491,14 +508,15 @@ function evaluateBuyXGetY(
   result.entitledQty = entitled;
 
   if (rule.giftMode === "text") {
+    const textValue = safeMoney(rule.giftTextValue ?? 0);
     if (entitled > 0) {
       gifts.push({
         ruleId: rule.id,
         sku: "",
         name: rule.giftText.trim() || "Quà tặng",
         qty: entitled,
-        unitValue: 0,
-        value: 0,
+        unitValue: textValue,
+        value: textValue * entitled,
         auto: true,
       });
     }

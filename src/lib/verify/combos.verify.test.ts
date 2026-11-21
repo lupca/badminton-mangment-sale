@@ -175,9 +175,9 @@ function oracle(programId: string, o: Pick<Order, "lines" | "gifts">): Oracle {
         if (d < unit[i]) unit[i] = d;
       }
     });
-    // Ưu đãi B1: one N65 string per DM01 unit.
+    // Ưu đãi B1: one N65 string per DM01 unit, each worth 150.000 đ (the original app's value for the string).
     res.strings = q1;
-    if (q1 > 0) gifts.push({ ruleId: "r-he-b1", sku: "", qty: q1, value: 0, auto: true });
+    if (q1 > 0) gifts.push({ ruleId: "r-he-b1", sku: "", qty: q1, value: 150_000 * q1, auto: true });
     // Ưu đãi B2: DM02 revenue → % budget; gifts from DM01 at wholesale.
     const revenue = o.lines.reduce((s, l, i) => (l.groupId === DM02 ? s + unit[i] * q[i] : s), 0);
     let tierIndex = -1;
@@ -454,7 +454,7 @@ describe("(a) hand-computed whole orders on the seed programs", () => {
     expect([b2.revenue, b2.tierIndex, b2.budget, b2.used, b2.remaining, b2.amountToNextTier]).toEqual([21_030_550, 1, 3_785_499, 3_608_182, 177_317, 13_969_450]);
     expect(ruleResult<BuyXGetYResult>(calc, "r-he-b1").entitledQty).toBe(3);
     expect(calc.giftQty).toBe(3 + 1 + 3);
-    expect(calc.giftValue).toBe(3_608_182);
+    expect(calc.giftValue).toBe(4_058_182); // 3 strings × 150.000 + B2 gifts 3.608.182 at wholesale
     expect(calc.hasError).toBe(false);
     compareWithOracle(HE, p, o);
   });

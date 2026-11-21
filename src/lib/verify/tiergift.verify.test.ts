@@ -408,13 +408,13 @@ describe("Khuyến mại Hè 2026 — Ưu đãi B2 (percent of DM02 revenue, who
     expect(c.gifts[0].unitValue).toBe(1_649_455);
   });
 
-  it("B1 text gifts and B2 chosen gifts add up in giftQty; giftValue excludes the text gift (0 đ)", () => {
+  it("B1 text gifts and B2 chosen gifts add up in giftQty; giftValue includes the text gift at its giftTextValue (150.000 đ)", () => {
     const c = calculateOrder(P, {
       lines: [line(P, DM02, SKU, 3), line(P, DM01, "P-AYPU109-4", 1)],
       gifts: [gift(P, B2, DM01, "P-AYPU109-4", 2)],
     });
     expect(c.giftQty).toBe(3); // 1 N65 + 2 rackets
-    expect(c.giftValue).toBe(1_305_818);
+    expect(c.giftValue).toBe(1_455_818); // 1 N65 × 150.000 + 2 × 652.909 wholesale
     expect(c.hasError).toBe(false);
   });
 });

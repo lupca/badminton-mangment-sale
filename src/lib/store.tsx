@@ -126,6 +126,9 @@ function normalizeRule(raw: any): Rule | null {
       giftMode: raw.giftMode === "group" || raw.giftMode === "text" ? raw.giftMode : "same",
       giftGroupId: str(raw.giftGroupId) || null,
       giftText: str(raw.giftText),
+      ...(Number.isFinite(Number(raw.giftTextValue)) && Number(raw.giftTextValue) > 0
+        ? { giftTextValue: Math.round(Number(raw.giftTextValue)) }
+        : {}),
     };
   }
   return null;

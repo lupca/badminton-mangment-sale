@@ -2337,7 +2337,8 @@
      "getQty": 1,
      "giftMode": "text",
      "giftGroupId": null,
-     "giftText": "Cước cầu lông LiNing N65"
+     "giftText": "Cước cầu lông LiNing N65",
+     "giftTextValue": 150000
     },
     {
      "id": "r-he-b2",
